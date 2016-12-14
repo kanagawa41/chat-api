@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>ルーム</title>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script type="text/javascript">
+    
+    
+    $(document).ready(function(){
+        var params = getParams();
+        
+        var room_hash = params['room_hash'];
+        existRoom(room_hash);
+    });
+    
+    /**
+     * 部屋の存在チェック
+     */
+    function existRoom(room_hash) {
+      $.ajax({
+        type: 'GET',
+        url: 'rooms/' + room_hash,
+        timeout: 10000,
+        cache: false,
+        data: {},
+        dataType: 'json',
+        beforeSend: function(jqXHR) {
+          jqXHR.setRequestHeader("If-Modified-Since", "Thu, 01 Jun 1970 00:00:00 GMT");
+          return true;
+        },
+      }).done(function(response, textStatus, jqXHR) {
+        if(response["errors"]){
+            console.log(response["errors"]);
+            alert('指定されたルームは存在しません。'); return;
+        }
+        $('#room_name').text(response.name);
+        $('#description').text(response.description);
+        $('#room_hash').val(room_hash);
+      }).fail(function(jqXHR, textStatus, errorThrown ) {
+        alert("Connection Error!");
+        console.log("XMLHttpRequest : " + XMLHttpRequest.status);
+        console.log("textStatus : " + textStatus);
+        console.log("errorThrown : " + errorThrown.message);
+      }).always(function(data_or_jqXHR, textStatus, jqXHR_or_errorThrown) {
+      });
+    }
+    
+    /**
+     * GETパラメータを配列にセットして返却する。
+     */
+    function getParams() {
+        var url   = location.href;
+        parameters    = url.split("?");
+        params   = parameters[1].split("&");
+        var paramsArray = [];
+        for ( i = 0; i < params.length; i++ ) {
+            neet = params[i].split("=");
+            paramsArray.push(neet[0]);
+            paramsArray[neet[0]] = neet[1];
+        }
+        return paramsArray;
+    }
+
+    /**
+     * ルームに入室する
+     */
+    function intoRoom(){
+      $.ajax({
+        type: 'POST',
+        url: 'rooms/' + $('#room_hash').val() + '/members',
+        timeout: 10000,
+        cache: false,
+        data: {
+            name : $('#user_name').val()
+        },
+        dataType: 'json',
+        beforeSend: function(jqXHR) {
+          return true;
+        },
+      }).done(function(response, textStatus, jqXHR) {
+        if(response["errors"]){
+            console.log(response["errors"]);
+            alert('指定されたルームは存在しません。'); return;
+        }
+        $('#user_hash').val(response.user_hash);
+        $('#user_hash').attr('readonly',true);
+
+        // 周期的にメッセージを取得する処理の発動
+        setInterval(function(){
+           getMessages();
+        },10000);
+        
+      }).fail(function(jqXHR, textStatus, errorThrown ) {
+        alert("Connection Error!");
+        console.log("XMLHttpRequest : " + jqXHR.status);
+        console.log("textStatus : " + textStatus);
+        console.log("errorThrown : " + errorThrown.message);
+      }).always(function(data_or_jqXHR, textStatus, jqXHR_or_errorThrown) {
+      });
+    }
+
+    /**
+     * メッセージを取得する
+     */
+    function getMessages(){
+      $.ajax({
+        type: 'GET',
+        url: 'rooms/' + $('#room_hash').val() + '/members/' + $('#user_hash').val() + '/messages',
+        timeout: 10000,
+        cache: false,
+        data: {},
+        dataType: 'json',
+        beforeSend: function(jqXHR) {
+          jqXHR.setRequestHeader("If-Modified-Since", "Thu, 01 Jun 1970 00:00:00 GMT");
+          return true;
+        },
+      }).done(function(response, textStatus, jqXHR) {
+        if(response["errors"]){
+            console.log(response["errors"]);
+            alert('指定されたルームは存在しません。'); return;
+        }
+
+        response.forEach(function(value) {
+            var message_id = value.message_id;
+            var body = value.body;
+            var user_name = value.user.name;
+            var who = value.user.who;
+            var type = value.type;
+            var sendTime = value.send_time;
+
+            $('#message_stream').append('<li>' + user_name + ': ' + body + '<input type="hidden" class="message_id" value="' + message_id + '">' + '<input type="hidden" class="who" value="' + who + '">' + '</li>');
+        });
+
+      }).fail(function(jqXHR, textStatus, errorThrown ) {
+        alert("Connection Error!");
+        console.log("XMLHttpRequest : " + jqXHR.status);
+        console.log("textStatus : " + textStatus);
+        console.log("errorThrown : " + errorThrown.message);
+      }).always(function(data_or_jqXHR, textStatus, jqXHR_or_errorThrown) {
+      });
+    }
+
+    /**
+     * メッセージを送信する
+     */
+    function sendMessage(){
+      var message_body = $('#message_body').val();
+      $.ajax({
+        type: 'POST',
+        url: 'rooms/' + $('#room_hash').val() + '/members/' + $('#user_hash').val() + '/messages',
+        timeout: 10000,
+        cache: false,
+        data: {
+            body : message_body
+        },
+        dataType: 'json',
+        beforeSend: function(jqXHR) {
+          jqXHR.setRequestHeader("If-Modified-Since", "Thu, 01 Jun 1970 00:00:00 GMT");
+          return true;
+        },
+      }).done(function(response, textStatus, jqXHR) {
+        if(response["errors"]){
+            console.log(response["errors"]);
+            alert('指定されたルームは存在しません。'); return;
+        }
+        
+        var message_id = response.message_id;
+        var user_name = $('#user_name').val();
+        var who = 'self';
+        $('#message_stream').append('<li>' + user_name + ': ' + message_body + '<input type="hidden" class="message_id" value="' + message_id + '">' + '<input type="hidden" class="who" value="' + who + '">' + '</li>');
+      }).fail(function(jqXHR, textStatus, errorThrown ) {
+        alert("Connection Error!");
+        console.log("XMLHttpRequest : " + jqXHR.status);
+        console.log("textStatus : " + textStatus);
+        console.log("errorThrown : " + errorThrown.message);
+      }).always(function(data_or_jqXHR, textStatus, jqXHR_or_errorThrown) {
+      });
+    }
+    
+</script>
+</head>
+<body>
+<h1 id="room_name">Dummy</h1>
+<h2 id="description">Dummy</h2>
+<input type="text" id="user_name"><button onclick="intoRoom()">入室</button>
+<input type="text" id="user_hash">
+<br>
+<ul id="message_stream">
+</ul>
+<input type="text" id="message_body"><button onclick="sendMessage()">発言</button>
+<input type="hidden" id="room_hash">
+</body>
+</html>

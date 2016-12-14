@@ -9,9 +9,15 @@
     
     $(document).ready(function(){
         var params = getParams();
-        
+
         var room_hash = params['room_hash'];
         existRoom(room_hash);
+
+        var user_hash = params['user_hash'];
+        // ユーザが指定されている場合は、ユーザ情報を取得する。
+        if(user_hash){
+          existUser(room_hash, user_hash);
+        }
     });
     
     /**
@@ -37,6 +43,41 @@
         $('#room_name').text(response.name);
         $('#description').text(response.description);
         $('#room_hash').val(room_hash);
+      }).fail(function(jqXHR, textStatus, errorThrown ) {
+        alert("Connection Error!");
+        console.log("XMLHttpRequest : " + XMLHttpRequest.status);
+        console.log("textStatus : " + textStatus);
+        console.log("errorThrown : " + errorThrown.message);
+      }).always(function(data_or_jqXHR, textStatus, jqXHR_or_errorThrown) {
+      });
+    }
+    
+    /**
+     * ユーザの存在チェック
+     */
+    function existUser(room_hash, user_hash) {
+      $.ajax({
+        type: 'GET',
+        url: 'rooms/' + room_hash + '/members/' + user_hash,
+        timeout: 10000,
+        cache: false,
+        data: {},
+        dataType: 'json',
+        beforeSend: function(jqXHR) {
+          jqXHR.setRequestHeader("If-Modified-Since", "Thu, 01 Jun 1970 00:00:00 GMT");
+          return true;
+        },
+      }).done(function(response, textStatus, jqXHR) {
+        if(response["errors"]){
+            console.log(response["errors"]);
+            alert('指定されたユーザは存在しません。'); return;
+        }
+        $('#user_name').val(response.name);
+        $('#user_hash').val(user_hash);
+        $('#login_url').val(location.href);
+        $('#user_name').attr('readonly',true);
+        $('#user_hash').attr('readonly',true);
+
       }).fail(function(jqXHR, textStatus, errorThrown ) {
         alert("Connection Error!");
         console.log("XMLHttpRequest : " + XMLHttpRequest.status);
@@ -84,7 +125,10 @@
             alert('指定されたルームは存在しません。'); return;
         }
         $('#user_hash').val(response.user_hash);
+        $('#login_url').val(location.href　+ '&user_hash=' + response.user_hash);
+        $('#user_name').attr('readonly',true);
         $('#user_hash').attr('readonly',true);
+
 
         // 周期的にメッセージを取得する処理の発動
         setInterval(function(){
@@ -122,14 +166,7 @@
         }
 
         response.forEach(function(value) {
-            var message_id = value.message_id;
-            var body = value.body;
-            var user_name = value.user.name;
-            var who = value.user.who;
-            var type = value.type;
-            var sendTime = value.send_time;
-
-            $('#message_stream').append('<li>' + user_name + ': ' + body + '<input type="hidden" class="message_id" value="' + message_id + '">' + '<input type="hidden" class="who" value="' + who + '">' + '</li>');
+            $('#message_stream').append(create_message(value));
         });
 
       }).fail(function(jqXHR, textStatus, errorThrown ) {
@@ -168,7 +205,19 @@
         var message_id = response.message_id;
         var user_name = $('#user_name').val();
         var who = 'self';
-        $('#message_stream').append('<li>' + user_name + ': ' + message_body + '<input type="hidden" class="message_id" value="' + message_id + '">' + '<input type="hidden" class="who" value="' + who + '">' + '</li>');
+
+        var message_values = {
+            message_id : response.message_id,
+            body : message_body,
+            user : {
+                name : $('#user_name').val(),
+                who : "self",
+            },
+            type : 1,
+            sendTime : new Date(),
+        };
+
+        $('#message_stream').append(create_message(message_values));
       }).fail(function(jqXHR, textStatus, errorThrown ) {
         alert("Connection Error!");
         console.log("XMLHttpRequest : " + jqXHR.status);
@@ -177,18 +226,171 @@
       }).always(function(data_or_jqXHR, textStatus, jqXHR_or_errorThrown) {
       });
     }
+
+    /**
+     *　メッセージ構成を作成し返却する。
+     */
+    function create_message(value){
+        var message_id = value.message_id;
+        var body = value.body;
+        var user_name = value.user.name;
+        var who = value.user.who;
+        var type = value.type;
+        var sendTime = value.send_time;
+
+        var result = '';
+        if(who == 'self'){
+            result = '<div class="question_Box"><div class="question_image"><img src="assets/image/ryugakusei_man.png" alt="' + user_name + '"/></div><div class="arrow_question">' + body + '<input type="hidden" class="message_id" value="' + message_id + '">' + '</div>';
+        } else {
+            result = '<div class="question_Box"><div class="answer_image"><img src="assets/image/ryugakusei_man.png" alt="' + user_name + '"/></div><div class="arrow_answer">' + body + '<input type="hidden" class="message_id" value="' + message_id + '">' + '</div>';
+        }
+        return result;
+    }
     
 </script>
+<style type="text/css">
+<!--
+body{
+     width:100%;
+     min-width: 320px;
+     margin:0;
+     padding: 0;
+}
+
+
+#message_stream{
+     margin: 20px auto;
+     width:96%;
+}
+
+
+.arrow_answer,
+.arrow_question {
+    position: relative;
+    background: #fff;
+    border: 1px solid #c8c8c8;
+    border-radius: 10px;
+    width:75%;
+    font-size: 11px;
+    padding:3%;
+}
+
+
+
+
+.arrow_question {
+    float: right;
+}
+
+
+.arrow_answer:after,
+.arrow_answer:before,
+.arrow_question:after,
+.arrow_question:before {
+    top: 30%;
+    border: solid transparent;
+    content: " ";
+    height: 0;
+    width: 0;
+    position: absolute;
+    pointer-events: none;
+}
+
+
+
+
+.arrow_question:after,
+.arrow_question:before {
+    right: 100%;
+}
+
+
+.arrow_answer:after,
+.arrow_answer:before{
+     left: 100%;
+}
+
+
+.arrow_answer:after,
+.arrow_question:after {
+    border-color: rgba(255, 255, 255, 0);
+    border-width: 8px;
+    margin-top: -8px;
+}
+
+
+.arrow_answer:after{
+    border-left-color: #fff;
+}
+
+
+.arrow_question:after{
+    border-right-color: #fff;
+    
+}
+
+
+.arrow_answer:before,
+.arrow_question:before {
+    border-color: rgba(200, 200, 200, 0);
+    border-width: 9px;
+    margin-top: -9px;
+}
+
+
+.arrow_answer:before{
+    border-left-color: #c8c8c8;
+}
+
+
+.arrow_question:before {
+    border-right-color: #c8c8c8;    
+}
+
+
+.question_image{
+     float: left;
+     width:15%;
+}
+
+
+.answer_image{
+     float: right;
+     width:15%;
+}
+
+
+.answer_image img,
+.question_image img{
+     border-radius: 50px;
+     width: 100%
+}
+
+
+.question_Box{
+     width: 100%;
+     overflow: hidden;
+     margin-bottom: 8%;
+}
+
+-->
+</style>
 </head>
 <body>
 <h1 id="room_name">Dummy</h1>
 <h2 id="description">Dummy</h2>
-<input type="text" id="user_name"><button onclick="intoRoom()">入室</button>
-<input type="text" id="user_hash">
+<input type="text" id="user_name" placeholder="ユーザ名"><button onclick="intoRoom()">入室</button>
+<input type="text" id="user_hash" placeholder="ユーザハッシュ">
 <br>
+<input type="text" id="login_url" placeholder="ログインURL"　readonly="readonly">
+<br>
+<!--
 <ul id="message_stream">
 </ul>
-<input type="text" id="message_body"><button onclick="sendMessage()">発言</button>
+-->
+<div id="message_stream">
+</div>
+<input type="text" id="message_body" placeholder="メッセージ"><button onclick="sendMessage()">発言</button>
 <input type="hidden" id="room_hash">
 </body>
 </html>

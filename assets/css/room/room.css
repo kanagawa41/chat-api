@@ -4,10 +4,8 @@ html {
 }
 
 body {
-	font-size: 10px;
 	font-size: 1.4rem;
 	font-family: "times new roman";
-	-webkit-text-size-adjust: 100%;
 }
 
 #menu_navi {
@@ -28,9 +26,7 @@ body {
 
 #room_name {
     position: fixed;
-    top: 10px;
     left: 10px;
-	font-size: 4rem;
 }
 
 /* メッセージ表示範囲  */
@@ -144,38 +140,4 @@ body {
      width: 100%;
      overflow: hidden;
      margin-bottom: 8%;
-}
-
-/* メニューバー */
-#menu {
-  display: none;
-  position: fixed;
-  width: 100%;
-  z-index: 1000;
-  top: 0px;
-}
- 
-@media screen and (min-width : 600px) {
-  #menu {
-    display: block;
-  }
-  .slicknav_menu {
-    display: none;
-  }
-}
-
-/* フッターの背景 */
-div#footer-bk
-{
-    background-color: #FFF;   /* 背景色(黒) */
-    width:100%;               /* 横の幅を100% */
-    height: 25px;            /* 縦の幅を120px */
-    position: absolute;       /* 絶対位置指定することを定義 */
-    bottom: 0px;              /* 絶対位置指定(左0px,下0px) */
-}
-/* フッターの表示領域 */
-div#footer{
-    height: 25px;          /* 縦幅の指定100px */
-    width:100%;               /* 横の幅を100% */
-    margin: auto;           /* 中央揃え */
 }

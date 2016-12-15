@@ -3,21 +3,22 @@
 <head>
 <meta charset="UTF-8" />
 <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ルーム</title>
 <link rel="stylesheet" type="text/css" href="assets/css/common/reset.css">
 <link rel="stylesheet" type="text/css" href="assets/css/common/setting.css">
 <link rel="stylesheet" type="text/css" href="assets/css/room/room.css">
 <link rel="stylesheet" type="text/css" href="assets/css/slicknav/slicknav.css">
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<link rel="stylesheet" type="text/css" href="assets/css/bootstrap-v3-3-7/bootstrap.min.css">
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+<script type="text/javascript" src="assets/js/common/http-input.js"></script>
 <script type="text/javascript" src="assets/js/slicknav/jquery.slicknav.min.js"></script>
+<script type="text/javascript" src="assets/js/bootstrap-v3-3-7/bootstrap.min.js"></script>
 <script type="text/javascript">
-    
-    
     $(document).ready(function(){
         /* FIXME 画面を開いたときから制御不能状態のマスクをかけたい */
 
-        var params = getParams();
+        var params = HttpInput.getParams();
 
         var room_hash = params['room_hash'];
         existRoom(room_hash);
@@ -68,7 +69,7 @@
       　　// スリックバー作動
         $('#menu_navi').slicknav();
 
-        var params = getParams();
+        var params = HttpInput.getParams();
 
         var user_hash = params['user_hash'];
         // ユーザが指定されている場合は、ユーザ情報を取得する。
@@ -122,22 +123,6 @@
         console.log("errorThrown : " + errorThrown.message);
       }).always(function(data_or_jqXHR, textStatus, jqXHR_or_errorThrown) {
       });
-    }
-    
-    /**
-     * GETパラメータを配列にセットして返却する。
-     */
-    function getParams() {
-        var url   = location.href;
-        parameters    = url.split("?");
-        params   = parameters[1].split("&");
-        var paramsArray = [];
-        for ( i = 0; i < params.length; i++ ) {
-            neet = params[i].split("=");
-            paramsArray.push(neet[0]);
-            paramsArray[neet[0]] = neet[1];
-        }
-        return paramsArray;
     }
 
     /**
@@ -307,17 +292,22 @@
 <h1 id="room_name"></h1>
 <input type="hidden" id="user_name">
 <input type="hidden" id="user_hash">
-<br>
-<br>
-<!--
-<ul id="message_stream">
-</ul>
--->
-<div id="message_stream">
-</div>
-<div id="footer-bk">
-    <div id="footer"><input type="text" id="message_body" placeholder="メッセージ" disabled="disabled" style="width:89%;height:25px;"><button id="message_submit" onclick="sendMessage()" disabled="disabled" style="width:10%;height:31px;">▶</button></div>
-</div>
+  <div class="row">
+    <div class="col-xs-12 content">
+      <div id="message_stream">
+      </div>
+    </div><!-- content -->
+    <div class="col-xs-12 footer">
+      <div class="row">
+        <div class="col-xs-8">
+          <input type="text" id="message_body" placeholder="メッセージ">
+        </div>
+        <div class="col-xs-2">
+          <button type="submit" class="btn btn-default"　id="message_submit"　onclick="sendMessage()">送信</button>
+        </div>
+      </div>
+    </div><!-- footer -->
+  </div>
 <input type="hidden" id="room_hash">
 <input type="hidden" id="self_icon">
 </body>

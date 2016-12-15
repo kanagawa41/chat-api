@@ -127,7 +127,7 @@ class Rooms_controller extends MY_Controller {
 	}
 
 	/**
-	 * ルーム一覧を作成する
+	 * ルームを作成する
 	 * POST
 	 */
 	public function create_room() {
@@ -141,6 +141,7 @@ class Rooms_controller extends MY_Controller {
 		}
 
 		$this->load->database();
+		$this->load->model('user');
 
 		$this->db->trans_start();
 
@@ -151,16 +152,41 @@ class Rooms_controller extends MY_Controller {
 
 		$room_id = $this->db->insert_id();
 
+		$admin_name = $this->config->item('admin_name');
+		
+		// 管理者ユーザを生成する。
+		$user_hash = $this->user->insert_user($admin_name, $room_id, 1, 0);
+
+		$user_id = $this->db->insert_id();
+
+		$insert_data = array(
+		   'user_id' => $user_id ,
+		   'room_id' => $room_id ,
+		   'body' => $name ,
+		   'type' => 1 , // ルーム作成
+		);
+
+		$this->db->insert('messages', $insert_data);
+
 		$this->db->trans_complete();
 
-		$data = array (
+		$data = array(
+		   'user_id' => $user_id ,
+		   'room_id' => $room_id ,
+		   'body' => $admin_name ,
+		   'type' => 3 , // 入室
+		);
+
+		$this->db->insert('messages', $data);
+
+		$response_data = array (
 			'room_id' => $room_id,
 			'room_hash' => $this->base64_urlsafe_encode($room_id),
-			
+			'admin_user_hash' => $user_hash,
 		);
 
 		//$dataをJSONにして返す
-		$this->output->set_json_output($data);
+		$this->output->set_json_output($response_data);
 	}
 
 	/**
@@ -227,6 +253,7 @@ class Rooms_controller extends MY_Controller {
 
 		$data = array ();
 		$data['name'] = $row->name;
+		$data['icon'] = $row->icon_id;
 		$data['message_count'] = $message_count;
 		$data['begin_message_id'] = $row->begin_message_id;
 		$data['last_create_time'] = $row->created_at;
@@ -281,7 +308,7 @@ class Rooms_controller extends MY_Controller {
 
 		$last_read_message_id = $last_read_message_id < $begin_message_id ? $begin_message_id : $last_read_message_id;
 
-		$select_results = $this->db->select('m.message_id, u.name, u.user_hash, m.body, m.type, m.created_at')->from('messages as m')->join('users as u', 'u.user_id = m.user_id', 'inner')->where(array (
+		$select_results = $this->db->select('m.message_id, u.name, u.user_hash, u.icon_id, m.body, m.type, m.created_at')->from('messages as m')->join('users as u', 'u.user_id = m.user_id', 'inner')->where(array (
 			'm.room_id' => $room_id,
 			'm.message_id >' => $last_read_message_id,
 			'm.user_id <>' => $user_id
@@ -299,6 +326,7 @@ class Rooms_controller extends MY_Controller {
 			$temp_user_info = array ();
 			$temp_user_info['name'] = $row->name;
 			$temp_user_info['who'] = $row->user_hash === $user_hash ? "self" : "other";
+			$temp_user_info['icon'] = $row->icon_id;
 			$temp_row['user'] = $temp_user_info;
 			$temp_row['body'] = $row->body;
 			$temp_row['type'] = $row->type;
@@ -328,6 +356,7 @@ class Rooms_controller extends MY_Controller {
 	}
 
 	/**
+	 * TODO 返却形式を「select_messages」に合わせる
 	 * チャットのメッセージ一覧を入室した時から全て取得。
 	 * GET
 	 */
@@ -480,11 +509,14 @@ class Rooms_controller extends MY_Controller {
 			$this->output->set_json_error_output(array('Scarce value as "name".')); return;
 		}
 
+		// ユーザのアイコンＩＤを設定します。（アイコンＩＤを増やしたらコンフィグの値を変更する。）
+		$icon_id = rand(1, $this->config->item('icon_num'));
+
 		$this->load->model('user');
-		$this->load->helper('string');
 		$this->db->trans_start();
 
-		$user_hash = $this->user->insert_user($name, $room_id);
+		// 一般ユーザを生成する。
+		$user_hash = $this->user->insert_user($name, $room_id, 2, $icon_id);
 
 		$this->db->trans_complete();
 

@@ -2,6 +2,8 @@
 <html>
 <head>
 <meta charset="UTF-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>ルーム</title>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 <script type="text/javascript">
@@ -74,9 +76,12 @@
         }
         $('#user_name').val(response.name);
         $('#user_hash').val(user_hash);
-        $('#login_url').val(location.href);
-        $('#user_name').attr('readonly',true);
-        $('#user_hash').attr('readonly',true);
+        $('#login_url').val(location.href　+ '&user_hash=' + user_hash);
+        $('#self_icon').val(response.icon);
+
+        $('#user_name').prop('readonly',true);
+        $('#message_body').prop('disabled', false);
+        $('#message_submit').prop('disabled', false);
 
       }).fail(function(jqXHR, textStatus, errorThrown ) {
         alert("Connection Error!");
@@ -126,9 +131,10 @@
         }
         $('#user_hash').val(response.user_hash);
         $('#login_url').val(location.href　+ '&user_hash=' + response.user_hash);
+        
         $('#user_name').attr('readonly',true);
-        $('#user_hash').attr('readonly',true);
 
+        existUser($('#room_hash').val(), response.user_hash);
 
         // 周期的にメッセージを取得する処理の発動
         setInterval(function(){
@@ -179,10 +185,14 @@
     }
 
     /**
+     * FIXME メッセージが送信している間に抜けたりするなどの不具合がありそうなので、送信前に受信するようにする。
      * メッセージを送信する
      */
     function sendMessage(){
       var message_body = $('#message_body').val();
+      if(! message_body) { return; }
+      $('#message_body').val('');
+      
       $.ajax({
         type: 'POST',
         url: 'rooms/' + $('#room_hash').val() + '/members/' + $('#user_hash').val() + '/messages',
@@ -212,6 +222,7 @@
             user : {
                 name : $('#user_name').val(),
                 who : "self",
+                icon : $('#self_icon').val(),
             },
             type : 1,
             sendTime : new Date(),
@@ -235,34 +246,52 @@
         var body = value.body;
         var user_name = value.user.name;
         var who = value.user.who;
+        var icon = value.user.icon;
         var type = value.type;
         var sendTime = value.send_time;
 
         var result = '';
         if(who == 'self'){
-            result = '<div class="question_Box"><div class="question_image"><img src="assets/image/ryugakusei_man.png" alt="' + user_name + '"/></div><div class="arrow_question">' + body + '<input type="hidden" class="message_id" value="' + message_id + '">' + '</div>';
-        } else {
-            result = '<div class="question_Box"><div class="answer_image"><img src="assets/image/ryugakusei_man.png" alt="' + user_name + '"/></div><div class="arrow_answer">' + body + '<input type="hidden" class="message_id" value="' + message_id + '">' + '</div>';
+            result = '<div class="question_Box"><div class="question_image"><img src="assets/image/user_icon/' + icon + '.gif' + '" alt="' + user_name + '"/></div><div class="arrow_question">' + body + '<input type="hidden" class="message_id" value="' + message_id + '">' + '</div>';
+        } else if(who == 'other') {
+            if(type == 2){ // メッセージの場合
+                result = '<div class="question_Box"><div class="answer_image"><img src="assets/image/user_icon/' + icon + '.gif' + '" alt="' + user_name + '"/></div><div class="arrow_answer">' + body + '<input type="hidden" class="message_id" value="' + message_id + '">' + '</div>';
+            } else if(type == 3){ // 入室の場合
+                result = '<div class="question_Box">' + body + ' さんが入室しました。' + '</div>';
+            } else if(type == 1){ // ルーム作成の場合
+                result = '<div class="question_Box">' + body + ' が作成されました。' + '</div>';
+            }
         }
         return result;
     }
     
 </script>
+
 <style type="text/css">
 <!--
-body{
-     width:100%;
-     min-width: 320px;
+html {
+    overflow-y: scroll;
+    font-size: 62.5%;
+}
+
+body {
+    width:100%;
+    min-width: 320px;
+    font-size: 10px;
+    font-size: 1.0rem;
+    font-family: "times new roman";
+    -webkit-text-size-adjust: 100%;
      margin:0;
      padding: 0;
 }
 
-
+/* メッセージ表示範囲  */
 #message_stream{
-     margin: 20px auto;
-     width:96%;
+     margin: 5px auto;
+     width:95%;
+     height: 60vh;
+     overflow: scroll;   /* スクロール表示 */ 
 }
-
 
 .arrow_answer,
 .arrow_question {
@@ -373,16 +402,33 @@ body{
      margin-bottom: 8%;
 }
 
+/* フッターの背景 */
+div#footer-bk
+{
+    background-color: #FFF;   /* 背景色(黒) */
+    width:100%;               /* 横の幅を100% */
+    height: 25px;            /* 縦の幅を120px */
+    position: absolute;       /* 絶対位置指定することを定義 */
+    bottom: 0px;              /* 絶対位置指定(左0px,下0px) */
+}
+/* フッターの表示領域 */
+div#footer{
+    height: 25px;          /* 縦幅の指定100px */
+    width:100%;               /* 横の幅を100% */
+    margin: auto;           /* 中央揃え */
+}
+
 -->
 </style>
+
 </head>
 <body>
 <h1 id="room_name">Dummy</h1>
 <h2 id="description">Dummy</h2>
 <input type="text" id="user_name" placeholder="ユーザ名"><button onclick="intoRoom()">入室</button>
-<input type="text" id="user_hash" placeholder="ユーザハッシュ">
+<input type="hidden" id="user_hash">
 <br>
-<input type="text" id="login_url" placeholder="ログインURL"　readonly="readonly">
+<label>再入室用URL:</label><input type="text" id="login_url" placeholder="ログインURL"　readonly="readonly">
 <br>
 <!--
 <ul id="message_stream">
@@ -390,7 +436,10 @@ body{
 -->
 <div id="message_stream">
 </div>
-<input type="text" id="message_body" placeholder="メッセージ"><button onclick="sendMessage()">発言</button>
+<div id="footer-bk">
+    <div id="footer"><input type="text" id="message_body" placeholder="メッセージ" disabled="disabled" style="width:89%;height:25px;"><button id="message_submit" onclick="sendMessage()" disabled="disabled" style="width:10%;height:31px;">▶</button></div>
+</div>
 <input type="hidden" id="room_hash">
+<input type="hidden" id="self_icon">
 </body>
 </html>

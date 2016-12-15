@@ -1,101 +1,116 @@
-# „§‰{——ƒc[ƒ‹
+# æ¨å¥¨é–²è¦§ãƒ„ãƒ¼ãƒ«
 
 [Dillinger](http://dillinger.io/)
 
-# ŠT—v
+# æ¦‚è¦
 
-‚±‚ê‚Íƒ`ƒƒƒbƒg‚Ì‚`‚o‚h‚Ìv‘z‚ğ‹L‚µ‚½‚à‚Ì‚Å‚ ‚éB
-‚`‚i‚`‚w‚Æ‚Ì’ÊM‚ğ‘z’è‚µ‚Ä‚¢‚éB
+ã“ã‚Œã¯ãƒãƒ£ãƒƒãƒˆã®ï¼¡ï¼°ï¼©ã®æ€æƒ³ã‚’è¨˜ã—ãŸã‚‚ã®ã§ã‚ã‚‹ã€‚
+ï¼¡ï¼ªï¼¡ï¼¸ã¨ã®é€šä¿¡ã‚’æƒ³å®šã—ã¦ã„ã‚‹ã€‚
 
-# \‘z
+# æ§‹æƒ³
 
-## À‘•‚·‚é‹@”\
+## å®Ÿè£…ã™ã‚‹æ©Ÿèƒ½
 
-###Ql
+###å‚è€ƒ
 [ChatWork](http://developer.chatwork.com/ja/)
-[jqueryƒ`ƒƒƒbƒg](http://studio-key.com/646.html)
 
-* ƒ‹[ƒ€‚Æ‚¢‚¤ŠT”O‚ª‚ ‚é
-* ƒ‹[ƒ€‚ÍƒnƒbƒVƒ…‰»‚³‚ê‚½URL‚Å“üº‚ª‰Â”\‚Æ‚È‚éB
-* ƒ†[ƒU‚É‚­‚Î‚ç‚ê‚½ƒnƒbƒVƒ…‰»‚µ‚½ID‚Å“üº‚ª‰Â”\‚Æ‚È‚é
-* ƒ†[ƒU‚ÍƒAƒiƒEƒ“ƒX‚ğó‚¯‚é‚±‚Æ‚ª‚Å‚«‚é
+[jqueryãƒãƒ£ãƒƒãƒˆ](http://studio-key.com/646.html)
 
-###‹Zp˜^
+* ãƒ«ãƒ¼ãƒ ã¨ã„ã†æ¦‚å¿µãŒã‚ã‚‹
+* ãƒ«ãƒ¼ãƒ ã«ã¯ãƒãƒƒã‚·ãƒ¥åŒ–ã•ã‚ŒãŸURLã§å…¥å®¤ãŒå¯èƒ½ã¨ãªã‚‹ã€‚
+* ãƒ¦ãƒ¼ã‚¶ã«ãã°ã‚‰ã‚ŒãŸãƒãƒƒã‚·ãƒ¥åŒ–ã—ãŸIDã§å…¥å®¤ãŒå¯èƒ½ã¨ãªã‚‹
+* ãƒ¦ãƒ¼ã‚¶ã¯ä»»æ„ã®ãƒãƒƒã‚·ãƒ¥å€¤ã‚’ä¿æŒã—ã€æ¬¡å›ä»¥é™ã¯ãã‚Œã‚’ä½¿ç”¨ã—ã¦å…¥å®¤ãŒã§ãã‚‹ã€‚ï¼ˆã¤ã¾ã‚ŠåŒä¸€ãƒ¦ãƒ¼ã‚¶ã‚’ä½¿ã„ç¶šã‘ã‚‰ã‚Œã‚‹ã€‚ï¼‰
+
+###æŠ€è¡“éŒ²
 [phpLiteAdmin](http://www.hiskip.com/pg-notes/dbtools/phpLiteAdmin.html)
 
 ## DDL
 
-#### ƒ‹[ƒ€î•ñ
+#### ãƒ«ãƒ¼ãƒ æƒ…å ±
 ```
 CREATE TABLE rooms (
-    /** ƒ‹[ƒ€î•ñ **/
-    room_id INTEGER, --ƒ‹[ƒ€‚h‚c
-    name STRING NOT NULL, --ì¬‚µ‚½‚¢ƒOƒ‹[ƒvƒ`ƒƒƒbƒg‚Ìƒ`ƒƒƒbƒg–¼
-    description STRING NOT NULL, --ƒOƒ‹[ƒvƒ`ƒƒƒbƒg‚ÌŠT—và–¾ƒeƒLƒXƒg
-    created_at default CURRENT_TIMESTAMP NOT NULL, --ì¬“ú
-    updated_at default CURRENT_TIMESTAMP NOT NULL, --XV“ú
+    /** ãƒ«ãƒ¼ãƒ æƒ…å ± **/
+    room_id INTEGER, --ãƒ«ãƒ¼ãƒ ï¼©ï¼¤
+    name STRING NOT NULL, --ä½œæˆã—ãŸã„ã‚°ãƒ«ãƒ¼ãƒ—ãƒãƒ£ãƒƒãƒˆã®ãƒãƒ£ãƒƒãƒˆå
+    description STRING NOT NULL, --ã‚°ãƒ«ãƒ¼ãƒ—ãƒãƒ£ãƒƒãƒˆã®æ¦‚è¦èª¬æ˜ãƒ†ã‚­ã‚¹ãƒˆ
+    created_at default CURRENT_TIMESTAMP NOT NULL, --ä½œæˆæ—¥
+    updated_at default CURRENT_TIMESTAMP NOT NULL, --æ›´æ–°æ—¥
     PRIMARY KEY(room_id AUTOINCREMENT)
 );
 ```
 
 
-#### ƒ†[ƒUî•ñ
+#### ãƒ¦ãƒ¼ã‚¶æƒ…å ±
 ```
 CREATE TABLE users (
-    /** ƒ†[ƒUî•ñ **/
-    user_id INTEGER, --ƒ†[ƒU‚h‚c
-    user_hash STRING NOT NULL, --ƒ†[ƒUƒnƒbƒVƒ…
-    name STRING NOT NULL, --ƒ†[ƒU–¼
-    room_id INTEGER, --ƒ‹[ƒ€‚h‚c
-    begin_message_id INTEGER, --“üº‚µ‚½Û‚ÌŠJnƒƒbƒZ[ƒW‚h‚c
-    user_agent STRING, --ƒ†[ƒUƒG[ƒWƒFƒ“ƒg
-    ip_address STRING, --ƒ†[ƒU‚ÌƒAƒhƒŒƒX
-    port INTEGER, --ƒ†[ƒU‚Ìƒ|[ƒg
-    created_at default CURRENT_TIMESTAMP NOT NULL, --ì¬“ú
+    /** ãƒ¦ãƒ¼ã‚¶æƒ…å ± **/
+    user_id INTEGER, --ãƒ¦ãƒ¼ã‚¶ï¼©ï¼¤
+    user_hash STRING NOT NULL, --ãƒ¦ãƒ¼ã‚¶ãƒãƒƒã‚·ãƒ¥
+    user_role INTEGER DEFAULT 2, --ãƒ¦ãƒ¼ã‚¶ãƒ­ãƒ¼ãƒ«(1â€¦admin, 2â€¦public)
+    name STRING NOT NULL, --ãƒ¦ãƒ¼ã‚¶å
+    room_id INTEGER, --ãƒ«ãƒ¼ãƒ ï¼©ï¼¤
+    begin_message_id INTEGER, --å…¥å®¤ã—ãŸéš›ã®é–‹å§‹ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ï¼©ï¼¤
+    icon_id INTEGER, --ã‚¢ã‚¤ã‚³ãƒ³ï¼©ï¼¤
+    user_agent STRING, --ãƒ¦ãƒ¼ã‚¶ã‚¨ãƒ¼ã‚¸ã‚§ãƒ³ãƒˆ
+    ip_address STRING, --ãƒ¦ãƒ¼ã‚¶ã®ã‚¢ãƒ‰ãƒ¬ã‚¹
+    port INTEGER, --ãƒ¦ãƒ¼ã‚¶ã®ãƒãƒ¼ãƒˆ
+    created_at default CURRENT_TIMESTAMP NOT NULL, --ä½œæˆæ—¥
     PRIMARY KEY(user_id AUTOINCREMENT)
 );
 ```
 
 
-#### ƒƒbƒZ[ƒWî•ñ
+#### ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸æƒ…å ±
 ```
 CREATE TABLE messages (
-    /** ƒƒbƒZ[ƒWî•ñ **/
-    message_id INTEGER, --ƒƒbƒZ[ƒW‚h‚c
-    user_id INTEGER, --ƒ†[ƒU‚h‚c
-    room_id INTEGER, --ƒ‹[ƒ€‚h‚c
-    body STRING NOT NULL, --ƒƒbƒZ[ƒW“à—e
-    type INTEGER default 1, --ƒƒbƒZ[ƒW‚Ìí—Ş(1EEEƒƒbƒZ[ƒWA2EEE“üº)
-    created_at default CURRENT_TIMESTAMP NOT NULL, --ì¬“ú
+    /** ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸æƒ…å ± **/
+    message_id INTEGER, --ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ï¼©ï¼¤
+    user_id INTEGER, --ãƒ¦ãƒ¼ã‚¶ï¼©ï¼¤
+    room_id INTEGER, --ãƒ«ãƒ¼ãƒ ï¼©ï¼¤
+    body STRING NOT NULL, --ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸å†…å®¹
+    type INTEGER DEFAULT 2, --ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã®ç¨®é¡(1â€¦ãƒ«ãƒ¼ãƒ ä½œæˆã€2â€¦ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã€3â€¦å…¥å®¤)
+    created_at default CURRENT_TIMESTAMP NOT NULL, --ä½œæˆæ—¥
     PRIMARY KEY(message_id AUTOINCREMENT)
 );
 ```
 
 
-#### Šù“Çî•ñ
+#### æ—¢èª­æƒ…å ±
 ```
 CREATE TABLE reads (
-    /** Šù“Çî•ñ **/
-    message_id INTEGER, --ƒƒbƒZ[ƒW‚h‚c
-    user_id INTEGER, --ƒ†[ƒU‚h‚c
-    room_id INTEGER, --ƒ‹[ƒ€‚h‚c
-    created_at default CURRENT_TIMESTAMP NOT NULL --ì¬“ú
+    /** æ—¢èª­æƒ…å ± **/
+    message_id INTEGER, --ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ï¼©ï¼¤
+    user_id INTEGER, --ãƒ¦ãƒ¼ã‚¶ï¼©ï¼¤
+    room_id INTEGER, --ãƒ«ãƒ¼ãƒ ï¼©ï¼¤
+    created_at default CURRENT_TIMESTAMP NOT NULL --ä½œæˆæ—¥
 );
 ```
 
 
-## API‚Ìí—Ş
+#â€»ã¾ã è£½é€ æœªç€æ‰‹ã€‚ã“ã‚Œã‚’ä½¿ç”¨ã—ã¦ãƒ¦ãƒ‹ãƒ¼ã‚¯ãªuser_hashã‚’ç”Ÿæˆã™ã‚‹ã€‚
+#### ãƒãƒƒã‚·ãƒ¥ãƒ—ãƒ¼ãƒ«
+```
+CREATE TABLE hashpools (
+    /** ãƒãƒƒã‚·ãƒ¥ãƒ—ãƒ¼ãƒ« **/
+    hash_id INTEGER, --ãƒãƒƒã‚·ãƒ¥ï¼©ï¼¤
+    hash STRING NOT NULL, --ãƒãƒƒã‚·ãƒ¥å€¤(10æ¡)
+    PRIMARY KEY(hash_id AUTOINCREMENT)
+);
+```
+
+
+## APIã®ç¨®é¡
 
 ### 3. _GET_ __/rooms__
 
-#### ƒ`ƒƒƒbƒgˆê——‚Ìæ“¾
+#### ãƒãƒ£ãƒƒãƒˆä¸€è¦§ã®å–å¾—
 
-yƒŠƒNƒGƒXƒgz
+ã€ãƒªã‚¯ã‚¨ã‚¹ãƒˆã€‘
 ```
-curl -X GET -H "X-ChatToken: ŠÇ—l‚ÌAPIƒg[ƒNƒ“" "https://api.emeraldchat.com/v1/rooms"
+curl -X GET -H "X-ChatToken: ç®¡ç†äººã®APIãƒˆãƒ¼ã‚¯ãƒ³" "https://api.emeraldchat.com/v1/rooms"
 ```
 
-yƒŒƒXƒ|ƒ“ƒXz
+ã€ãƒ¬ã‚¹ãƒãƒ³ã‚¹ã€‘
 ```
 [
   {
@@ -110,17 +125,17 @@ curl -X GET -H "X-ChatToken: ŠÇ—l‚ÌAPIƒg[ƒNƒ“" "https://api.emeraldchat.com/v
 
 ### 4. _POST_ __/rooms__
 
-#### ƒOƒ‹[ƒvƒ`ƒƒƒbƒg‚ğV‹Kì¬
+#### ã‚°ãƒ«ãƒ¼ãƒ—ãƒãƒ£ãƒƒãƒˆã‚’æ–°è¦ä½œæˆ
 
-yƒŠƒNƒGƒXƒgz
+ã€ãƒªã‚¯ã‚¨ã‚¹ãƒˆã€‘
 ```
-curl -X POST -H "X-ChatToken: ŠÇ—l‚ÌAPIƒg[ƒNƒ“" -d "description=group+chat+description&name=Website+renewal+project" "https://api.emeraldchat.com/v1/rooms"
+curl -X POST -H "X-ChatToken: ç®¡ç†äººã®APIãƒˆãƒ¼ã‚¯ãƒ³" -d "description=group+chat+description&name=Website+renewal+project" "https://api.emeraldchat.com/v1/rooms"
 ```
 
-* descriptionEEEƒOƒ‹[ƒvƒ`ƒƒƒbƒg‚ÌŠT—và–¾ƒeƒLƒXƒg
-* nameEEEì¬‚µ‚½‚¢ƒOƒ‹[ƒvƒ`ƒƒƒbƒg‚Ìƒ`ƒƒƒbƒg–¼
+* descriptionãƒ»ãƒ»ãƒ»ã‚°ãƒ«ãƒ¼ãƒ—ãƒãƒ£ãƒƒãƒˆã®æ¦‚è¦èª¬æ˜ãƒ†ã‚­ã‚¹ãƒˆ
+* nameãƒ»ãƒ»ãƒ»ä½œæˆã—ãŸã„ã‚°ãƒ«ãƒ¼ãƒ—ãƒãƒ£ãƒƒãƒˆã®ãƒãƒ£ãƒƒãƒˆå
 
-yƒŒƒXƒ|ƒ“ƒXz
+ã€ãƒ¬ã‚¹ãƒãƒ³ã‚¹ã€‘
 ```
 {
   "room_id": 1234,
@@ -130,14 +145,14 @@ curl -X POST -H "X-ChatToken: ŠÇ—l‚ÌAPIƒg[ƒNƒ“" -d "description=group+chat+de
 
 ### 5. _GET_ __/rooms/{room_id}__
 
-#### ƒ`ƒƒƒbƒg‚Ì–¼‘O‚ğæ“¾
+#### ãƒãƒ£ãƒƒãƒˆã®åå‰ã‚’å–å¾—
 
-yƒŠƒNƒGƒXƒgz
+ã€ãƒªã‚¯ã‚¨ã‚¹ãƒˆã€‘
 ```
-curl -X GET -H "X-ChatToken: ŠÇ—l‚ÌAPIƒg[ƒNƒ“" "https://api.emeraldchat.com/v1/rooms/{room_id}"
+curl -X GET -H "X-ChatToken: ç®¡ç†äººã®APIãƒˆãƒ¼ã‚¯ãƒ³" "https://api.emeraldchat.com/v1/rooms/{room_id}"
 ```
 
-yƒŒƒXƒ|ƒ“ƒXz
+ã€ãƒ¬ã‚¹ãƒãƒ³ã‚¹ã€‘
 ```
 {
   "name": "Group Chat Name",
@@ -148,17 +163,17 @@ curl -X GET -H "X-ChatToken: ŠÇ—l‚ÌAPIƒg[ƒNƒ“" "https://api.emeraldchat.com/v
 
 ### 6. _PUT_ __/rooms/{room_id}__
 
-#### ƒ`ƒƒƒbƒg‚Ì–¼‘O‚ğƒAƒbƒvƒf[ƒg
+#### ãƒãƒ£ãƒƒãƒˆã®åå‰ã‚’ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ
 
-yƒŠƒNƒGƒXƒgz
+ã€ãƒªã‚¯ã‚¨ã‚¹ãƒˆã€‘
 ```
-curl -X PUT -H "X-ChatToken: ŠÇ—l‚ÌAPIƒg[ƒNƒ“" -d "description=group+chat+description&name=Website+renewal+project" "https://api.emeraldchat.com/v1/rooms/{room_id}"
+curl -X PUT -H "X-ChatToken: ç®¡ç†äººã®APIãƒˆãƒ¼ã‚¯ãƒ³" -d "description=group+chat+description&name=Website+renewal+project" "https://api.emeraldchat.com/v1/rooms/{room_id}"
 ```
 
-* descriptionEEEƒOƒ‹[ƒvƒ`ƒƒƒbƒg‚ÌŠT—và–¾ƒeƒLƒXƒg
-* nameEEEì¬‚µ‚½‚¢ƒOƒ‹[ƒvƒ`ƒƒƒbƒg‚Ìƒ`ƒƒƒbƒg–¼
+* descriptionãƒ»ãƒ»ãƒ»ã‚°ãƒ«ãƒ¼ãƒ—ãƒãƒ£ãƒƒãƒˆã®æ¦‚è¦èª¬æ˜ãƒ†ã‚­ã‚¹ãƒˆ
+* nameãƒ»ãƒ»ãƒ»ä½œæˆã—ãŸã„ã‚°ãƒ«ãƒ¼ãƒ—ãƒãƒ£ãƒƒãƒˆã®ãƒãƒ£ãƒƒãƒˆå
 
-yƒŒƒXƒ|ƒ“ƒXz
+ã€ãƒ¬ã‚¹ãƒãƒ³ã‚¹ã€‘
 ```
 {
   "room_id": 1234
@@ -168,29 +183,29 @@ curl -X PUT -H "X-ChatToken: ŠÇ—l‚ÌAPIƒg[ƒNƒ“" -d "description=group+chat+des
 
 ### 7. _DELETE_ __/rooms/{room_id}__
 
-#### ƒOƒ‹[ƒvƒ`ƒƒƒbƒg‚ğíœ‚·‚é
+#### ã‚°ãƒ«ãƒ¼ãƒ—ãƒãƒ£ãƒƒãƒˆã‚’å‰Šé™¤ã™ã‚‹
 
-yƒŠƒNƒGƒXƒgz
+ã€ãƒªã‚¯ã‚¨ã‚¹ãƒˆã€‘
 ```
-curl -X DELETE -H "X-ChatToken: ŠÇ—l‚ÌAPIƒg[ƒNƒ“" -d "https://api.emeraldchat.com/v1/rooms/{room_id}"
+curl -X DELETE -H "X-ChatToken: ç®¡ç†äººã®APIãƒˆãƒ¼ã‚¯ãƒ³" -d "https://api.emeraldchat.com/v1/rooms/{room_id}"
 ```
 
-yƒŒƒXƒ|ƒ“ƒXz
+ã€ãƒ¬ã‚¹ãƒãƒ³ã‚¹ã€‘
 ```
-‚È‚µ
+ãªã—
 ```
 
 
 ### 8. _GET_ __/rooms/{room_hash}/members__
 
-#### ƒ`ƒƒƒbƒg‚Ìƒƒ“ƒo[ˆê——‚ğæ“¾
+#### ãƒãƒ£ãƒƒãƒˆã®ãƒ¡ãƒ³ãƒãƒ¼ä¸€è¦§ã‚’å–å¾—
 
-yƒŠƒNƒGƒXƒgz
+ã€ãƒªã‚¯ã‚¨ã‚¹ãƒˆã€‘
 ```
 curl -X GET "https://api.emeraldchat.com/v1/rooms/{room_hash}/members"
 ```
 
-yƒŒƒXƒ|ƒ“ƒXz
+ã€ãƒ¬ã‚¹ãƒãƒ³ã‚¹ã€‘
 ```
 [
   {
@@ -203,18 +218,19 @@ curl -X GET "https://api.emeraldchat.com/v1/rooms/{room_hash}/members"
 
 ### 8.1. _GET_ __/rooms/{room_hash}/members__/{user_hash}
 
-#### ƒ`ƒƒƒbƒg‚Ìƒƒ“ƒo[î•ñ‚ğæ“¾
+#### ãƒãƒ£ãƒƒãƒˆã®ãƒ¡ãƒ³ãƒãƒ¼æƒ…å ±ã‚’å–å¾—
 
-yƒŠƒNƒGƒXƒgz
+ã€ãƒªã‚¯ã‚¨ã‚¹ãƒˆã€‘
 ```
 curl -X GET "https://api.emeraldchat.com/v1/rooms/{room_hash}/members/{user_hash}"
 ```
 
-yƒŒƒXƒ|ƒ“ƒXz
+ã€ãƒ¬ã‚¹ãƒãƒ³ã‚¹ã€‘
 ```
 [
   {
     "name": "John Smith",
+    "icon": 1,
     "message_count": 3,
     "begin_message_id": "123",
     "last_create_time": 1298905200
@@ -225,22 +241,23 @@ curl -X GET "https://api.emeraldchat.com/v1/rooms/{room_hash}/members/{user_hash
 
 ### 9. _GET_ __/rooms/{room_hash}/members/{user_hash}/messages__
 
-#### ƒ`ƒƒƒbƒg‚ÌƒƒbƒZ[ƒWˆê——‚ğæ“¾B‘O‰ñæ“¾•ª‚©‚ç‚Ì·•ª‚Ì‚İ‚ğ•Ô‚µ‚Ü‚·B
+#### ãƒãƒ£ãƒƒãƒˆã®ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ä¸€è¦§ã‚’å–å¾—ã€‚å‰å›å–å¾—åˆ†ã‹ã‚‰ã®å·®åˆ†ã®ã¿ã‚’è¿”ã—ã¾ã™ã€‚
 
-yƒŠƒNƒGƒXƒgz
+ã€ãƒªã‚¯ã‚¨ã‚¹ãƒˆã€‘
 ```
 curl -X GET "https://api.emeraldchat.com/v1/rooms/rooms/{room_hash}/members/{user_hash}/messages"
 ```
 
 
-yƒŒƒXƒ|ƒ“ƒXz
+ã€ãƒ¬ã‚¹ãƒãƒ³ã‚¹ã€‘
 ```
 [
   {
     "message_id": 1,
     "user":{
-        "name": "Test1"
-        "who": "self"
+        "name": "Test1",
+        "who": "self",
+        "icon": 1
     },
     "body": "Test1",
     "type": 2,
@@ -252,16 +269,16 @@ curl -X GET "https://api.emeraldchat.com/v1/rooms/rooms/{room_hash}/members/{use
 
 ### 10. _POST_ __/rooms/{room_hash}/members/{user_hash}/messages__
 
-#### ƒ`ƒƒƒbƒg‚ÉV‚µ‚¢ƒƒbƒZ[ƒW‚ğ’Ç‰Á
+#### ãƒãƒ£ãƒƒãƒˆã«æ–°ã—ã„ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’è¿½åŠ 
 
-yƒŠƒNƒGƒXƒgz
+ã€ãƒªã‚¯ã‚¨ã‚¹ãƒˆã€‘
 ```
 curl -X POST -d "body=Hello+EmeraldChat%21" "https://api.emeraldchat.com/v1/rooms/{room_hash}/members/{user_hash}/messages"
 ```
 
-* bodyEEEƒƒbƒZ[ƒW–{•¶
+* bodyãƒ»ãƒ»ãƒ»ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸æœ¬æ–‡
 
-yƒŒƒXƒ|ƒ“ƒXz
+ã€ãƒ¬ã‚¹ãƒãƒ³ã‚¹ã€‘
 ```
 {
   "message_id": 1234
@@ -269,67 +286,84 @@ curl -X POST -d "body=Hello+EmeraldChat%21" "https://api.emeraldchat.com/v1/room
 ```
 
 
-### 11. _GET_ __/rooms/{room_id}/messages/{message_id}__
-
-#### ƒƒbƒZ[ƒWî•ñ‚ğæ“¾
-
-yƒŠƒNƒGƒXƒgz
-```
-curl -X GET -H "X-ChatToken: ŠÇ—l‚ÌAPIƒg[ƒNƒ“" "https://api.emeraldchat.com/v1/rooms/{room_id}/messages/{message_id}"
-```
-
-yƒŒƒXƒ|ƒ“ƒXz
-```
-{
-  "message_id": 5,
-  "user": {
-    "name": "Bob",
-  },
-  "body": "Hello Chatwork!",
-  "send_time": 1384242850
-}
-```
-
-
 ### 12. _POST_ __/rooms/{room_id}/members__
 
-#### ƒ`ƒƒƒbƒg‚Éƒ†[ƒU‚ğ’Ç‰Á
+#### ãƒãƒ£ãƒƒãƒˆã«ãƒ¦ãƒ¼ã‚¶ã‚’è¿½åŠ 
 
-yƒŠƒNƒGƒXƒgz
+ã€ãƒªã‚¯ã‚¨ã‚¹ãƒˆã€‘
 ```
 curl -X POST -d "name=Ryuji" "https://api.emeraldchat.com/v1/rooms/{room_id}/members"
 ```
 
-* nameEEEƒ†[ƒU–¼
+* nameãƒ»ãƒ»ãƒ»ãƒ¦ãƒ¼ã‚¶å
 
-yƒŒƒXƒ|ƒ“ƒXz
+ã€ãƒ¬ã‚¹ãƒãƒ³ã‚¹ã€‘
 ```
 {
   "user_hash": 2uhimbRJ6T
 }
 ```
 
+# FIXME ç¾çŠ¶ã¨å‰¥é›¢ã—ã¦ã„ã‚‹ã®ã§ä¿®æ­£è¦ã€‚
+# åˆ©ç”¨ãƒ•ãƒ­ãƒ¼
 
-# —˜—pƒtƒ[
-
-* ƒ‹[ƒ€‚ğì¬‚µA¶¬‚³‚ê‚½ƒ‹[ƒ€ID(ƒnƒbƒVƒ…’l)‚ğæ“¾‚·‚é(API\‘zÏ‚İ)
+* ãƒ«ãƒ¼ãƒ ã‚’ä½œæˆã—ã€ç”Ÿæˆã•ã‚ŒãŸãƒ«ãƒ¼ãƒ ID(ãƒãƒƒã‚·ãƒ¥å€¤)ã‚’å–å¾—ã™ã‚‹(APIæ§‹æƒ³æ¸ˆã¿)
 {room_id:FJOIngow2489u53345lFEklEC}
 
-* ƒ‹[ƒ€‚ÉƒƒOƒCƒ“‚µ‚Ü‚·B(API\‘zÏ‚İ)
+* ãƒ«ãƒ¼ãƒ ã«ãƒ­ã‚°ã‚¤ãƒ³ã—ã¾ã™ã€‚(APIæ§‹æƒ³æ¸ˆã¿)
 http://chat/rooms/FJOIngow2489u53345lFEklEC
 
-* ƒ†[ƒU–¼‚ğ‘—M‚µ‚Ü‚·B(ãŒÀ10•¶š)(API\‘zÏ‚İ)
-ƒŒƒXƒ|ƒ“ƒXF{"user_id": 1234}
+* ãƒ¦ãƒ¼ã‚¶åã‚’é€ä¿¡ã—ã¾ã™ã€‚(ä¸Šé™10æ–‡å­—)(APIæ§‹æƒ³æ¸ˆã¿)
+ãƒ¬ã‚¹ãƒãƒ³ã‚¹ï¼š{"user_id": 1234}
 
-* ƒƒbƒZ[ƒW‚ğæ“¾‚µ‚Ü‚·B(API\‘zÏ‚İ)
-ƒŒƒXƒ|ƒ“ƒXF[{"message_id": 5,"user": {"name": "Bob"},"body": "Hello Chatwork!","send_time": 1384242850,"update_time": 0}]
+* ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’å–å¾—ã—ã¾ã™ã€‚(APIæ§‹æƒ³æ¸ˆã¿)
+ãƒ¬ã‚¹ãƒãƒ³ã‚¹ï¼š[{"message_id": 5,"user": {"name": "Bob"},"body": "Hello Chatwork!","send_time": 1384242850,"update_time": 0}]
 
-* ƒƒbƒZ[ƒW‚ğ‘—M‚µ‚Ü‚·B(API\‘zÏ‚İ)
-ƒŠƒNƒGƒXƒgF{"message_id": 1234}
+* ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’é€ä¿¡ã—ã¾ã™ã€‚(APIæ§‹æƒ³æ¸ˆã¿)
+ãƒªã‚¯ã‚¨ã‚¹ãƒˆï¼š{"message_id": 1234}
 
-* ’èŠú“I‚ÉƒƒbƒZ[ƒW‚ğóM‚µ‚Ü‚·B(API\‘zÏ‚İ)
-ƒŠƒNƒGƒXƒgF[{"message_id": 5,"user": {"name": "Bob"},"body": "Hello Chatwork!","send_time": 1384242850,"update_time": 0}]
+* å®šæœŸçš„ã«ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’å—ä¿¡ã—ã¾ã™ã€‚(APIæ§‹æƒ³æ¸ˆã¿)
+ãƒªã‚¯ã‚¨ã‚¹ãƒˆï¼š[{"message_id": 5,"user": {"name": "Bob"},"body": "Hello Chatwork!","send_time": 1384242850,"update_time": 0}]
 
-* ‰ß‹•ª‚ğQÆ‚·‚éB(API\‘zÏ‚İ)
-ƒŒƒXƒ|ƒ“ƒXF[{"message_id": 5,"user": {"name": "Bob"},"body": "Hello Chatwork!","send_time": 1384242850,"update_time": 0}]
+* éå»åˆ†ã‚’å‚ç…§ã™ã‚‹ã€‚(APIæ§‹æƒ³æ¸ˆã¿)
+ãƒ¬ã‚¹ãƒãƒ³ã‚¹ï¼š[{"message_id": 5,"user": {"name": "Bob"},"body": "Hello Chatwork!","send_time": 1384242850,"update_time": 0}]
 
+
+# TODO
+
+### â—ãƒ†ãƒ¼ãƒ–ãƒ«ä½œæˆã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ©ãƒ¼ã®å‰Šé™¤ã€‚
+
+### â—ãƒãƒƒã‚·ãƒ¥ãƒ—ãƒ¼ãƒ«ã‚’åˆ©ç”¨ã—ã¦user_hashã‚’æ±‚ã‚ã‚‹ã‚ˆã†ã«ã™ã‚‹ã€‚
+
+### â—ãƒ¦ãƒ¼ã‚¶ã‚’è­˜åˆ¥ã™ã‚‹ãŸã‚ã®ãƒãƒƒã‚·ãƒ¥å€¤ã‚’ç”Ÿæˆã™ã‚‹ä»•çµ„ã¿ã‚’è€ƒãˆã‚‹ã€‚ï¼ˆï¼’ï½ƒï½ˆã¿ãŸã„ã«ï¼‰
+* ãƒ¦ãƒ¼ã‚¶ã‚’è­˜åˆ¥ã™ã‚‹ã«ã¯åå‰ã—ã‹ãªã„ãŒã€ãã‚Œã ã¨æ‚ªæˆ¯ã§ãã¦ã—ã¾ã†ã€‚user_hashã¯å†å…¥å ´ã«ä½¿ç”¨ã™ã‚‹ãŸã‚ä»–äººã«æ•™ãˆã¦ã¯ã„ã‘ãªã„ãŸã‚ä½¿ç”¨ã§ããªã„ã€‚ãƒ¦ãƒ¼ã‚¶ãŒä¿æŒã™ã‚‹ã€Œipaddressã€ã€ã€Œportã€ã‹ã‚‰ãƒãƒƒã‚·ãƒ¥å€¤ã‚’æ±‚ã‚ã¦é ­æ•°ã‚±ã‚¿ã‚’ä½¿ç”¨ã™ã‚‹ã€‚
+* ãƒãƒƒã‚·ãƒ¥å€¤ã®æ¡æ•°ã¯2chã‚’å‚è€ƒã€‚ï¼ˆã‹ã¶ã‚‰ãªã„ã‚ˆã†ã«ã§ãã¦ã„ã‚‹ã¨æ€ã†ã®ã§ï¼‰
+
+### â—ãƒ¦ãƒ¼ã‚¶ãƒãƒƒã‚·ãƒ¥ã‚’åˆ©ç”¨ã—ã¦å†å…¥å ´ã—ãŸå ´åˆã¯ã€å…¥å®¤ã—ãŸç›´å‰ã®100ä»¶(?)ã‚’å–å¾—ã§ãã‚‹APIã‚’ä½œæˆã™ã‚‹ã€‚
+* åå‰ã¯ã€Œ/rooms/{room_hash}/members/{user_hash}/messages/reentryã€
+* ç”»é¢å´ã‹ã‚‰ã‚‚å–å¾—ä»¶æ•°ã®æŒ‡å®šãŒã§ãã‚‹ã‚ˆã†ã«ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ã‚’ä»˜ã‘ã‚‹ã€‚
+
+### â—ãƒ¦ãƒ¼ã‚¶ã«å½¹å‰²ã®å€¤ã‚’ä¿æŒã•ã›ã‚‹ã€‚ï¼ˆadmin, publicï¼‰
+* adminã¯å…¥å®¤ã™ã‚‹éš›ã«ç‰¹å®šã®ãƒ•ãƒ©ã‚°ã‚’ç«‹ã¦ã‚Œã°ã€å†å…¥å ´ã®é–²è¦§åˆ¶é™ã‚’æ°—ã«ã™ã‚‹ã“ã¨ãªãã€å…¨ã¦ã®ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’é–²è¦§ã™ã‚‹äº‹ãŒã§ãã‚‹ã€‚
+* publicã¯ç‰¹ã«æ„å‘³ãªã—ã€‚
+
+### â—ç”»é¢ã®ãƒ¬ã‚¤ã‚¢ã‚¦ãƒˆã‚’æ•´ãˆã‚‹ã€‚ï¼ˆï¼¬ï¼©ï¼®ï¼¥ã‚’è¸è¥²ï¼‰
+* å…¥å®¤æ™‚ã«user_hashãŒæŒ‡å®šã•ã‚Œã¦ã„ãªã„å ´åˆã¯ã€ãƒ€ã‚¤ã‚¢ãƒ­ã‚°ãŒä¸­å¤®ã«è¡¨ç¤ºã•ã‚Œã€ãƒ¦ãƒ¼ã‚¶å…¥å®¤ã—ãŸã®ã¡æ¶ˆãˆã‚‹ã€‚
+* ç”Ÿæˆã—ãŸurlã‚’ã‚³ãƒ”ãƒ¼ã§ãã‚‹ãƒœã‚¿ãƒ³ã‚’ä½œæˆã™ã‚‹ã€‚
+* ãƒ˜ãƒƒãƒ€ãƒ¼ã«ãƒ«ãƒ¼ãƒ åã‚’è¡¨ç¤ºã™ã‚‹ã€‚ï¼ˆã‚ˆãã‚ã‚‹ã€Œï¼‹ã€ã‚’ãŠã™ã¨ãƒ¡ãƒ‹ãƒ¥ãƒ¼ãŒã§ã‚‹æ„Ÿã˜ã‚’å‡ºã—ãŸã„ã€‚ï¼‰
+
+### â—ç”»é¢å‡¦ç†ã§é€ä¿¡ã™ã‚‹å‰ã«ã€å†åº¦å—ä¿¡ã‚’ã—ã¦ã‹ã‚‰é€ä¿¡ã™ã‚‹ã‚ˆã†ã«ã™ã‚‹ã€‚
+* ãŸã¾ã«å—ä¿¡ä¸­ã«é€ä¿¡ã—ã¦ã‚¨ãƒ©ãƒ¼ãŒç™ºç”Ÿã™ã‚‹å ´åˆãŒã‚ã‚‹ã®ã§å¯¾ç­–ã‚’ã™ã‚‹ã€‚
+
+### â—ãƒ«ãƒ¼ãƒ ã‚’ãƒªãƒ¼ãƒ‰ã‚ªãƒ³ãƒªãƒ¼ï¼ˆé€ä¿¡ã§ããªã„ï¼‰ãƒ¢ãƒ¼ãƒ‰ã‚’ã¤ã‘ã‚‹ã€‚
+
+### Ã—ã‚³ãƒ³ãƒ•ã‚£ã‚°ãƒ•ã‚¡ã‚¤ãƒ«ã«ä¸»è¦ãªè¨­å®šå€¤ã‚’ã¾ã¨ã‚ã‚‹ã€‚
+* Ã—ãƒãƒƒã‚·ãƒ¥å€¤ã®ç¨®
+* Ã—å†å…¥å ´ã®å–å¾—ä»¶æ•°
+* Ã—ã‚¢ã‚¤ã‚³ãƒ³ã®ä¸Šé™æ•°
+
+### â—ç®¡ç†è€…ãŒæ°—è»½ã«æ›´æ–°ã§ãã‚‹ã€ç®¡ç†ç”»é¢ã‚’ä½œæˆã™ã‚‹ã€‚
+
+### â—åˆ©ç”¨ãƒ•ãƒ­ãƒ¼ã‚’æ›¸ãç›´ã™ã€‚
+
+### â—APIã®ãƒªã‚¯ã‚¨ã‚¹ãƒˆã®è¨˜è¼‰ã‚’ã€Œcurlã€ä¸»ä½“ã‹ã‚‰ã€Œajaxã€é¢¨ã«æ›¸ãç›´ã™

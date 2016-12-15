@@ -7,6 +7,8 @@ class MY_Controller extends CI_Controller
     function __construct()
     {
         parent::__construct();
+
+		$this->config->load('my_config');
 	}
 	
 	/**
@@ -15,7 +17,7 @@ class MY_Controller extends CI_Controller
 	 */
 	public function exist_token() {
 		$this->config->load('my_config');
-		
+
 		$token = $this->input->get_request_header('X-ChatToken');
 
 		// トークンが含まれていない場合
@@ -46,7 +48,7 @@ class MY_Controller extends CI_Controller
 	 * 
 	 */
 	public function base64_urlsafe_encode($val) {
-		$encode_val = $this->encrypt->encode($val, $this->encrypt->get_key());
+		$encode_val = $this->encrypt->encode($val, $this->config->item('room_encryption_key'));
 		
 		return substr(str_replace(array (
 			'+',
@@ -76,6 +78,6 @@ class MY_Controller extends CI_Controller
 			'='
 		), $raw_val . '..');
 
-		return $this->encrypt->decode($val, $this->encrypt->get_key());
+		return $this->encrypt->decode($val, $this->config->item('room_encryption_key'));
 	}
 }

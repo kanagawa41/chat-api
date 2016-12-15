@@ -5,23 +5,41 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>ルーム</title>
+<link rel="stylesheet" type="text/css" href="assets/css/common/reset.css">
+<link rel="stylesheet" type="text/css" href="assets/css/common/setting.css">
+<link rel="stylesheet" type="text/css" href="assets/css/room/room.css">
+<link rel="stylesheet" type="text/css" href="assets/css/slicknav/slicknav.css">
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script type="text/javascript" src="assets/js/slicknav/jquery.slicknav.min.js"></script>
 <script type="text/javascript">
     
     
     $(document).ready(function(){
+        /* FIXME 画面を開いたときから制御不能状態のマスクをかけたい */
+
         var params = getParams();
 
         var room_hash = params['room_hash'];
         existRoom(room_hash);
-
-        var user_hash = params['user_hash'];
-        // ユーザが指定されている場合は、ユーザ情報を取得する。
-        if(user_hash){
-          existUser(room_hash, user_hash);
-        }
     });
     
+    /**
+     * FIXME もっとかっこいいダイアログに変更する。
+     * 入室ダイアログを表示する。
+     */
+    function inRoomInputDisplay(){
+      // 入力ダイアログを表示 ＋ 入力内容を user に代入
+      user_name = window.prompt("ユーザー名を入力してください", "");
+
+      if(user_name == '' || user_name == null){
+        window.alert('名前が入力されていません。');
+      }　else　{
+        $('#user_name').val(user_name);
+        intoRoom();
+      }
+
+    }
+
     /**
      * 部屋の存在チェック
      */
@@ -45,6 +63,20 @@
         $('#room_name').text(response.name);
         $('#description').text(response.description);
         $('#room_hash').val(room_hash);
+        $('#login_url').val(location.href);
+
+      　　// スリックバー作動
+        $('#menu_navi').slicknav();
+
+        var params = getParams();
+
+        var user_hash = params['user_hash'];
+        // ユーザが指定されている場合は、ユーザ情報を取得する。
+        if(user_hash){
+          existUser(room_hash, user_hash);
+        } else {
+          inRoomInputDisplay();
+        }
       }).fail(function(jqXHR, textStatus, errorThrown ) {
         alert("Connection Error!");
         console.log("XMLHttpRequest : " + XMLHttpRequest.status);
@@ -266,169 +298,16 @@
     }
     
 </script>
-
-<style type="text/css">
-<!--
-html {
-    overflow-y: scroll;
-    font-size: 62.5%;
-}
-
-body {
-    width:100%;
-    min-width: 320px;
-    font-size: 10px;
-    font-size: 1.0rem;
-    font-family: "times new roman";
-    -webkit-text-size-adjust: 100%;
-     margin:0;
-     padding: 0;
-}
-
-/* メッセージ表示範囲  */
-#message_stream{
-     margin: 5px auto;
-     width:95%;
-     height: 60vh;
-     overflow: scroll;   /* スクロール表示 */ 
-}
-
-.arrow_answer,
-.arrow_question {
-    position: relative;
-    background: #fff;
-    border: 1px solid #c8c8c8;
-    border-radius: 10px;
-    width:75%;
-    font-size: 11px;
-    padding:3%;
-}
-
-
-
-
-.arrow_question {
-    float: right;
-}
-
-
-.arrow_answer:after,
-.arrow_answer:before,
-.arrow_question:after,
-.arrow_question:before {
-    top: 30%;
-    border: solid transparent;
-    content: " ";
-    height: 0;
-    width: 0;
-    position: absolute;
-    pointer-events: none;
-}
-
-
-
-
-.arrow_question:after,
-.arrow_question:before {
-    right: 100%;
-}
-
-
-.arrow_answer:after,
-.arrow_answer:before{
-     left: 100%;
-}
-
-
-.arrow_answer:after,
-.arrow_question:after {
-    border-color: rgba(255, 255, 255, 0);
-    border-width: 8px;
-    margin-top: -8px;
-}
-
-
-.arrow_answer:after{
-    border-left-color: #fff;
-}
-
-
-.arrow_question:after{
-    border-right-color: #fff;
-    
-}
-
-
-.arrow_answer:before,
-.arrow_question:before {
-    border-color: rgba(200, 200, 200, 0);
-    border-width: 9px;
-    margin-top: -9px;
-}
-
-
-.arrow_answer:before{
-    border-left-color: #c8c8c8;
-}
-
-
-.arrow_question:before {
-    border-right-color: #c8c8c8;    
-}
-
-
-.question_image{
-     float: left;
-     width:15%;
-}
-
-
-.answer_image{
-     float: right;
-     width:15%;
-}
-
-
-.answer_image img,
-.question_image img{
-     border-radius: 50px;
-     width: 100%
-}
-
-
-.question_Box{
-     width: 100%;
-     overflow: hidden;
-     margin-bottom: 8%;
-}
-
-/* フッターの背景 */
-div#footer-bk
-{
-    background-color: #FFF;   /* 背景色(黒) */
-    width:100%;               /* 横の幅を100% */
-    height: 25px;            /* 縦の幅を120px */
-    position: absolute;       /* 絶対位置指定することを定義 */
-    bottom: 0px;              /* 絶対位置指定(左0px,下0px) */
-}
-/* フッターの表示領域 */
-div#footer{
-    height: 25px;          /* 縦幅の指定100px */
-    width:100%;               /* 横の幅を100% */
-    margin: auto;           /* 中央揃え */
-}
-
--->
-</style>
-
 </head>
 <body>
-<h1 id="room_name">Dummy</h1>
-<h2 id="description">Dummy</h2>
-<input type="text" id="user_name" placeholder="ユーザ名"><button onclick="intoRoom()">入室</button>
+<ul id="menu_navi" class="clearfix">
+      <li><h2 id="description"></h2></li>
+      <li><label>再入室用URL:</label><input type="text" id="login_url"　readonly="readonly"></li>
+</ul>
+<h1 id="room_name"></h1>
+<input type="hidden" id="user_name">
 <input type="hidden" id="user_hash">
 <br>
-<label>再入室用URL:</label><input type="text" id="login_url" placeholder="ログインURL"　readonly="readonly">
 <br>
 <!--
 <ul id="message_stream">

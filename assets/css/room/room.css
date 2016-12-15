@@ -1,0 +1,181 @@
+html {
+	overflow-y: scroll;
+	font-size: 62.5%;
+}
+
+body {
+	font-size: 10px;
+	font-size: 1.4rem;
+	font-family: "times new roman";
+	-webkit-text-size-adjust: 100%;
+}
+
+#menu_navi {
+    display: none;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+#menu_navi {
+    display: none;
+}
+
+.slicknav_menu {
+    position: fixed;
+    width: 100%;
+}
+
+#room_name {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+	font-size: 4rem;
+}
+
+/* メッセージ表示範囲  */
+#message_stream{
+     margin: 50px auto 5px auto;
+     width:95%;
+     height: 60vh;
+     overflow: scroll;   /* スクロール表示 */ 
+}
+
+.arrow_answer,
+.arrow_question {
+    position: relative;
+    background: #fff;
+    border: 1px solid #c8c8c8;
+    border-radius: 10px;
+    width:75%;
+    font-size: 11px;
+    padding:3%;
+}
+
+
+.arrow_question {
+    float: right;
+}
+
+
+.arrow_answer:after,
+.arrow_answer:before,
+.arrow_question:after,
+.arrow_question:before {
+    top: 30%;
+    border: solid transparent;
+    content: " ";
+    height: 0;
+    width: 0;
+    position: absolute;
+    pointer-events: none;
+}
+
+
+.arrow_question:after,
+.arrow_question:before {
+    right: 100%;
+}
+
+
+.arrow_answer:after,
+.arrow_answer:before{
+     left: 100%;
+}
+
+
+.arrow_answer:after,
+.arrow_question:after {
+    border-color: rgba(255, 255, 255, 0);
+    border-width: 8px;
+    margin-top: -8px;
+}
+
+
+.arrow_answer:after{
+    border-left-color: #fff;
+}
+
+
+.arrow_question:after{
+    border-right-color: #fff;
+    
+}
+
+
+.arrow_answer:before,
+.arrow_question:before {
+    border-color: rgba(200, 200, 200, 0);
+    border-width: 9px;
+    margin-top: -9px;
+}
+
+
+.arrow_answer:before{
+    border-left-color: #c8c8c8;
+}
+
+
+.arrow_question:before {
+    border-right-color: #c8c8c8;    
+}
+
+
+.question_image{
+     float: left;
+     width:15%;
+}
+
+
+.answer_image{
+     float: right;
+     width:15%;
+}
+
+
+.answer_image img,
+.question_image img{
+     border-radius: 50px;
+     width: 100%
+}
+
+
+.question_Box{
+     width: 100%;
+     overflow: hidden;
+     margin-bottom: 8%;
+}
+
+/* メニューバー */
+#menu {
+  display: none;
+  position: fixed;
+  width: 100%;
+  z-index: 1000;
+  top: 0px;
+}
+ 
+@media screen and (min-width : 600px) {
+  #menu {
+    display: block;
+  }
+  .slicknav_menu {
+    display: none;
+  }
+}
+
+/* フッターの背景 */
+div#footer-bk
+{
+    background-color: #FFF;   /* 背景色(黒) */
+    width:100%;               /* 横の幅を100% */
+    height: 25px;            /* 縦の幅を120px */
+    position: absolute;       /* 絶対位置指定することを定義 */
+    bottom: 0px;              /* 絶対位置指定(左0px,下0px) */
+}
+/* フッターの表示領域 */
+div#footer{
+    height: 25px;          /* 縦幅の指定100px */
+    width:100%;               /* 横の幅を100% */
+    margin: auto;           /* 中央揃え */
+}

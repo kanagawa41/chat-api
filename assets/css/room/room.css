@@ -22,11 +22,12 @@ body {
 .slicknav_menu {
     position: fixed;
     width: 100%;
+    top: 0;
 }
 
 #room_name {
     position: fixed;
-    left: 10px;
+    left: 0;
 }
 
 /* メッセージ表示範囲  */

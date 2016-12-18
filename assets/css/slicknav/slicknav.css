@@ -77,8 +77,9 @@
 
 .slicknav_menu {
   font-size: 2em;
+  color: #fff;
   box-sizing: border-box;
-  background: #669999;
+  background: #313c52;
   padding: 5px; }
   .slicknav_menu * {
     box-sizing: border-box; }

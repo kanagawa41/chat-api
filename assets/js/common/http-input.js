@@ -1,11 +1,20 @@
-window.HttpInput = {
+/**
+ * HttpInputクラス
+ */
+HttpInput: {
+    /**
+     * コンストラクタ
+     */
+    HttpInput = function() {
+    }
 
-    // _bar: 'メンバ変数',
+    // prototype をローカル変数へ
+    var p = HttpInput.prototype;
 
     /**
      * GETパラメータを配列にセットして返却する。
      */
-    getParams: function (){
+    HttpInput.getParams = function (){
         var url   = location.href;
         parameters    = url.split("?");
         params   = parameters[1].split("&");

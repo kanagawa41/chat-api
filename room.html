@@ -15,6 +15,8 @@
 <script type="text/javascript" src="assets/js/slicknav/jquery.slicknav.min.js"></script>
 <script type="text/javascript" src="assets/js/bootstrap-v3-3-7/bootstrap.min.js"></script>
 <script type="text/javascript">
+    var GET_MESSAGE_INTERVAL = 10000;
+
     $(document).ready(function(){
         /* FIXME 画面を開いたときから制御不能状態のマスクをかけたい */
 
@@ -61,13 +63,18 @@
             console.log(response["errors"]);
             alert('指定されたルームは存在しません。'); return;
         }
-        $('#room_name').text(response.name);
         $('#description').text(response.description);
         $('#room_hash').val(room_hash);
         $('#login_url').val(location.href);
 
       　　// スリックバー作動
         $('#menu_navi').slicknav();
+        var menuHeight = parseInt($('.slicknav_menu').outerHeight());
+        $('#message_stream').css('margin-top', menuHeight);
+        $('#message_stream').css('height', 
+          parseInt(screen.height) - (menuHeight + parseInt($('#message_input_area').height()))
+        );
+        $('.slicknav_btn').after('<div style="font-size: 1.5em; text-align: center;">' + response.name + '</div>');
 
         var params = HttpInput.getParams();
 
@@ -156,7 +163,7 @@
         // 周期的にメッセージを取得する処理の発動
         setInterval(function(){
            getMessages();
-        },10000);
+        }, GET_MESSAGE_INTERVAL);
         
       }).fail(function(jqXHR, textStatus, errorThrown ) {
         alert("Connection Error!");
@@ -269,14 +276,14 @@
 
         var result = '';
         if(who == 'self'){
-            result = '<div class="question_Box"><div class="question_image"><img src="assets/image/user_icon/' + icon + '.gif' + '" alt="' + user_name + '"/></div><div class="arrow_question">' + body + '<input type="hidden" class="message_id" value="' + message_id + '">' + '</div>';
+            result = '<div class="question_box"><div class="question_image"><img src="assets/image/user_icon/' + icon + '.gif' + '" alt="' + user_name + '"/></div><p class="question_name">' + user_name + '　' + sendTime + '</p><div class="arrow_question">' + body + '<input type="hidden" class="message_id" value="' + message_id + '">' + '</div>';
         } else if(who == 'other') {
             if(type == 2){ // メッセージの場合
-                result = '<div class="question_Box"><div class="answer_image"><img src="assets/image/user_icon/' + icon + '.gif' + '" alt="' + user_name + '"/></div><div class="arrow_answer">' + body + '<input type="hidden" class="message_id" value="' + message_id + '">' + '</div>';
+                result = '<div class="question_box"><div class="answer_image"><img src="assets/image/user_icon/' + icon + '.gif' + '" alt="' + user_name + '"/></div><p class="answer_name">' + user_name + '　' + sendTime + '</p><div class="arrow_answer">' + body + '<input type="hidden" class="message_id" value="' + message_id + '">' + '</div>';
             } else if(type == 3){ // 入室の場合
-                result = '<div class="question_Box">' + body + ' さんが入室しました。' + '</div>';
+                result = '<div class="question_box">' + body + ' さんが入室しました。' + '</div>';
             } else if(type == 1){ // ルーム作成の場合
-                result = '<div class="question_Box">' + body + ' が作成されました。' + '</div>';
+                result = '<div class="question_box">' + body + ' が作成されました。' + '</div>';
             }
         }
         return result;
@@ -287,24 +294,18 @@
 <body>
 <ul id="menu_navi" class="clearfix">
       <li><h2 id="description"></h2></li>
-      <li><label>再入室用URL:</label><input type="text" id="login_url"　readonly="readonly"></li>
+      <li><label>再入室用URL:</label><input type="text" id="login_url" readonly="readonly"></li>
 </ul>
-<h1 id="room_name"></h1>
 <input type="hidden" id="user_name">
 <input type="hidden" id="user_hash">
-      <div id="message_stream">
-      </div>
-  <div class="row">
-    <div class="col-xs-12 footer">
-      <div class="row">
-        <div class="col-xs-8">
-          <input type="text" id="message_body" placeholder="メッセージ">
-        </div>
-        <div class="col-xs-2">
-          <button type="submit" class="btn btn-default"　id="message_submit"　onclick="sendMessage()">送信</button>
-        </div>
-      </div>
-    </div><!-- footer -->
+<div id="message_stream">
+</div>
+<div id="message_input_area" class="input-group">
+    <input type="text" id="message_body" class="form-control input-xs" placeholder="メッセージ">
+    <span class="input-group-btn">
+      <button type="button" class="btn btn-primary" id="message_submit" onclick="sendMessage();">送信</button>
+    </span>
+  </div>
   </div>
 <input type="hidden" id="room_hash">
 <input type="hidden" id="self_icon">

@@ -4,6 +4,7 @@ html {
 }
 
 body {
+    overflow: hidden;
 	font-size: 1.4rem;
 	font-family: "times new roman";
 }
@@ -32,8 +33,9 @@ body {
 
 /* メッセージ表示範囲  */
 #message_stream{
-     margin: 50px auto 5px auto;
-     width:95%;
+     background: #6f92c0;
+     margin: 0 auto;
+     width: 100%;
      height: 60vh;
      overflow: scroll;   /* スクロール表示 */ 
 }
@@ -44,77 +46,14 @@ body {
     background: #fff;
     border: 1px solid #c8c8c8;
     border-radius: 10px;
-    width:75%;
+    width:85%;
     font-size: 11px;
     padding:3%;
 }
 
-
 .arrow_question {
     float: right;
-}
-
-
-.arrow_answer:after,
-.arrow_answer:before,
-.arrow_question:after,
-.arrow_question:before {
-    top: 30%;
-    border: solid transparent;
-    content: " ";
-    height: 0;
-    width: 0;
-    position: absolute;
-    pointer-events: none;
-}
-
-
-.arrow_question:after,
-.arrow_question:before {
-    right: 100%;
-}
-
-
-.arrow_answer:after,
-.arrow_answer:before{
-     left: 100%;
-}
-
-
-.arrow_answer:after,
-.arrow_question:after {
-    border-color: rgba(255, 255, 255, 0);
-    border-width: 8px;
-    margin-top: -8px;
-}
-
-
-.arrow_answer:after{
-    border-left-color: #fff;
-}
-
-
-.arrow_question:after{
-    border-right-color: #fff;
-    
-}
-
-
-.arrow_answer:before,
-.arrow_question:before {
-    border-color: rgba(200, 200, 200, 0);
-    border-width: 9px;
-    margin-top: -9px;
-}
-
-
-.arrow_answer:before{
-    border-left-color: #c8c8c8;
-}
-
-
-.arrow_question:before {
-    border-right-color: #c8c8c8;    
+    background: #85e249;
 }
 
 
@@ -137,8 +76,24 @@ body {
 }
 
 
-.question_Box{
+.question_image{
+     float: left;
+     width:15%;
+}
+
+
+.question_box{
      width: 100%;
      overflow: hidden;
      margin-bottom: 8%;
 }
+
+
+p.question_name,
+p.answer_name{
+     font-size: 14px;
+     color: #fff;
+     margin:0;
+}
+
+p.answer_name{text-align: right;}

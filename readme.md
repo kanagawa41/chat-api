@@ -24,6 +24,8 @@
 ###技術録
 [phpLiteAdmin](http://www.hiskip.com/pg-notes/dbtools/phpLiteAdmin.html)
 
+[CSSで作った対談（会話）式吹き出しをLINE風にしてスマホにも対応させる](http://webkcampus.com/201411/829/)
+
 ## DDL
 
 #### ルーム情報

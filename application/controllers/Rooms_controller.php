@@ -25,9 +25,9 @@ class Rooms_controller extends MY_Controller {
 		foreach ($select_results as $row) {
 			$temp_row = array ();
 			$temp_row['room_id'] = $row->room_id;
-			$temp_row['room_id_hash'] = $this->base64_urlsafe_encode($row->room_id); // 周知用のID
+			$temp_row['room_anonymous_hash'] = $this->room_hash_encode($row->room_id, 0); // 匿名入室するための周知用のID
 			$temp_row['name'] = $row->name;
-			$temp_row['message_num'] = ''; // TODO メッセージを返却できるようにする
+			$temp_row['message_num'] = $this->db->from('messages')->where('room_id', $row->room_id)->count_all_results();
 			$temp_row['last_update_time'] = $row->updated_at;
 
 			$data[] = $temp_row;
@@ -48,8 +48,9 @@ class Rooms_controller extends MY_Controller {
 		}
 
 		// ルームＩＤをデコードする
-		$room_id = $this->base64_urlsafe_decode($room_hash);
-
+		$room_data = $this->room_hash_decode($room_hash);
+		$room_id = $room_data['room_id'];
+		
 		$this->load->database();
 
 		$row = $this->db->select('room_id, name, description, updated_at')->from('rooms')->where('room_id', $room_id)->get()->row();
@@ -57,8 +58,6 @@ class Rooms_controller extends MY_Controller {
 		if (empty($row)) {
 			$this->output->set_json_error_output(array('No target.')); return;
 		}
-
-		$message_count = $this->db->from('messages')->where('room_id', $room_id)->count_all_results();
 
 		$data = array ();
 		$data['name'] = $row->name;
@@ -155,9 +154,7 @@ class Rooms_controller extends MY_Controller {
 		$admin_name = $this->config->item('admin_name');
 		
 		// 管理者ユーザを生成する。
-		$user_hash = $this->user->insert_user($admin_name, $room_id, 1, 0);
-
-		$user_id = $this->db->insert_id();
+		$user_id = $this->user->insert_user($admin_name, $room_id, 1, 0);
 
 		$insert_data = array(
 		   'user_id' => $user_id ,
@@ -181,8 +178,8 @@ class Rooms_controller extends MY_Controller {
 
 		$response_data = array (
 			'room_id' => $room_id,
-			'room_hash' => $this->base64_urlsafe_encode($room_id),
-			'admin_user_hash' => $user_hash,
+			'room_hash' => $this->room_hash_encode($room_id, 0), // 匿名入室するための周知用のID
+			'room_admin_hash' => $this->room_hash_encode($room_id, $user_id), // 管理人で入室するための周知用のID
 		);
 
 		//$dataをJSONにして返す
@@ -195,16 +192,14 @@ class Rooms_controller extends MY_Controller {
 	 */
 	public function select_users($room_hash) {
 		// ルームＩＤをデコードする
-		$room_id = $this->base64_urlsafe_decode($room_hash);
+		$room_data = $this->room_hash_decode($room_hash);
+		$room_id = $room_data['room_id'];
 
 		$this->load->database();
 
 		// 存在しないルームの場合
-		$room_count = $this->db->from('rooms')->where(array (
-			'room_id' => $room_id
-		))->count_all_results();
-		if ($room_count == 0) {
-			$this->output->set_json_error_output(array('It do not exist room_id.')); return;
+		if ($this->db->from('rooms')->where(array ('room_id' => $room_id))->count_all_results() == 0) {
+			$this->output->set_json_error_output(array('It do not exist room.')); return;
 		}
 
 		$sql_result = $this->db->from('users')->where(array (
@@ -227,29 +222,26 @@ class Rooms_controller extends MY_Controller {
 	 * チャットのメンバー情報を取得
 	 * GET
 	 */
-	public function select_user($room_hash, $user_hash) {
+	public function select_user($room_hash) {
 		// ルームＩＤをデコードする
-		$room_id = $this->base64_urlsafe_decode($room_hash);
+		$room_data = $this->room_hash_decode($room_hash);
 
 		$this->load->database();
 
+		$room_id = $room_data['room_id'];
 		// 存在しないルームの場合
-		$room_count = $this->db->from('rooms')->where(array (
-			'room_id' => $room_id
-		))->count_all_results();
-		if ($room_count == 0) {
-			$this->output->set_json_error_output(array('It do not exist room_id.')); return;
+		if ($this->db->from('rooms')->where(array ('room_id' => $room_id))->count_all_results() == 0) {
+			$this->output->set_json_error_output(array('It do not exist room.')); return;
 		}
 
+		$user_id = $room_data['user_id'];
 		// 存在しないユーザの場合
-		$row = $this->db->from('users')->where(array (
-			'user_hash' => $user_hash
-		))->get()->row();
+		$row = $this->db->from('users')->where(array ('user_id' => $user_id))->get()->row();
 		if (empty ($row)) {
 			$this->output->set_json_error_output(array('It do not exist user_id.')); return;
 		}
 
-		$message_count = $this->db->from('messages')->where(array('room_id' => $room_id, 'user_id' => $row->user_id))->count_all_results();
+		$message_count = $this->db->from('messages')->where(array('room_id' => $room_id, 'user_id' => $user_id))->count_all_results();
 
 		$data = array ();
 		$data['name'] = $row->name;
@@ -266,25 +258,24 @@ class Rooms_controller extends MY_Controller {
 	 * チャットのメッセージ一覧を取得。前回取得分からの差分を返します。
 	 * GET
 	 */
-	public function select_messages($room_hash, $user_hash) {
+	public function select_messages($room_hash) {
 		$this->load->library('encrypt');
 
 		// ルームＩＤをデコードする
-		$room_id = $this->base64_urlsafe_decode($room_hash);
+		$room_data = $this->room_hash_decode($room_hash);
 
 		$this->load->database();
 
+		$room_id = $room_data['room_id'];
 		// 存在しないルームの場合
-		$room_count = $this->db->from('rooms')->where(array (
-			'room_id' => $room_id
-		))->count_all_results();
-		if ($room_count == 0) {
-			$this->output->set_json_error_output(array('It do not exist room_id.')); return;
+		if ($this->db->from('rooms')->where(array ('room_id' => $room_id))->count_all_results() == 0) {
+			$this->output->set_json_error_output(array('It do not exist room.')); return;
 		}
 
+		$user_id = $room_data['user_id'];
 		// 存在しないユーザの場合
 		$row = $this->db->from('users')->where(array (
-			'user_hash' => $user_hash
+			'user_id' => $user_id
 		))->get()->row();
 		if (empty ($row)) {
 			$data = array (
@@ -294,7 +285,6 @@ class Rooms_controller extends MY_Controller {
 			return;
 		}
 
-		$user_id = $row->user_id;
 		$begin_message_id = $row->begin_message_id;
 
 		// 既読済のメッセージIDを返却する
@@ -308,7 +298,7 @@ class Rooms_controller extends MY_Controller {
 
 		$last_read_message_id = $last_read_message_id < $begin_message_id ? $begin_message_id : $last_read_message_id;
 
-		$select_results = $this->db->select('m.message_id, u.name, u.user_hash, u.icon_id, m.body, m.type, m.created_at')->from('messages as m')->join('users as u', 'u.user_id = m.user_id', 'inner')->where(array (
+		$select_results = $this->db->select('m.message_id, u.name, u.user_id, u.icon_id, m.body, m.type, m.created_at')->from('messages as m')->join('users as u', 'u.user_id = m.user_id', 'inner')->where(array (
 			'm.room_id' => $room_id,
 			'm.message_id >' => $last_read_message_id,
 			'm.user_id <>' => $user_id
@@ -325,7 +315,7 @@ class Rooms_controller extends MY_Controller {
 			$temp_row['message_id'] = $row->message_id;
 			$temp_user_info = array ();
 			$temp_user_info['name'] = $row->name;
-			$temp_user_info['who'] = $row->user_hash === $user_hash ? "self" : "other";
+			$temp_user_info['who'] = $row->user_id === $user_id ? "self" : "other";
 			$temp_user_info['icon'] = $row->icon_id;
 			$temp_row['user'] = $temp_user_info;
 			$temp_row['body'] = $row->body;
@@ -356,34 +346,28 @@ class Rooms_controller extends MY_Controller {
 	}
 
 	/**
-	 * TODO 返却形式を「select_messages」に合わせる
 	 * チャットのメッセージ一覧を入室した時から全て取得。
+	 * 管理人ではない場合は、設定された最大件数に依存する。
 	 * GET
 	 */
-	public function select_messages_all($room_id, $user_hash) {
+	public function select_messages_all($room_hash) {
 		$this->load->library('encrypt');
 
 		// ルームＩＤをデコードする
-		$decode_room_id = $this->base64_urlsafe_decode($room_id);
+		$room_data = $this->room_hash_decode($room_hash);
 
 		$this->load->database();
 
+		$room_id = $room_data['room_id'];
 		// 存在しないルームの場合
-		$room_count = $this->db->from('rooms')->where(array (
-			'room_id' => $decode_room_id
-		))->count_all_results();
-		if ($room_count == 0) {
-			$data = array (
-				'error' => 'It do not exist room_id.'
-			);
-			$this->output->set_json_output($data);
-
-			return;
+		if ($this->db->from('rooms')->where(array ('room_id' => $room_id))->count_all_results() == 0) {
+			$this->output->set_json_error_output(array('It do not exist room.')); return;
 		}
 
+		$user_id = $room_data['user_id'];
 		// 存在しないユーザの場合
 		$row = $this->db->from('users')->where(array (
-			'user_hash' => $user_hash
+			'user_id' => $user_id
 		))->get()->row();
 		if (empty ($row)) {
 			$data = array (
@@ -393,33 +377,47 @@ class Rooms_controller extends MY_Controller {
 			return;
 		}
 
-		$user_id = $row->user_id;
-		// 参加開始メッセージID
-		$begin_message_id = $row->begin_message_id;
+		// 役割によって取得できる数が変化する
+		$limit = -1;
+		if($row->user_role == 1){
+			$limit = $this->config->item('admin_reentry_max_count');
+		} else if($row->user_role == 2){
+			$limit = $this->config->item('specific_reentry_max_count');
+		} else {
+			$limit = $this->config->item('anonymous_reentry_max_count');
+		}
 
-		// ルームに入った際のメッセージＩＤ～未読のメッセージＩＤまで
-		$select_results = $this->db->select('m.message_id, u.name, m.body, m.type, m.created_at')->from('messages as m')->join('users as u', 'u.user_id = m.user_id', 'inner')->where(array (
-			'm.room_id' => $decode_room_id,
-			'm.message_id >' => $begin_message_id
-		))->get()->result();
+		$massage_count = $this->db->from('messages')->where(array ('room_id' => $room_id))->count_all_results();
+		$massage_begin = $massage_count > $limit ? $massage_count - $limit : 0;
+
+		$select_results = $this->db->select('m.message_id, u.name, u.user_id, u.icon_id, m.body, m.type, m.created_at')->from('messages as m')->join('users as u', 'u.user_id = m.user_id', 'inner')->where(array (
+			'm.room_id' => $room_id,
+		))->limit($limit, $massage_begin)->get()->result();
+
+		// デバッグ用
+		// $this->output->set_json_error_output(array($this->db->last_query())); return;
+
 
 		$data = array ();
 		$last_message_id = null;
 		foreach ($select_results as $row) {
 			$temp_row = array ();
 			$temp_row['message_id'] = $row->message_id;
-			$temp_row['name'] = $row->name;
+			$temp_user_info = array ();
+			$temp_user_info['name'] = $row->name;
+			$temp_user_info['who'] = $row->user_id == $user_id ? "self" : "other";
+			$temp_user_info['icon'] = $row->icon_id;
+			$temp_row['user'] = $temp_user_info;
 			$temp_row['body'] = $row->body;
 			$temp_row['type'] = $row->type;
-			$temp_row['created_at'] = $row->created_at;
+			$temp_row['send_time'] = $row->created_at;
 
 			$data[] = $temp_row;
 			$last_message_id = $row->message_id;
 		}
 
 		if (empty ($last_message_id)) {
-			$this->output->set_content_type('application/json')->set_output(json_encode(array ()));
-			return;
+			$this->output->set_json_output(array ()); return;
 		}
 
 		// 取得した最後のメッセージを既読済にする
@@ -428,7 +426,7 @@ class Rooms_controller extends MY_Controller {
 		$insert_data = array (
 			'message_id' => $last_message_id,
 			'user_id' => $user_id,
-			'room_id' => $decode_room_id
+			'room_id' => $room_id
 		);
 		$this->db->insert('reads', $insert_data);
 
@@ -441,32 +439,28 @@ class Rooms_controller extends MY_Controller {
 	 * チャットに新しいメッセージを追加。
 	 * POST
 	 */
-	public function create_message($room_hash, $user_hash) {
-		// ルームＩＤをデコードする
-		$room_id = $this->base64_urlsafe_decode($room_hash);
-
-		$this->load->database();
-
-		// 存在しないルームの場合
-		$room_count = $this->db->from('rooms')->where(array (
-			'room_id' => $room_id
-		))->count_all_results();
-		if ($room_count == 0) {
-			$this->output->set_json_error_output(array('It do not exist room_id.')); return;
-		}
-
+	public function create_message($room_hash) {
 		$body = $this->input->post('body');
 		if (empty ($body)) {
 			$this->output->set_json_error_output(array('Scarce value as "body".')); return;
 		}
 
-		$row = $this->db->from('users')->where(array (
-			'user_hash' => $user_hash
-		))->get()->row();
-		if (empty ($row)) {
-			$this->output->set_json_error_output(array('It do not exist user_id.')); return;
+		// ルームＩＤをデコードする
+		$room_data = $this->room_hash_decode($room_hash);
+
+		$this->load->database();
+
+		$room_id = $room_data['room_id'];
+		// 存在しないルームの場合
+		if ($this->db->from('rooms')->where(array ('room_id' => $room_id))->count_all_results() == 0) {
+			$this->output->set_json_error_output(array('It do not exist room.')); return;
 		}
-		$user_id = $row->user_id;
+
+		$user_id = $room_data['user_id'];
+		// 存在しないユーザの場合
+		if ($this->db->from('users')->where(array ('user_id' => $user_id))->count_all_results() == 0) {
+			$this->output->set_json_error_output(array('It do not exist user.')); return;
+		}
 
 		$this->db->trans_start();
 
@@ -491,16 +485,25 @@ class Rooms_controller extends MY_Controller {
 	 * POST
 	 */
 	public function create_user($room_hash) {
-		// ルームＩＤをデコードする
-		$room_id = $this->base64_urlsafe_decode($room_hash);
+		$specific_user_flg = $this->input->post('specific_user_flg');
 
+		// 特定ユーザを生成しようとするがトークンが存在しない
+		if($this->input->post('specific_user_flg') === '1' && !$this->exist_token()){
+			$this->output->set_json_error_output(array('You do not admit to create specific-user.')); return;
+		}
+
+		// ルームＩＤをデコードする
+		$room_data = $this->room_hash_decode($room_hash);
+		$room_id = $room_data['room_id'];
+
+		if (empty($room_id)) {
+			$this->output->set_json_error_output(array('It do not exist room_id.')); return;
+		}
+		
 		$this->load->database();
 
 		// 存在しないルームの場合
-		$room_count = $this->db->from('rooms')->where(array (
-			'room_id' => $room_id
-		))->count_all_results();
-		if ($room_count == 0) {
+		if ($this->db->from('rooms')->where(array ('room_id' => $room_id))->count_all_results() == 0) {
 			$this->output->set_json_error_output(array('It do not exist room_id.')); return;
 		}
 
@@ -509,22 +512,68 @@ class Rooms_controller extends MY_Controller {
 			$this->output->set_json_error_output(array('Scarce value as "name".')); return;
 		}
 
+		if($specific_user_flg === '1'){
+			$this->output->set_json_output($this->create_specific_user($room_id, $name)); return;
+		} else {
+			$this->output->set_json_output($this->create_anonymous_user($room_id, $name)); return;
+		}
+	}
+
+	/**
+	 * チャットに特定ユーザを追加。
+	 * POST
+	 */
+	private function create_specific_user($room_id, $name) {
 		// ユーザのアイコンＩＤを設定します。（アイコンＩＤを増やしたらコンフィグの値を変更する。）
 		$icon_id = rand(1, $this->config->item('icon_num'));
 
 		$this->load->model('user');
 		$this->db->trans_start();
 
-		// 一般ユーザを生成する。
-		$user_hash = $this->user->insert_user($name, $room_id, 2, $icon_id);
+		// 特定ユーザを生成する。
+		$user_id = $this->user->insert_user($name, $room_id, 2, $icon_id);
+
+		// ルームに入った際のメッセージＩＤ～未読のメッセージＩＤまで
+		$select_result = $this->db->select('user_hash')->from('users')->where(array (
+			'user_id' => $user_id,
+		))->get()->row();
 
 		$this->db->trans_complete();
 
 		$data = array (
-			'user_hash' => $user_hash
+			'room_hash' => $this->room_hash_encode($room_id, $user_id), // ユーザ専用のハッシュ値を生成する
+			'user_hash' => $select_result->user_hash
 		);
 
-		//$dataをJSONにして返す
-		$this->output->set_json_output($data);
+		return $data;
+	}
+
+	/**
+	 * チャットにユーザを追加。
+	 * POST
+	 */
+	private function create_anonymous_user($room_id, $name) {
+		// ユーザのアイコンＩＤを設定します。（アノニマスアイコン）
+		$icon_id = 999;
+
+		$this->load->model('user');
+		$this->db->trans_start();
+
+		// アノニマスユーザを生成する。
+		$user_id = $this->user->insert_user($name, $room_id, 3, $icon_id);
+
+		// ルームに入った際のメッセージＩＤ～未読のメッセージＩＤまで
+		$select_result = $this->db->select('user_hash')->from('users')->where(array (
+			'user_id' => $user_id,
+		))->get()->row();
+
+		$this->db->trans_complete();
+
+		$data = array (
+			'room_hash' => $this->room_hash_encode($room_id, $user_id), // ユーザ専用のハッシュ値を生成する
+			'user_hash' => $select_result->user_hash
+		);
+
+		return $data;
 	}
 }

@@ -46,7 +46,7 @@ CREATE TABLE users (
     /** ユーザ情報 **/
     user_id INTEGER, --ユーザＩＤ
     user_hash STRING NOT NULL, --ユーザハッシュ
-    user_role INTEGER DEFAULT 2, --ユーザロール(1…admin, 2…public)
+    user_role INTEGER DEFAULT 3, --ユーザロール(1…admin, 2…specific-user, 3…anonymous)
     name STRING NOT NULL, --ユーザ名
     room_id INTEGER, --ルームＩＤ
     begin_message_id INTEGER, --入室した際の開始メッセージＩＤ
@@ -286,23 +286,26 @@ curl -X POST -d "body=Hello+EmeraldChat%21" "https://api.emeraldchat.com/v1/room
 ```
 
 
-### 12. _POST_ __/rooms/{room_id}/members__
+### 11. _POST_ __/rooms/{room_hash}/members__
 
 #### チャットにユーザを追加
 
 【リクエスト】
 ```
-curl -X POST -d "name=Ryuji" "https://api.emeraldchat.com/v1/rooms/{room_id}/members"
+curl -X POST -H "X-ChatToken: 管理人のAPIトークン"  -d "name=Ryuji&specific_user_flg=1" "https://api.emeraldchat.com/v1/rooms/{room_id}/members"
 ```
 
 * name・・・ユーザ名
+* specific_user_flg・・・特定ユーザの生成フラグ(X-ChatTokenの設定が必須)。設定がなければアノニマス（匿名）ユーザ。
 
 【レスポンス】
 ```
 {
+  "room_hash": baCR29qKf_JHzsvlhphGsyy-MTho3lbmYVg2KiKcMIIC3AP6HiHQonviBN9scQfhkIqupm8l9_iLcX87nMmTbQ,
   "user_hash": 2uhimbRJ6T
 }
 ```
+
 
 # FIXME 現状と剥離しているので修正要。
 # 利用フロー

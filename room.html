@@ -33,7 +33,7 @@
       user_name = window.prompt("ユーザー名を入力してください", "");
 
       if(user_name == '' || user_name == null){
-        window.alert('名前が入力されていません。');
+        alert('名前が入力されていません。');
       }　else　{
         $('#user_name').val(user_name);
         intoRoom();
@@ -64,20 +64,12 @@
         $('#room_name').text(response.name);
         $('#description').text(response.description);
         $('#room_hash').val(room_hash);
-        $('#login_url').val(location.href);
 
       　　// スリックバー作動
         $('#menu_navi').slicknav();
 
-        var params = HttpInput.getParams();
-
-        var user_hash = params['user_hash'];
         // ユーザが指定されている場合は、ユーザ情報を取得する。
-        if(user_hash){
-          existUser(room_hash, user_hash);
-        } else {
-          inRoomInputDisplay();
-        }
+        existUser(room_hash);
       }).fail(function(jqXHR, textStatus, errorThrown ) {
         alert("Connection Error!");
         console.log("XMLHttpRequest : " + XMLHttpRequest.status);
@@ -90,10 +82,46 @@
     /**
      * ユーザの存在チェック
      */
-    function existUser(room_hash, user_hash) {
+    function existUser(room_hash) {
       $.ajax({
         type: 'GET',
-        url: 'rooms/' + room_hash + '/members/' + user_hash,
+        url: 'rooms/' + room_hash + '/members',
+        timeout: 10000,
+        cache: false,
+        data: {},
+        dataType: 'json',
+        beforeSend: function(jqXHR) {
+          jqXHR.setRequestHeader("If-Modified-Since", "Thu, 01 Jun 1970 00:00:00 GMT");
+          return true;
+        },
+      }).done(function(response, textStatus, jqXHR) {
+        if(response["errors"]){
+            inRoomInputDisplay();
+            return;
+        }
+        $('#user_name').val(response.name);
+        $('#self_icon').val(response.icon);
+
+        $('#message_body').prop('disabled', false);
+        $('#message_submit').prop('disabled', false);
+
+        getPastMessages();
+      }).fail(function(jqXHR, textStatus, errorThrown ) {
+        alert("Connection Error!");
+        console.log("XMLHttpRequest : " + XMLHttpRequest.status);
+        console.log("textStatus : " + textStatus);
+        console.log("errorThrown : " + errorThrown.message);
+      }).always(function(data_or_jqXHR, textStatus, jqXHR_or_errorThrown) {
+      });
+    }
+
+    /**
+     * 過去のメッセージを取得する
+     */
+    function getPastMessages(){
+      $.ajax({
+        type: 'GET',
+        url: 'rooms/' + $('#room_hash').val() + '/messages/all',
         timeout: 10000,
         cache: false,
         data: {},
@@ -105,20 +133,21 @@
       }).done(function(response, textStatus, jqXHR) {
         if(response["errors"]){
             console.log(response["errors"]);
-            alert('指定されたユーザは存在しません。'); return;
+            alert('指定されたルームは存在しません。'); return;
         }
-        $('#user_name').val(response.name);
-        $('#user_hash').val(user_hash);
-        $('#login_url').val(location.href　+ '&user_hash=' + user_hash);
-        $('#self_icon').val(response.icon);
 
-        $('#user_name').prop('readonly',true);
-        $('#message_body').prop('disabled', false);
-        $('#message_submit').prop('disabled', false);
+        response.forEach(function(value) {
+            $('#message_stream').append(create_message(value));
+        });
 
+        // FIXME　取得する前にフラグなどで行動に制限をかける。考えもなしに周期的に取得をしているので、取得がブッキングするとエラーが発生するので。
+        // 周期的にメッセージを取得する処理の発動
+        setInterval(function(){
+           getMessages();
+        },10000);
       }).fail(function(jqXHR, textStatus, errorThrown ) {
         alert("Connection Error!");
-        console.log("XMLHttpRequest : " + XMLHttpRequest.status);
+        console.log("XMLHttpRequest : " + jqXHR.status);
         console.log("textStatus : " + textStatus);
         console.log("errorThrown : " + errorThrown.message);
       }).always(function(data_or_jqXHR, textStatus, jqXHR_or_errorThrown) {
@@ -146,18 +175,8 @@
             console.log(response["errors"]);
             alert('指定されたルームは存在しません。'); return;
         }
-        $('#user_hash').val(response.user_hash);
-        $('#login_url').val(location.href　+ '&user_hash=' + response.user_hash);
-        
-        $('#user_name').attr('readonly',true);
+        window.location.href = window.location.href.split('?')[0] + "?room_hash=" + response.room_hash;
 
-        existUser($('#room_hash').val(), response.user_hash);
-
-        // 周期的にメッセージを取得する処理の発動
-        setInterval(function(){
-           getMessages();
-        },10000);
-        
       }).fail(function(jqXHR, textStatus, errorThrown ) {
         alert("Connection Error!");
         console.log("XMLHttpRequest : " + jqXHR.status);
@@ -173,7 +192,7 @@
     function getMessages(){
       $.ajax({
         type: 'GET',
-        url: 'rooms/' + $('#room_hash').val() + '/members/' + $('#user_hash').val() + '/messages',
+        url: 'rooms/' + $('#room_hash').val() + '/messages',
         timeout: 10000,
         cache: false,
         data: {},
@@ -212,7 +231,7 @@
       
       $.ajax({
         type: 'POST',
-        url: 'rooms/' + $('#room_hash').val() + '/members/' + $('#user_hash').val() + '/messages',
+        url: 'rooms/' + $('#room_hash').val() + '/messages',
         timeout: 10000,
         cache: false,
         data: {
@@ -287,11 +306,9 @@
 <body>
 <ul id="menu_navi" class="clearfix">
       <li><h2 id="description"></h2></li>
-      <li><label>再入室用URL:</label><input type="text" id="login_url"　readonly="readonly"></li>
 </ul>
 <h1 id="room_name"></h1>
 <input type="hidden" id="user_name">
-<input type="hidden" id="user_hash">
       <div id="message_stream">
       </div>
   <div class="row">
@@ -301,7 +318,7 @@
           <input type="text" id="message_body" placeholder="メッセージ">
         </div>
         <div class="col-xs-2">
-          <button type="submit" class="btn btn-default"　id="message_submit"　onclick="sendMessage()">送信</button>
+          <button type="submit" class="btn btn-default" id="message_submit" onclick="sendMessage()">送信</button>
         </div>
       </div>
     </div><!-- footer -->

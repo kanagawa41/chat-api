@@ -42,6 +42,42 @@ class MY_Controller extends CI_Controller
 	}
 
 	/**
+	 * 引数から周知用のハッシュ値にエンコードする。
+	 * 「roomid_userid」の形式でbase64にエンコードする。
+	 * 「０」は自分でユーザ名を決められるアノニマスが使用できる。
+	 * TODO ここに宣言すると呼び出せてしまうのでhelperなどに移動する。
+	 * 
+	 */
+	public function room_hash_encode($room_id, $user_id) {
+		return $this->base64_urlsafe_encode($room_id . '_' . $user_id);
+	}
+
+	/**
+	 * 周知用のハッシュ値をデコードする。
+	 * 「ルームID(room_id)、ユーザID(user_id)」は配列にして返却する。
+	 * TODO ここに宣言すると呼び出せてしまうのでhelperなどに移動する。
+	 * 
+	 */
+	public function room_hash_decode($room_hash) {
+		$raw_room_data = $this->base64_urlsafe_decode($room_hash);
+		$room_data = explode("_", $raw_room_data);
+
+		// 部屋情報が２つでない場合は異常値
+		if(count($room_data) == 2) {
+			return array(
+					'room_id' => $room_data[0]
+					, 'user_id' => $room_data[1]
+			);
+		} else {
+			return array(
+					'room_id' => ''
+					, 'user_id' => ''
+			);
+		}
+
+	}
+
+	/**
 	 * URL safeなエンコードメソッド
 	 * 変換した後に後ろの「==」は削除する。
 	 * TODO ここに宣言すると呼び出せてしまうのでhelperなどに移動する。

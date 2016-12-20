@@ -10,6 +10,7 @@ class User extends CI_Model {
 
 	/**
 	 * ユーザを追加する。
+	 * 追加したユーザIDを返却する。
 	 */
 	public function insert_user($name, $room_id, $user_role, $icon_id) 
 	{
@@ -48,7 +49,6 @@ class User extends CI_Model {
 
 		$this->db->insert('messages', $data);
 
-		return $user_hash;
-		
+		return $user_id;
 	}
 }

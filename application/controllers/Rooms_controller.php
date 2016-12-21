@@ -238,7 +238,7 @@ class Rooms_controller extends MY_Controller {
 		// 存在しないユーザの場合
 		$row = $this->db->from('users')->where(array ('user_id' => $user_id))->get()->row();
 		if (empty ($row)) {
-			$this->output->set_json_error_output(array('It do not exist user_id.')); return;
+			$this->output->set_json_error_output(array('It do not exist user.')); return;
 		}
 
 		$message_count = $this->db->from('messages')->where(array('room_id' => $room_id, 'user_id' => $user_id))->count_all_results();
@@ -278,11 +278,7 @@ class Rooms_controller extends MY_Controller {
 			'user_id' => $user_id
 		))->get()->row();
 		if (empty ($row)) {
-			$data = array (
-				'error' => 'It do not exist user_id.'
-			);
-			$this->output->set_json_output($data);
-			return;
+			$this->output->set_json_error_output(array('It do not exist user.')); return;
 		}
 
 		$begin_message_id = $row->begin_message_id;
@@ -379,6 +375,7 @@ class Rooms_controller extends MY_Controller {
 
 		$row = $this->db->select('m.message_id, u.name, u.user_id, u.icon_id, u.user_hash, m.body, m.type, m.created_at')->from('messages as m')->join('users as u', 'u.user_id = m.user_id', 'inner')->where(array (
 			'm.message_id' => $message_id,
+			'm.room_id' => $room_id,
 		))->get()->row();
 
 		// デバッグ用
@@ -583,8 +580,12 @@ class Rooms_controller extends MY_Controller {
 	 * POST
 	 */
 	private function create_specific_user($room_id, $name) {
-		// ユーザのアイコンＩＤを設定します。（アイコンＩＤを増やしたらコンフィグの値を変更する。）
-		$icon_id = rand(1, $this->config->item('icon_num'));
+		if(empty($this->input->post('icon'))){
+			// ユーザのアイコンＩＤを設定します。（アイコンＩＤを増やしたらコンフィグの値を変更する。）
+			$icon_id = rand(1, $this->config->item('icon_num'));
+		} else {
+			$icon_id = $this->input->post('icon');
+		}
 
 		$this->load->model('user');
 		$this->db->trans_start();

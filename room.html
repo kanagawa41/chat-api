@@ -220,7 +220,7 @@
             alert('指定されたルームは存在しません。'); return;
         }
 
-        var compareDate1 = '';
+        var compareDate1 = $('#last_send_date').val();
         response.forEach(function(value) {
             var compareDate2 = calcDate(value.send_time);
             if(compareDate1 != compareDate2){

@@ -42,7 +42,8 @@ body {
 
 .arrow_answer,
 .arrow_question {
-    position: relative;
+    /* position: relative;  これを設定したらdescriptionの上にメッセージが表示されてしまう*/
+    word-wrap: break-word;
     background: #fff;
     border: 1px solid #c8c8c8;
     border-radius: 10px;
@@ -53,9 +54,11 @@ body {
 
 .arrow_question {
     float: right;
-    background: #85e249;
 }
 
+.arrow_answer {
+    background: #85e249;
+}
 
 .question_image{
      float: left;
@@ -97,3 +100,17 @@ p.answer_name{
 }
 
 p.answer_name{text-align: right;}
+
+.send_time{
+    text-align: center;
+    color: #fff;
+}
+
+.information_box{
+     text-align: center;
+     color: #fff;
+     background-color:rgba(119,136,153,0.5);
+     width: 100%;
+     overflow: hidden;
+     margin-bottom: 8%;
+}

@@ -143,7 +143,14 @@
             alert('指定されたルームは存在しません。'); return;
         }
 
+        var compareDate1 = '';
         response.forEach(function(value) {
+            var compareDate2 = calcDate(value.send_time);
+            if(compareDate1 != compareDate2){
+              $('#message_stream').append('<div class="information_box">' + compareDate2 + '</div>');
+              compareDate1 = compareDate2;
+              $('#last_send_date').val(compareDate1);
+            }
             $('#message_stream').append(create_message(value));
         });
 
@@ -213,7 +220,14 @@
             alert('指定されたルームは存在しません。'); return;
         }
 
+        var compareDate1 = '';
         response.forEach(function(value) {
+            var compareDate2 = calcDate(value.send_time);
+            if(compareDate1 != compareDate2){
+              $('#message_stream').append('<div class="information_box">' + compareDate2 + '</div>');
+              compareDate1 = compareDate2;
+              $('#last_send_date').val(compareDate1);
+            }
             $('#message_stream').append(create_message(value));
         });
 
@@ -224,6 +238,54 @@
         console.log("errorThrown : " + errorThrown.message);
       }).always(function(data_or_jqXHR, textStatus, jqXHR_or_errorThrown) {
       });
+    }
+
+    function calcDate(date_str){
+      //文字列からミリ秒を取得
+      var time = Date.parse(date_str);
+
+      //ミリ秒から日付を求める
+      var date = new Date();
+      date.setTime(time);
+
+      var y = date.getFullYear();
+      var m = date.getMonth() + 1;
+      var d = date.getDate();
+      var w = date.getDay();
+
+      var wNames = ['日', '月', '火', '水', '木', '金', '土'];
+
+      // 「月」と「日」で1桁だったときに頭に 0 をつける
+      if (m < 10) {
+        m = '0' + m;
+      }
+      if (d < 10) {
+        d = '0' + d;
+      }
+
+      return y + '/' + m + '/' + d + ' (' + wNames[date.getDay()] + ')';
+    }
+
+    function calcTime(date_str){
+      //文字列からミリ秒を取得
+      var time = Date.parse(date_str);
+
+      //ミリ秒から日付を求める
+      var date = new Date();
+      date.setTime(time);
+
+      var h = date.getHours();
+      var m = date.getMinutes();
+
+      // 「月」と「日」で1桁だったときに頭に 0 をつける
+      if (h < 10) {
+        h = '0' + h;
+      }
+      if (m < 10) {
+        m = '0' + m;
+      }
+
+      return h + ':' + m;
     }
 
     /**
@@ -253,24 +315,47 @@
             console.log(response["errors"]);
             alert('指定されたルームは存在しません。'); return;
         }
-        
-        var message_id = response.message_id;
-        var user_name = $('#user_name').val();
-        var who = 'self';
 
-        var message_values = {
-            message_id : response.message_id,
-            body : message_body,
-            user : {
-                name : $('#user_name').val(),
-                who : "self",
-                icon : $('#self_icon').val(),
-            },
-            type : 1,
-            sendTime : new Date(),
-        };
+        getMessage(response.message_id);
+      }).fail(function(jqXHR, textStatus, errorThrown ) {
+        alert("Connection Error!");
+        console.log("XMLHttpRequest : " + jqXHR.status);
+        console.log("textStatus : " + textStatus);
+        console.log("errorThrown : " + errorThrown.message);
+      }).always(function(data_or_jqXHR, textStatus, jqXHR_or_errorThrown) {
+      });
+    }
 
-        $('#message_stream').append(create_message(message_values));
+    /**
+     * メッセージを取得する
+     */
+    function getMessage(message_id){
+      $.ajax({
+        type: 'GET',
+        url: 'rooms/' + $('#room_hash').val() + '/messages/' + message_id,
+        timeout: 10000,
+        cache: false,
+        data: {},
+        dataType: 'json',
+        beforeSend: function(jqXHR) {
+          jqXHR.setRequestHeader("If-Modified-Since", "Thu, 01 Jun 1970 00:00:00 GMT");
+          return true;
+        },
+      }).done(function(response, textStatus, jqXHR) {
+        if(response["errors"]){
+            console.log(response["errors"]);
+            alert('指定されたルームは存在しません。'); return;
+        }
+
+        var compareDate1 = $('#last_send_date').val();
+        var compareDate2 = calcDate(response.send_time);
+
+        if(compareDate1 != compareDate2){
+          $('#message_stream').append('<div class="information_box">' + compareDate2 + '</div>');
+          $('#last_send_date').val(compareDate2);
+        }
+
+        $('#message_stream').append(create_message(response));
       }).fail(function(jqXHR, textStatus, errorThrown ) {
         alert("Connection Error!");
         console.log("XMLHttpRequest : " + jqXHR.status);
@@ -289,19 +374,21 @@
         var user_name = value.user.name;
         var who = value.user.who;
         var icon = value.user.icon;
+        var hash = value.user.hash;
         var type = value.type;
-        var sendTime = value.send_time;
+        var sendTime = calcTime(value.send_time);
+        var sendDate = calcDate(value.send_time);
 
         var result = '';
         if(who == 'self'){
-            result = '<div class="question_box"><div class="question_image"><img src="assets/image/user_icon/' + icon + '.gif' + '" alt="' + user_name + '"/></div><p class="question_name">' + user_name + '　' + sendTime + '</p><div class="arrow_question">' + body + '<input type="hidden" class="message_id" value="' + message_id + '">' + '</div>';
+            result = '<div class="question_box"><div class="answer_image"><img src="assets/image/user_icon/' + icon + '.gif' + '" alt="' + user_name + '"/>' + '<div class="send_time">' + sendTime + '</div>' + '</div><p class="answer_name">' + user_name + '　' + hash + '</p><div class="arrow_answer">' + body + '<input type="hidden" class="message_id" value="' + message_id + '">' + '</div>';
         } else if(who == 'other') {
             if(type == 2){ // メッセージの場合
-                result = '<div class="question_box"><div class="answer_image"><img src="assets/image/user_icon/' + icon + '.gif' + '" alt="' + user_name + '"/></div><p class="answer_name">' + user_name + '　' + sendTime + '</p><div class="arrow_answer">' + body + '<input type="hidden" class="message_id" value="' + message_id + '">' + '</div>';
+                result = '<div class="question_box"><div class="question_image"><img src="assets/image/user_icon/' + icon + '.gif' + '" alt="' + user_name + '"/>' + '<div class="send_time">' + sendTime + '</div>' + '</div><p class="question_name">' + user_name + '　' + hash + '</p><div class="arrow_question">' + body + '<input type="hidden" class="message_id" value="' + message_id + '">' + '</div>';
             } else if(type == 3){ // 入室の場合
-                result = '<div class="question_box">' + body + ' さんが入室しました。' + '</div>';
+                result = '<div class="information_box">' + body + ' さんが入室しました。' + '</div>';
             } else if(type == 1){ // ルーム作成の場合
-                result = '<div class="question_box">' + body + ' が作成されました。' + '</div>';
+                result = '<div class="information_box">' + body + ' が作成されました。' + '</div>';
             }
         }
         return result;
@@ -324,5 +411,6 @@
 </div>
 <input type="hidden" id="room_hash">
 <input type="hidden" id="self_icon">
+<input type="hidden" id="last_send_date" value="">
 </body>
 </html>

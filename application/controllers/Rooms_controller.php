@@ -298,7 +298,7 @@ class Rooms_controller extends MY_Controller {
 
 		$last_read_message_id = $last_read_message_id < $begin_message_id ? $begin_message_id : $last_read_message_id;
 
-		$select_results = $this->db->select('m.message_id, u.name, u.user_id, u.icon_id, m.body, m.type, m.created_at')->from('messages as m')->join('users as u', 'u.user_id = m.user_id', 'inner')->where(array (
+		$select_results = $this->db->select('m.message_id, u.name, u.user_id, u.icon_id, u.user_hash, m.body, m.type, m.created_at')->from('messages as m')->join('users as u', 'u.user_id = m.user_id', 'inner')->where(array (
 			'm.room_id' => $room_id,
 			'm.message_id >' => $last_read_message_id,
 			'm.user_id <>' => $user_id
@@ -315,8 +315,9 @@ class Rooms_controller extends MY_Controller {
 			$temp_row['message_id'] = $row->message_id;
 			$temp_user_info = array ();
 			$temp_user_info['name'] = $row->name;
-			$temp_user_info['who'] = $row->user_id === $user_id ? "self" : "other";
+			$temp_user_info['who'] = $row->user_id == $user_id ? "self" : "other";
 			$temp_user_info['icon'] = $row->icon_id;
+			$temp_user_info['hash'] = $row->user_hash;
 			$temp_row['user'] = $temp_user_info;
 			$temp_row['body'] = $row->body;
 			$temp_row['type'] = $row->type;
@@ -339,6 +340,63 @@ class Rooms_controller extends MY_Controller {
 			'room_id' => $room_id
 		);
 		$this->db->insert('reads', $insert_data);
+
+		$this->db->trans_complete();
+
+		$this->output->set_json_output($data);
+	}
+
+	/**
+	 * チャットの指定のメッセージ一を取得。
+	 * GET
+	 */
+	public function select_message($room_hash, $message_id) {
+		$this->load->library('encrypt');
+
+		// ルームＩＤをデコードする
+		$room_data = $this->room_hash_decode($room_hash);
+
+		$this->load->database();
+
+		$room_id = $room_data['room_id'];
+		// 存在しないルームの場合
+		if ($this->db->from('rooms')->where(array ('room_id' => $room_id))->count_all_results() == 0) {
+			$this->output->set_json_error_output(array('It do not exist room.')); return;
+		}
+
+		$user_id = $room_data['user_id'];
+		// 存在しないユーザの場合
+		$row = $this->db->from('users')->where(array (
+			'user_id' => $user_id
+		))->get()->row();
+		if (empty ($row)) {
+			$data = array (
+				'error' => 'It do not exist user_id.'
+			);
+			$this->output->set_json_output($data);
+			return;
+		}
+
+		$row = $this->db->select('m.message_id, u.name, u.user_id, u.icon_id, u.user_hash, m.body, m.type, m.created_at')->from('messages as m')->join('users as u', 'u.user_id = m.user_id', 'inner')->where(array (
+			'm.message_id' => $message_id,
+		))->get()->row();
+
+		// デバッグ用
+		//$this->output->set_json_error_output(array($this->db->last_query())); return;
+
+		$data = array ();
+		if (!empty($row)) {
+			$data['message_id'] = $row->message_id;
+			$temp_user_info = array ();
+			$temp_user_info['name'] = $row->name;
+			$temp_user_info['who'] = $row->user_id == $user_id ? "self" : "other";
+			$temp_user_info['icon'] = $row->icon_id;
+			$temp_user_info['hash'] = $row->user_hash;
+			$data['user'] = $temp_user_info;
+			$data['body'] = $row->body;
+			$data['type'] = $row->type;
+			$data['send_time'] = $row->created_at;
+		}
 
 		$this->db->trans_complete();
 
@@ -390,7 +448,7 @@ class Rooms_controller extends MY_Controller {
 		$massage_count = $this->db->from('messages')->where(array ('room_id' => $room_id))->count_all_results();
 		$massage_begin = $massage_count > $limit ? $massage_count - $limit : 0;
 
-		$select_results = $this->db->select('m.message_id, u.name, u.user_id, u.icon_id, m.body, m.type, m.created_at')->from('messages as m')->join('users as u', 'u.user_id = m.user_id', 'inner')->where(array (
+		$select_results = $this->db->select('m.message_id, u.name, u.user_id, u.icon_id, u.user_hash, m.body, m.type, m.created_at')->from('messages as m')->join('users as u', 'u.user_id = m.user_id', 'inner')->where(array (
 			'm.room_id' => $room_id,
 		))->limit($limit, $massage_begin)->get()->result();
 
@@ -407,6 +465,7 @@ class Rooms_controller extends MY_Controller {
 			$temp_user_info['name'] = $row->name;
 			$temp_user_info['who'] = $row->user_id == $user_id ? "self" : "other";
 			$temp_user_info['icon'] = $row->icon_id;
+			$temp_user_info['hash'] = $row->user_hash;
 			$temp_row['user'] = $temp_user_info;
 			$temp_row['body'] = $row->body;
 			$temp_row['type'] = $row->type;

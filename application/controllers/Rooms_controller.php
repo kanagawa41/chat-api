@@ -580,7 +580,8 @@ class Rooms_controller extends MY_Controller {
 	 * POST
 	 */
 	private function create_specific_user($room_id, $name) {
-		if(empty($this->input->post('icon'))){
+		$icon_id = $this->input->post('icon');
+		if(empty($icon_id)){
 			// ユーザのアイコンＩＤを設定します。（アイコンＩＤを増やしたらコンフィグの値を変更する。）
 			$icon_id = rand(1, $this->config->item('icon_num'));
 		} else {

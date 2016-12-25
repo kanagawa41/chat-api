@@ -112,12 +112,6 @@
         $('#message_body').prop('disabled', false);
         $('#message_submit').prop('disabled', false);
 
-        //画面を一番下までスクロールする。
-        //アンドロイドのブラウザがＵＲＬ分の縦幅を途中でなくため誤作動が起きる。
-        setTimeout(function() {
-            window.scroll(0,$(document).height());
-        },0);
-
         getPastMessages();
       }).fail(function(jqXHR, textStatus, errorThrown ) {
         alert("Connection Error!");
@@ -159,9 +153,6 @@
             }
             $('#message_stream').append(create_message(value));
         });
-
-        // 一番下までスクロールする
-        $('#message_stream').animate({scrollTop: $('#message_stream')[0].scrollHeight}, 'fast');
 
         // 周期的にメッセージを取得する処理の発動
         setInterval(function(){
@@ -240,8 +231,6 @@
             $('#message_stream').append(create_message(value));
         });
 
-        // 一番下までスクロールする
-        $('#message_stream').animate({scrollTop: $('#message_stream')[0].scrollHeight}, 'fast');
       }).fail(function(jqXHR, textStatus, errorThrown ) {
         alert("Connection Error!");
         console.log("XMLHttpRequest : " + jqXHR.status);
@@ -367,10 +356,6 @@
         }
 
         $('#message_stream').append(create_message(response));
-
-        // 一番下までスクロールする
-        $('#message_stream').animate({scrollTop: $('#message_stream')[0].scrollHeight}, 'fast');
-
       }).fail(function(jqXHR, textStatus, errorThrown ) {
         alert("Connection Error!");
         console.log("XMLHttpRequest : " + jqXHR.status);
@@ -419,8 +404,7 @@
 <div id="message_stream">
 </div>
 <div id="message_input_area" class="input-group">
-    <!-- font-size:16pxはiphoneの入力時の拡大を避けるため -->
-    <input type="text" id="message_body" class="form-control input-xs" style="font-size:16px" placeholder="メッセージ">
+    <input type="text" id="message_body" class="form-control input-xs" placeholder="メッセージ">
     <span class="input-group-btn">
       <button type="button" class="btn btn-primary" id="message_submit" onclick="sendMessage();">送信</button>
     </span>

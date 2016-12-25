@@ -33,7 +33,7 @@ body {
 
 /* メッセージ表示範囲  */
 #message_stream{
-     background: #6f92c0;
+     background: #6f92c0; /* 入力欄の背景色と同一にする必要がある */
      margin: 0 auto;
      width: 100%;
      height: 60vh;
@@ -113,4 +113,8 @@ p.answer_name{text-align: right;}
      width: 100%;
      overflow: hidden;
      margin-bottom: 8%;
+}
+
+#message_input_area{
+     background: #6f92c0;　　/* メッセージ欄の背景色と同一にする必要がある */
 }

@@ -49,7 +49,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 | Examples:	my-controller/index	-> my_controller/index
 |		my-controller/my-method	-> my_controller/my_method
 */
-$route['default_controller'] = 'welcome';
+$route['default_controller'] = 'health_controller';
 $route['404_override'] = '';
 $route['translate_uri_dashes'] = FALSE;
 
@@ -65,3 +65,9 @@ $route['rooms/(:any)/messages/all']['get'] = 'rooms_controller/select_messages_a
 $route['rooms/(:any)/messages']['get'] = 'rooms_controller/select_messages/$1';
 $route['rooms/(:any)/messages/(:num)']['get'] = 'rooms_controller/select_message/$1/$2';
 $route['rooms/(:any)/messages']['post'] = 'rooms_controller/create_message/$1';
+
+/* APIのコントローラーを直接たたかせないために宣言。スラッシュで区切るパターン分の宣言が必要。 */
+$route[':any'] = 'errors_controller/error_404';
+$route[':any/:any'] = 'errors_controller/error_404';
+$route[':any/:any/:any'] = 'errors_controller/error_404';
+$route[':any/:any/:any/:any'] = 'errors_controller/error_404';

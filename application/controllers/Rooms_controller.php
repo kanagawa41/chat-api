@@ -19,13 +19,15 @@ class Rooms_controller extends MY_Controller {
 
 		$this->load->database();
 
-		$select_results = $this->db->select('room_id, name, description, updated_at')->from('rooms')->get()->result();
+		//$select_results = $this->db->select('room_id, name, description, updated_at')->from('rooms')->get()->result();
+		$select_results = $this->db->select('r.room_id, r.name, r.description, r.updated_at, u.user_id')->from('rooms as r')->join('users as u', 'u.room_id = r.room_id and u.user_role = 1', 'inner')->get()->result();
 
 		$data = array ();
 		foreach ($select_results as $row) {
 			$temp_row = array ();
 			$temp_row['room_id'] = $row->room_id;
-			$temp_row['room_anonymous_hash'] = $this->room_hash_encode($row->room_id, 0); // 匿名入室するための周知用のID
+			$temp_row['room_anonymous_hash'] = $this->room_hash_encode($row->room_id, 0); // 匿名入室するための周知用のハッシュ
+			$temp_row['room_admin_hash'] = $this->room_hash_encode($row->room_id, $row->user_id); // 管理者ユーザ
 			$temp_row['name'] = $row->name;
 			$temp_row['message_num'] = $this->db->from('messages')->where('room_id', $row->room_id)->count_all_results();
 			$temp_row['last_update_time'] = $row->updated_at;
@@ -178,7 +180,7 @@ class Rooms_controller extends MY_Controller {
 
 		$response_data = array (
 			'room_id' => $room_id,
-			'room_hash' => $this->room_hash_encode($room_id, 0), // 匿名入室するための周知用のID
+			'room_anonymous_hash' => $this->room_hash_encode($room_id, 0), // 匿名入室するための周知用のID
 			'room_admin_hash' => $this->room_hash_encode($room_id, $user_id), // 管理人で入室するための周知用のID
 		);
 
@@ -187,10 +189,12 @@ class Rooms_controller extends MY_Controller {
 	}
 
 	/**
-	 * チャットのメンバー一覧を取得
+	 * チャットのメンバー一覧を取得(トークンがあるなしで返却値が変わります)
 	 * GET
 	 */
 	public function select_users($room_hash) {
+		$token_flag = $this->exist_token();
+
 		// ルームＩＤをデコードする
 		$room_data = $this->room_hash_decode($room_hash);
 		$room_id = $room_data['room_id'];
@@ -210,6 +214,10 @@ class Rooms_controller extends MY_Controller {
 		foreach ($sql_result as $row) {
 			$temp_row = array ();
 			$temp_row['name'] = $row->name;
+			// 管理人が操作した場合
+			if($token_flag){
+				$temp_row['room_hash'] = $this->room_hash_encode($room_id, $row->user_id);
+			}
 
 			$data[] = $temp_row;
 		}

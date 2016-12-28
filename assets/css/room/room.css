@@ -31,6 +31,14 @@ body {
     left: 0;
 }
 
+#now_date {
+    position: fixed;
+    /* topはjsで算出 */
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff;
+}
+
 /* メッセージ表示範囲  */
 #message_stream{
      background: #6f92c0; /* 入力欄の背景色と同一にする必要がある */

@@ -16,10 +16,11 @@
 <script type="text/javascript" src="assets/js/slicknav/jquery.slicknav.min.js"></script>
 <script type="text/javascript" src="assets/js/bootstrap-v3-3-7/bootstrap.min.js"></script>
 <script type="text/javascript" src="assets/js/toastr/toastr.min.js"></script>
+<script type="text/javascript" src="assets/js/inview/jquery.inview.min.js"></script>
 
 <script type="text/javascript">
-    // 定期的にメッセージを取得するインターバル
-    var GET_MESSAGE_INTERVAL = 10000;
+    // メッセージ取得インターバル
+    var GET_MESSAGE_INTERVAL = 5500;
     // トースター情報
     var TOASTR = null;
     // メッセージ最後の座標
@@ -98,10 +99,13 @@
       　　// スリックバー作動
         $('#menu_navi').slicknav();
         var menuHeight = parseInt($('.slicknav_menu').outerHeight());
+        // スリックバーの詳細と被らないようにメッセージの表示位置を指定している。
         $('#message_stream').css('margin-top', menuHeight);
         $('#message_stream').css('height', 
           parseInt(screen.height) - (menuHeight + parseInt($('#message_input_area').height()))
         );
+        $('.slicknav_menu').after('<div id="now_date" style="top:' + (menuHeight + 10) + 'px;"></div>');
+
         $('.slicknav_btn').after('<div style="font-size: 1.5em; text-align: center;">' + response.name + '</div>');
 
         // ユーザが指定されている場合は、ユーザ情報を取得する。
@@ -181,16 +185,17 @@
             TOASTR["warning"]("入力エラー", "指定されたルームは存在しません。"); return;
         }
 
-        var compareDate1 = '';
+        var compareDate1 = null;
         response.forEach(function(value) {
             var compareDate2 = calcDate(value.send_time);
             if(compareDate1 != compareDate2){
-              $('#message_stream').append('<div class="information_box">' + compareDate2 + '</div>');
+              createDateMessage(value.send_time, compareDate2);
               compareDate1 = compareDate2;
-              $('#last_send_date').val(compareDate1);
             }
             $('#message_stream').append(create_message(value));
         });
+
+        $('#now_date').text(compareDate1);
 
         messageScrollButtom();
 
@@ -262,15 +267,14 @@
             TOASTR["warning"]("入力エラー", "指定されたルームは存在しません。"); return;
         }
 
-        var addCommendFlag = false;
+        var addCommendFlag = null;
         var compareDate1 = $('#last_send_date').val();
         response.forEach(function(value) {
-            addCommendFlag = true;
+            addCommendFlag = value.body;
             var compareDate2 = calcDate(value.send_time);
             if(compareDate1 != compareDate2){
-              $('#message_stream').append('<div class="information_box">' + compareDate2 + '</div>');
+              createDateMessage(value.send_time, compareDate2);
               compareDate1 = compareDate2;
-              $('#last_send_date').val(compareDate1);
             }
             $('#message_stream').append(create_message(value));
         });
@@ -278,7 +282,7 @@
         if(addCommendFlag){
           // メッセージの表示位置が最後と離れている場合
           if($('#message_stream div:last-child').offset().top != MESSAGE_Y_POSITION){
-            TOASTR["info"]('<a href="javascript:void(0);" class="clear" onclick="messageScrollButtom();">新着メッセージを確認</a>');
+            TOASTR["info"]('▼', '<a href="javascript:void(0);" class="clear" onclick="messageScrollButtom();">' + addCommendFlag + '</a>');
           } else {
             $('#message_stream').append(create_message(response));
             messageScrollButtom();
@@ -406,8 +410,7 @@
         var compareDate2 = calcDate(response.send_time);
 
         if(compareDate1 != compareDate2){
-          $('#message_stream').append('<div class="information_box">' + compareDate2 + '</div>');
-          $('#last_send_date').val(compareDate2);
+          createDateMessage(response.send_time, compareDate2);
         }
 
         var message = create_message(response);
@@ -457,6 +460,20 @@
         }
 
         return result;
+    }
+
+    /**
+     * 日付メッセージの表示共通処理
+     */
+    function createDateMessage(rawDateValue, dateValue){
+        var id = rawDateValue.split(' ')[0];
+        $('#message_stream').append('<div class="information_box" id="' + id + '">' + dateValue + '</div>');
+        $('#' + id).on('inview', function(event, isInView, visiblePartX, visiblePartY) {
+            if (isInView) { //要素が見えたときに実行する処理
+                $('#now_date').text(dateValue);
+            }
+        });
+        $('#last_send_date').val(dateValue);
     }
     
     /**

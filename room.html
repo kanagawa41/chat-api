@@ -141,6 +141,8 @@
         $('#message_body').prop('disabled', false);
         $('#message_submit').prop('disabled', false);
 
+        $('#message_submit').height($('#message_body').height());
+
         //画面を一番下までスクロールする。
         //アンドロイドのブラウザがＵＲＬ分の縦幅を途中でなくため誤作動が起きる。
         setTimeout(function() {
@@ -190,9 +192,7 @@
             $('#message_stream').append(create_message(value));
         });
 
-        // 一番下までスクロールする
-        $('#message_stream').animate({scrollTop: $('#message_stream')[0].scrollHeight}, 'fast');
-        MESSAGE_Y_POSITION = $('#message_stream div:last-child').offset().top;
+        messageScrollButtom();
 
         // 周期的にメッセージを取得する処理の発動
         setInterval(function(){
@@ -276,9 +276,13 @@
         });
 
         if(addCommendFlag){
-          // 一番下までスクロールする
-          $('#message_stream').animate({scrollTop: $('#message_stream')[0].scrollHeight}, 'fast');
-          MESSAGE_Y_POSITION = $('#message_stream div:last-child').offset().top;
+          // メッセージの表示位置が最後と離れている場合
+          if($('#message_stream div:last-child').offset().top != MESSAGE_Y_POSITION){
+            TOASTR["info"]('<a href="javascript:void(0);" class="clear" onclick="messageScrollButtom();">新着メッセージを確認</a>');
+          } else {
+            $('#message_stream').append(create_message(response));
+            messageScrollButtom();
+          }
         }
       }).fail(function(jqXHR, textStatus, errorThrown ) {
         TOASTR["error"]("システムエラー", "接続が正しく行われませんでした。");
@@ -292,7 +296,7 @@
 
     function calcDate(date_str){
       //文字列からミリ秒を取得
-      var time = Date.parse(date_str);
+      var time = Date.parse(date_str.replace(/-/g,"/"));
 
       //ミリ秒から日付を求める
       var date = new Date();
@@ -318,7 +322,7 @@
 
     function calcTime(date_str){
       //文字列からミリ秒を取得
-      var time = Date.parse(date_str);
+      var time = Date.parse(date_str.replace(/-/g,"/"));
 
       //ミリ秒から日付を求める
       var date = new Date();
@@ -408,13 +412,8 @@
 
         var message = create_message(response);
         if(message != null){
-          // メッセージの表示位置が最後と離れている場合
-          if($('#message_stream div:last-child').offset().top != MESSAGE_Y_POSITION){
-            TOASTR["info"]('新着メッセージ<button type="button" class="btn clear" onclick="messageScrollButtom()">メッセージを確認する</button>');
-          } else {
             $('#message_stream').append(create_message(response));
             messageScrollButtom();
-          }
         }
       }).fail(function(jqXHR, textStatus, errorThrown ) {
         TOASTR["error"]("システムエラー", "接続が正しく行われませんでした。");
@@ -431,7 +430,7 @@
      */
     function create_message(value){
         var message_id = value.message_id;
-        var body = value.body;
+        var body = value.body.replace(/\n/g, '<br>'); // 改行コード置換
         var user_name = value.user.name;
         var who = value.user.who;
         var icon = value.user.icon;
@@ -480,7 +479,7 @@
 </div>
 <div id="message_input_area" class="input-group">
     <!-- font-size:16pxはiphoneの入力時の拡大を避けるため -->
-    <input type="text" id="message_body" class="form-control input-xs" style="font-size:16px" placeholder="メッセージ">
+    <textarea id="message_body" class="form-control input-xs" style="font-size:16px" placeholder="メッセージ"></textarea>
     <span class="input-group-btn">
       <button type="button" class="btn btn-primary" id="message_submit" onclick="sendMessage();">送信</button>
     </span>

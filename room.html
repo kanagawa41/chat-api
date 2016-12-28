@@ -10,15 +10,44 @@
 <link rel="stylesheet" type="text/css" href="assets/css/room/room.css">
 <link rel="stylesheet" type="text/css" href="assets/css/slicknav/slicknav.css">
 <link rel="stylesheet" type="text/css" href="assets/css/bootstrap-v3-3-7/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="assets/css/toastr/toastr.min.css"/>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
 <script type="text/javascript" src="assets/js/common/http-input.js"></script>
 <script type="text/javascript" src="assets/js/slicknav/jquery.slicknav.min.js"></script>
 <script type="text/javascript" src="assets/js/bootstrap-v3-3-7/bootstrap.min.js"></script>
+<script type="text/javascript" src="assets/js/toastr/toastr.min.js"></script>
+
 <script type="text/javascript">
+    // 定期的にメッセージを取得するインターバル
     var GET_MESSAGE_INTERVAL = 10000;
+    // トースター情報
+    var TOASTR = null;
+    // メッセージ最後の座標
+    var MESSAGE_Y_POSITION = null;
 
     $(document).ready(function(){
         /* FIXME 画面を開いたときから制御不能状態のマスクをかけたい */
+
+        // トースター
+        toastr.options.timeOut = 3000;
+        toastr.options = {
+          "closeButton": true,
+          "debug": false,
+          "newestOnTop": true,
+          "progressBar": false,
+          "positionClass": "toast-top-full-width",
+          "preventDuplicates": false,
+          "showDuration": "300",
+          "hideDuration": "1000",
+          "timeOut": "5000",
+          "extendedTimeOut": "1000",
+          "showEasing": "swing",
+          "hideEasing": "linear",
+          "showMethod": "fadeIn",
+          "hideMethod": "fadeOut",
+          "tapToDismiss": false
+        }
+        TOASTR = toastr;
 
         var params = HttpInput.getParams();
 
@@ -35,7 +64,7 @@
       user_name = window.prompt("ユーザー名を入力してください", "");
 
       if(user_name == '' || user_name == null){
-        alert('名前が入力されていません。');
+        TOASTR["warning"]("初期設定エラー", "使用するユーザ名が入力されていません。");
       }　else　{
         $('#user_name').val(user_name);
         intoRoom();
@@ -61,7 +90,7 @@
       }).done(function(response, textStatus, jqXHR) {
         if(response["errors"]){
             console.log(response["errors"]);
-            alert('指定されたルームは存在しません。'); return;
+            TOASTR["warning"]("入力エラー", "指定されたルームは存在しません。"); return;
         }
         $('#description').text(response.description);
         $('#room_hash').val(room_hash);
@@ -120,8 +149,9 @@
 
         getPastMessages();
       }).fail(function(jqXHR, textStatus, errorThrown ) {
-        alert("Connection Error!");
-        console.log("XMLHttpRequest : " + XMLHttpRequest.status);
+        TOASTR["error"]("システムエラー", "接続が正しく行われませんでした。");
+
+        console.log("XMLHttpRequest : " + jqXHR.status);
         console.log("textStatus : " + textStatus);
         console.log("errorThrown : " + errorThrown.message);
       }).always(function(data_or_jqXHR, textStatus, jqXHR_or_errorThrown) {
@@ -146,7 +176,7 @@
       }).done(function(response, textStatus, jqXHR) {
         if(response["errors"]){
             console.log(response["errors"]);
-            alert('指定されたルームは存在しません。'); return;
+            TOASTR["warning"]("入力エラー", "指定されたルームは存在しません。"); return;
         }
 
         var compareDate1 = '';
@@ -162,13 +192,15 @@
 
         // 一番下までスクロールする
         $('#message_stream').animate({scrollTop: $('#message_stream')[0].scrollHeight}, 'fast');
+        MESSAGE_Y_POSITION = $('#message_stream div:last-child').offset().top;
 
         // 周期的にメッセージを取得する処理の発動
         setInterval(function(){
            getMessages();
         }, GET_MESSAGE_INTERVAL);
       }).fail(function(jqXHR, textStatus, errorThrown ) {
-        alert("Connection Error!");
+        TOASTR["error"]("システムエラー", "接続が正しく行われませんでした。");
+
         console.log("XMLHttpRequest : " + jqXHR.status);
         console.log("textStatus : " + textStatus);
         console.log("errorThrown : " + errorThrown.message);
@@ -195,12 +227,13 @@
       }).done(function(response, textStatus, jqXHR) {
         if(response["errors"]){
             console.log(response["errors"]);
-            alert('指定されたルームは存在しません。'); return;
+            TOASTR["warning"]("入力エラー", "指定されたルームは存在しません。"); return;
         }
         window.location.href = window.location.href.split('?')[0] + "?room=" + response.room_hash;
 
       }).fail(function(jqXHR, textStatus, errorThrown ) {
-        alert("Connection Error!");
+        TOASTR["error"]("システムエラー", "接続が正しく行われませんでした。");
+
         console.log("XMLHttpRequest : " + jqXHR.status);
         console.log("textStatus : " + textStatus);
         console.log("errorThrown : " + errorThrown.message);
@@ -226,11 +259,13 @@
       }).done(function(response, textStatus, jqXHR) {
         if(response["errors"]){
             console.log(response["errors"]);
-            alert('指定されたルームは存在しません。'); return;
+            TOASTR["warning"]("入力エラー", "指定されたルームは存在しません。"); return;
         }
 
+        var addCommendFlag = false;
         var compareDate1 = $('#last_send_date').val();
         response.forEach(function(value) {
+            addCommendFlag = true;
             var compareDate2 = calcDate(value.send_time);
             if(compareDate1 != compareDate2){
               $('#message_stream').append('<div class="information_box">' + compareDate2 + '</div>');
@@ -240,10 +275,14 @@
             $('#message_stream').append(create_message(value));
         });
 
-        // 一番下までスクロールする
-        $('#message_stream').animate({scrollTop: $('#message_stream')[0].scrollHeight}, 'fast');
+        if(addCommendFlag){
+          // 一番下までスクロールする
+          $('#message_stream').animate({scrollTop: $('#message_stream')[0].scrollHeight}, 'fast');
+          MESSAGE_Y_POSITION = $('#message_stream div:last-child').offset().top;
+        }
       }).fail(function(jqXHR, textStatus, errorThrown ) {
-        alert("Connection Error!");
+        TOASTR["error"]("システムエラー", "接続が正しく行われませんでした。");
+
         console.log("XMLHttpRequest : " + jqXHR.status);
         console.log("textStatus : " + textStatus);
         console.log("errorThrown : " + errorThrown.message);
@@ -324,12 +363,13 @@
       }).done(function(response, textStatus, jqXHR) {
         if(response["errors"]){
             console.log(response["errors"]);
-            alert('指定されたルームは存在しません。'); return;
+            TOASTR["warning"]("入力エラー", "指定されたルームは存在しません。"); return;
         }
 
         getMessage(response.message_id);
       }).fail(function(jqXHR, textStatus, errorThrown ) {
-        alert("Connection Error!");
+        TOASTR["error"]("システムエラー", "接続が正しく行われませんでした。");
+
         console.log("XMLHttpRequest : " + jqXHR.status);
         console.log("textStatus : " + textStatus);
         console.log("errorThrown : " + errorThrown.message);
@@ -355,7 +395,7 @@
       }).done(function(response, textStatus, jqXHR) {
         if(response["errors"]){
             console.log(response["errors"]);
-            alert('指定されたルームは存在しません。'); return;
+            TOASTR["warning"]("入力エラー", "指定されたルームは存在しません。"); return;
         }
 
         var compareDate1 = $('#last_send_date').val();
@@ -366,13 +406,19 @@
           $('#last_send_date').val(compareDate2);
         }
 
-        $('#message_stream').append(create_message(response));
-
-        // 一番下までスクロールする
-        $('#message_stream').animate({scrollTop: $('#message_stream')[0].scrollHeight}, 'fast');
-
+        var message = create_message(response);
+        if(message != null){
+          // メッセージの表示位置が最後と離れている場合
+          if($('#message_stream div:last-child').offset().top != MESSAGE_Y_POSITION){
+            TOASTR["info"]('新着メッセージ<button type="button" class="btn clear" onclick="messageScrollButtom()">メッセージを確認する</button>');
+          } else {
+            $('#message_stream').append(create_message(response));
+            messageScrollButtom();
+          }
+        }
       }).fail(function(jqXHR, textStatus, errorThrown ) {
-        alert("Connection Error!");
+        TOASTR["error"]("システムエラー", "接続が正しく行われませんでした。");
+
         console.log("XMLHttpRequest : " + jqXHR.status);
         console.log("textStatus : " + textStatus);
         console.log("errorThrown : " + errorThrown.message);
@@ -395,20 +441,34 @@
         var sendDate = calcDate(value.send_time);
 
         var result = '';
-        if(who == 'self'){
-            result = '<div class="question_box"><div class="answer_image"><img src="assets/image/user_icon/' + icon + '.gif' + '" alt="' + user_name + '"/>' + '<div class="send_time">' + sendTime + '</div>' + '</div><p class="answer_name">' + user_name + '　' + hash + '</p><div class="arrow_answer">' + body + '<input type="hidden" class="message_id" value="' + message_id + '">' + '</div>';
-        } else if(who == 'other') {
-            if(type == 2){ // メッセージの場合
+
+        if(type == 3){ // 入室の場合
+            result = '<div class="information_box">' + body + ' さんが入室しました。' + '</div>';
+        } else if(type == 1){ // ルーム作成の場合
+            //bodyに部屋名が入力されているが、部屋名を表示すると途中で部屋名を変更したときの齟齬の調整が面倒なので表示しない。
+            result = '<div class="information_box">ルームが作成されました。' + '</div>'; 
+        }　else if(type == 2){ // メッセージの場合
+            if(who == 'self'){
+                result = '<div class="question_box"><div class="answer_image"><img src="assets/image/user_icon/' + icon + '.gif' + '" alt="' + user_name + '"/>' + '<div class="send_time">' + sendTime + '</div>' + '</div><p class="answer_name">' + user_name + '　' + hash + '</p><div class="arrow_answer">' + body + '<input type="hidden" class="message_id" value="' + message_id + '">' + '</div>';
+            } else if(who == 'other') {
                 result = '<div class="question_box"><div class="question_image"><img src="assets/image/user_icon/' + icon + '.gif' + '" alt="' + user_name + '"/>' + '<div class="send_time">' + sendTime + '</div>' + '</div><p class="question_name">' + user_name + '　' + hash + '</p><div class="arrow_question">' + body + '<input type="hidden" class="message_id" value="' + message_id + '">' + '</div>';
-            } else if(type == 3){ // 入室の場合
-                result = '<div class="information_box">' + body + ' さんが入室しました。' + '</div>';
-            } else if(type == 1){ // ルーム作成の場合
-                result = '<div class="information_box">' + body + ' が作成されました。' + '</div>';
             }
+        } else {
+            return null;
         }
+
         return result;
     }
     
+    /**
+     * メッセージ欄を一番下までスクロールする
+     */
+    function messageScrollButtom(){
+        // 一番下までスクロールする
+        $('#message_stream').animate({scrollTop: $('#message_stream')[0].scrollHeight}, 'fast');
+        MESSAGE_Y_POSITION = $('#message_stream div:last-child').offset().top;
+    }
+
 </script>
 </head>
 <body>

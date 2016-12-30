@@ -48,8 +48,8 @@ class MY_Controller extends CI_Controller
 	 * TODO ここに宣言すると呼び出せてしまうのでhelperなどに移動する。
 	 * 
 	 */
-	public function room_hash_encode($room_id, $user_id) {
-		return $this->base64_urlsafe_encode($room_id . '_' . $user_id);
+	public function room_hash_encode($room_id, $role, $user_id) {
+		return $this->base64_urlsafe_encode($room_id . '_' . $role . '_' . $user_id);
 	}
 
 	/**
@@ -63,14 +63,16 @@ class MY_Controller extends CI_Controller
 		$room_data = explode("_", $raw_room_data);
 
 		// 部屋情報が２つでない場合は異常値
-		if(count($room_data) == 2) {
+		if(count($room_data) == 3) {
 			return array(
 					'room_id' => $room_data[0]
-					, 'user_id' => $room_data[1]
+					, 'role' => $room_data[1]
+					, 'user_id' => $room_data[2]
 			);
 		} else {
 			return array(
 					'room_id' => ''
+					, 'role' => ''
 					, 'user_id' => ''
 			);
 		}

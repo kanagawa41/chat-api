@@ -56,7 +56,6 @@ body {
     border: 1px solid #c8c8c8;
     border-radius: 10px;
     width:85%;
-    font-size: 11px;
     padding:3%;
 }
 
@@ -102,7 +101,7 @@ body {
 
 p.question_name,
 p.answer_name{
-     font-size: 14px;
+     font-size: 11px;
      color: #fff;
      margin:0;
 }
@@ -111,6 +110,7 @@ p.answer_name{text-align: right;}
 
 .send_time{
     text-align: center;
+    font-size: 11px;
     color: #fff;
 }
 

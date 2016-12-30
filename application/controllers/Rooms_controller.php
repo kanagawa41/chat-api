@@ -19,15 +19,15 @@ class Rooms_controller extends MY_Controller {
 
 		$this->load->database();
 
-		//$select_results = $this->db->select('room_id, name, description, updated_at')->from('rooms')->get()->result();
 		$select_results = $this->db->select('r.room_id, r.name, r.description, r.updated_at, u.user_id')->from('rooms as r')->join('users as u', 'u.room_id = r.room_id and u.user_role = 1', 'inner')->get()->result();
 
 		$data = array ();
 		foreach ($select_results as $row) {
 			$temp_row = array ();
 			$temp_row['room_id'] = $row->room_id;
-			$temp_row['room_anonymous_hash'] = $this->room_hash_encode($row->room_id, 0); // 匿名入室するための周知用のハッシュ
-			$temp_row['room_admin_hash'] = $this->room_hash_encode($row->room_id, $row->user_id); // 管理者ユーザ
+			$temp_row['room_admin_hash'] = $this->room_hash_encode($row->room_id, 1, $row->user_id); // 管理者ユーザで入室するためのハッシュ
+			$temp_row['room_specificuser_hash'] = $this->room_hash_encode($row->room_id, 2, 0); // 特定ユーザで入室するための周知用のハッシュ
+			$temp_row['room_anonymous_hash'] = $this->room_hash_encode($row->room_id, 3, 0); // 匿名入室するための周知用のハッシュ
 			$temp_row['name'] = $row->name;
 			$temp_row['message_num'] = $this->db->from('messages')->where('room_id', $row->room_id)->count_all_results();
 			$temp_row['last_update_time'] = $row->updated_at;
@@ -156,7 +156,7 @@ class Rooms_controller extends MY_Controller {
 		$admin_name = $this->config->item('admin_name');
 		
 		// 管理者ユーザを生成する。
-		$user_id = $this->user->insert_user($admin_name, $room_id, 1, 0);
+		$user_id = $this->user->insert_user($admin_name, $room_id, 1, 0, null, 0);
 
 		$insert_data = array(
 		   'user_id' => $user_id ,
@@ -179,9 +179,7 @@ class Rooms_controller extends MY_Controller {
 		$this->db->insert('messages', $data);
 
 		$response_data = array (
-			'room_id' => $room_id,
-			'room_anonymous_hash' => $this->room_hash_encode($room_id, 0), // 匿名入室するための周知用のID
-			'room_admin_hash' => $this->room_hash_encode($room_id, $user_id), // 管理人で入室するための周知用のID
+			'room_id' => $room_id
 		);
 
 		//$dataをJSONにして返す
@@ -253,6 +251,7 @@ class Rooms_controller extends MY_Controller {
 
 		$data = array ();
 		$data['name'] = $row->name;
+		$data['sex'] = $row->sex;
 		$data['icon'] = $row->icon_id;
 		$data['message_count'] = $message_count;
 		$data['begin_message_id'] = $row->begin_message_id;
@@ -549,19 +548,20 @@ class Rooms_controller extends MY_Controller {
 	 * POST
 	 */
 	public function create_user($room_hash) {
-		$specific_user_flg = $this->input->post('specific_user_flg');
-
-		// 特定ユーザを生成しようとするがトークンが存在しない
-		if($this->input->post('specific_user_flg') === '1' && !$this->exist_token()){
-			$this->output->set_json_error_output(array('You do not admit to create specific-user.')); return;
-		}
-
 		// ルームＩＤをデコードする
 		$room_data = $this->room_hash_decode($room_hash);
 		$room_id = $room_data['room_id'];
 
 		if (empty($room_id)) {
 			$this->output->set_json_error_output(array('It do not exist room_id.')); return;
+		}
+
+		$role = $room_data['role'];
+
+		if($role === '1') { // 管理人ハッシュで生成しようとした場合
+			$this->output->set_json_error_output(array('This is hash of admin. It is not admit to create other user.')); return;
+		} else if(!in_array($role, array('2', '3')) || $room_data['user_id'] !== '0') { // 特定ユーザ、アノニマスユーザ以外が指定
+			$this->output->set_json_error_output(array('This is not right hash.')); return;
 		}
 		
 		$this->load->database();
@@ -576,9 +576,18 @@ class Rooms_controller extends MY_Controller {
 			$this->output->set_json_error_output(array('Scarce value as "name".')); return;
 		}
 
-		if($specific_user_flg === '1'){
+		$select_count = $this->db->select('*')->from('users')->where(array (
+			'room_id' => $room_id,
+			'fingerprint' => $this->input->post('fingerprint'),
+		))->count_all_results();
+
+		if($select_count > 0){
+			$this->output->set_json_error_output(array('User already exist.')); return;
+		}
+
+		if($role === '2'){ // 特定ユーザ
 			$this->output->set_json_output($this->create_specific_user($room_id, $name)); return;
-		} else {
+		} else { // アノニマスユーザ
 			$this->output->set_json_output($this->create_anonymous_user($room_id, $name)); return;
 		}
 	}
@@ -589,6 +598,7 @@ class Rooms_controller extends MY_Controller {
 	 */
 	private function create_specific_user($room_id, $name) {
 		$icon_id = $this->input->post('icon');
+		$sex = $this->input->post('sex');
 		if(empty($icon_id)){
 			// ユーザのアイコンＩＤを設定します。（アイコンＩＤを増やしたらコンフィグの値を変更する。）
 			$icon_id = rand(1, $this->config->item('icon_num'));
@@ -600,17 +610,16 @@ class Rooms_controller extends MY_Controller {
 		$this->db->trans_start();
 
 		// 特定ユーザを生成する。
-		$user_id = $this->user->insert_user($name, $room_id, 2, $icon_id);
+		$user_id = $this->user->insert_user($name, $room_id, 2, $this->input->post('fingerprint'), $sex, $icon_id);
 
-		// ルームに入った際のメッセージＩＤ～未読のメッセージＩＤまで
-		$select_result = $this->db->select('user_hash')->from('users')->where(array (
+		$select_result = $this->db->select('*')->from('users')->where(array (
 			'user_id' => $user_id,
 		))->get()->row();
 
 		$this->db->trans_complete();
 
 		$data = array (
-			'room_hash' => $this->room_hash_encode($room_id, $user_id), // ユーザ専用のハッシュ値を生成する
+			'room_hash' => $this->room_hash_encode($room_id, 2, $user_id), // ユーザ専用のハッシュ値を生成する
 			'user_hash' => $select_result->user_hash
 		);
 
@@ -629,9 +638,8 @@ class Rooms_controller extends MY_Controller {
 		$this->db->trans_start();
 
 		// アノニマスユーザを生成する。
-		$user_id = $this->user->insert_user($name, $room_id, 3, $icon_id);
+		$user_id = $this->user->insert_user($name, $room_id, 3, $this->input->post('fingerprint'), $this->input->post('sex'),$icon_id);
 
-		// ルームに入った際のメッセージＩＤ～未読のメッセージＩＤまで
 		$select_result = $this->db->select('user_hash')->from('users')->where(array (
 			'user_id' => $user_id,
 		))->get()->row();
@@ -639,7 +647,7 @@ class Rooms_controller extends MY_Controller {
 		$this->db->trans_complete();
 
 		$data = array (
-			'room_hash' => $this->room_hash_encode($room_id, $user_id), // ユーザ専用のハッシュ値を生成する
+			'room_hash' => $this->room_hash_encode($room_id, 3, $user_id), // ユーザ専用のハッシュ値を生成する
 			'user_hash' => $select_result->user_hash
 		);
 

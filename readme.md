@@ -50,9 +50,11 @@ CREATE TABLE users (
     user_hash STRING NOT NULL, --ユーザハッシュ
     user_role INTEGER DEFAULT 3, --ユーザロール(1…admin, 2…specific-user, 3…anonymous)
     name STRING NOT NULL, --ユーザ名
+    sex STRING, --性別(1…男, 2…女)
     room_id INTEGER, --ルームＩＤ
     begin_message_id INTEGER, --入室した際の開始メッセージＩＤ
     icon_id INTEGER, --アイコンＩＤ
+    fingerprint INTEGER, --フィンガープリント
     user_agent STRING, --ユーザエージェント
     ip_address STRING, --ユーザのアドレス
     port INTEGER, --ユーザのポート
@@ -335,6 +337,8 @@ http://chat/rooms/FJOIngow2489u53345lFEklEC
 
 
 # TODO
+
+### ●画面のほうを新しいユーザ生成方法に対応させる。（roomid_role_userid）
 
 ### ●ルームの画面にラインみたく日付を表示する。（https://github.com/protonet/jquery.inview）
 

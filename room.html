@@ -17,6 +17,7 @@
 <script type="text/javascript" src="assets/js/bootstrap-v3-3-7/bootstrap.min.js"></script>
 <script type="text/javascript" src="assets/js/toastr/toastr.min.js"></script>
 <script type="text/javascript" src="assets/js/inview/jquery.inview.min.js"></script>
+<script type="text/javascript" src="assets/js/fingerprint/fingerprint.js"></script>
 
 <script type="text/javascript">
     // メッセージ取得インターバル
@@ -25,9 +26,14 @@
     var TOASTR = null;
     // メッセージ最後の座標
     var MESSAGE_Y_POSITION = null;
+    // フィンガープリント
+    var FINGERPRINT = null;
 
     $(document).ready(function(){
         /* FIXME 画面を開いたときから制御不能状態のマスクをかけたい */
+
+        var fp = new Fingerprint();
+        FINGERPRINT = fp.get();
 
         // トースター
         toastr.options.timeOut = 3000;
@@ -56,21 +62,23 @@
         existRoom(room_hash);
     });
     
-    /**
-     * FIXME もっとかっこいいダイアログに変更する。
-     * 入室ダイアログを表示する。
-     */
-    function inRoomInputDisplay(){
-      // 入力ダイアログを表示 ＋ 入力内容を user に代入
-      user_name = window.prompt("ユーザー名を入力してください", "");
+    function validUserInfo(){
+        var userName = $('#name').val();
+        if(userName == ''){
+          TOASTR["warning"]("使用するユーザ名が入力されていません。", "入力エラー"); return;
+        } 
 
-      if(user_name == '' || user_name == null){
-        TOASTR["warning"]("初期設定エラー", "使用するユーザ名が入力されていません。");
-      }　else　{
-        $('#user_name').val(user_name);
+        var sex = $('[class="sex"]:checked').map(function(){
+          return $(this).val();
+        }).get();
+
+        if(sex == null){
+          TOASTR["warning"]("性別が選択されていません。", "入力エラー"); return;
+        }
+
+        $('#user_name').val(userName);
+        $('#user_sex').val(sex[0]);
         intoRoom();
-      }
-
     }
 
     /**
@@ -91,7 +99,7 @@
       }).done(function(response, textStatus, jqXHR) {
         if(response["errors"]){
             console.log(response["errors"]);
-            TOASTR["warning"]("入力エラー", "指定されたルームは存在しません。"); return;
+            TOASTR["warning"]("指定されたルームは存在しません。", "入力エラー"); return;
         }
         $('#description').text(response.description);
         $('#room_hash').val(room_hash);
@@ -106,7 +114,13 @@
         );
         $('.slicknav_menu').after('<div id="now_date" style="top:' + (menuHeight + 10) + 'px;"></div>');
 
-        $('.slicknav_btn').after('<div style="font-size: 1.5em; text-align: center;">' + response.name + '</div>');
+        var titleName = null;
+        if(response.name.length > 8){
+          titleName = response.name.substring(0, 8) + '...';
+        } else {
+          titleName　= response.name;
+        }
+        $('.slicknav_btn').after('<div style="font-size: 0.9em; text-align: center; line-height: ' + parseInt($('.slicknav_menu').height()) + 'px;">' + titleName　+ '</div>');
 
         // ユーザが指定されている場合は、ユーザ情報を取得する。
         existUser(room_hash);
@@ -136,10 +150,11 @@
         },
       }).done(function(response, textStatus, jqXHR) {
         if(response["errors"]){
-            inRoomInputDisplay();
-            return;
+            //ユーザ情報入力モーダルを表示
+            $('#input-modal').modal('show'); return;
         }
         $('#user_name').val(response.name);
+        $('#user_sex').val(response.sex);
         $('#self_icon').val(response.icon);
 
         $('#message_body').prop('disabled', false);
@@ -155,7 +170,7 @@
 
         getPastMessages();
       }).fail(function(jqXHR, textStatus, errorThrown ) {
-        TOASTR["error"]("システムエラー", "接続が正しく行われませんでした。");
+        TOASTR["error"]("接続が正しく行われませんでした。", "システムエラー");
 
         console.log("XMLHttpRequest : " + jqXHR.status);
         console.log("textStatus : " + textStatus);
@@ -182,7 +197,7 @@
       }).done(function(response, textStatus, jqXHR) {
         if(response["errors"]){
             console.log(response["errors"]);
-            TOASTR["warning"]("入力エラー", "指定されたルームは存在しません。"); return;
+            TOASTR["warning"]("指定されたルームは存在しません。", "入力エラー"); return;
         }
 
         var compareDate1 = null;
@@ -204,7 +219,7 @@
            getMessages();
         }, GET_MESSAGE_INTERVAL);
       }).fail(function(jqXHR, textStatus, errorThrown ) {
-        TOASTR["error"]("システムエラー", "接続が正しく行われませんでした。");
+        TOASTR["error"]("接続が正しく行われませんでした。", "システムエラー");
 
         console.log("XMLHttpRequest : " + jqXHR.status);
         console.log("textStatus : " + textStatus);
@@ -223,7 +238,9 @@
         timeout: 10000,
         cache: false,
         data: {
-            name : $('#user_name').val()
+            name : $('#user_name').val(),
+            sex : $('#user_sex').val(),
+            fingerprint : FINGERPRINT
         },
         dataType: 'json',
         beforeSend: function(jqXHR) {
@@ -232,12 +249,16 @@
       }).done(function(response, textStatus, jqXHR) {
         if(response["errors"]){
             console.log(response["errors"]);
-            TOASTR["warning"]("入力エラー", "指定されたルームは存在しません。"); return;
+            if(response["errors"][0] == 'User already exist.'){
+              TOASTR["warning"]("既にユーザは作成されています。", "重複登録エラー"); return;
+            } else {
+              TOASTR["warning"]("指定されたルームは存在しません。", "入力エラー"); return;
+            }
         }
         window.location.href = window.location.href.split('?')[0] + "?room=" + response.room_hash;
 
       }).fail(function(jqXHR, textStatus, errorThrown ) {
-        TOASTR["error"]("システムエラー", "接続が正しく行われませんでした。");
+        TOASTR["error"]("接続が正しく行われませんでした。", "システムエラー");
 
         console.log("XMLHttpRequest : " + jqXHR.status);
         console.log("textStatus : " + textStatus);
@@ -264,7 +285,7 @@
       }).done(function(response, textStatus, jqXHR) {
         if(response["errors"]){
             console.log(response["errors"]);
-            TOASTR["warning"]("入力エラー", "指定されたルームは存在しません。"); return;
+            TOASTR["warning"]("指定されたルームは存在しません。", "入力エラー"); return;
         }
 
         var addCommendFlag = null;
@@ -282,14 +303,14 @@
         if(addCommendFlag){
           // メッセージの表示位置が最後と離れている場合
           if($('#message_stream div:last-child').offset().top != MESSAGE_Y_POSITION){
-            TOASTR["info"]('▼', '<a href="javascript:void(0);" class="clear" onclick="messageScrollButtom();">' + addCommendFlag + '</a>');
+            TOASTR["info"]('<a href="javascript:void(0);" class="clear" onclick="messageScrollButtom();">' + addCommendFlag + '</a>', '▼');
           } else {
             $('#message_stream').append(create_message(response));
             messageScrollButtom();
           }
         }
       }).fail(function(jqXHR, textStatus, errorThrown ) {
-        TOASTR["error"]("システムエラー", "接続が正しく行われませんでした。");
+        TOASTR["error"]("接続が正しく行われませんでした。", "システムエラー");
 
         console.log("XMLHttpRequest : " + jqXHR.status);
         console.log("textStatus : " + textStatus);
@@ -371,12 +392,12 @@
       }).done(function(response, textStatus, jqXHR) {
         if(response["errors"]){
             console.log(response["errors"]);
-            TOASTR["warning"]("入力エラー", "指定されたルームは存在しません。"); return;
+            TOASTR["warning"]("指定されたルームは存在しません。", "入力エラー"); return;
         }
 
         getMessage(response.message_id);
       }).fail(function(jqXHR, textStatus, errorThrown ) {
-        TOASTR["error"]("システムエラー", "接続が正しく行われませんでした。");
+        TOASTR["error"]("接続が正しく行われませんでした。", "システムエラー");
 
         console.log("XMLHttpRequest : " + jqXHR.status);
         console.log("textStatus : " + textStatus);
@@ -403,7 +424,7 @@
       }).done(function(response, textStatus, jqXHR) {
         if(response["errors"]){
             console.log(response["errors"]);
-            TOASTR["warning"]("入力エラー", "指定されたルームは存在しません。"); return;
+            TOASTR["warning"]("指定されたルームは存在しません。", "入力エラー"); return;
         }
 
         var compareDate1 = $('#last_send_date').val();
@@ -419,7 +440,7 @@
             messageScrollButtom();
         }
       }).fail(function(jqXHR, textStatus, errorThrown ) {
-        TOASTR["error"]("システムエラー", "接続が正しく行われませんでした。");
+        TOASTR["error"]("接続が正しく行われませんでした。", "システムエラー");
 
         console.log("XMLHttpRequest : " + jqXHR.status);
         console.log("textStatus : " + textStatus);
@@ -492,6 +513,7 @@
       <li><h2 id="description"></h2></li>
 </ul>
 <input type="hidden" id="user_name">
+<input type="hidden" id="user_sex">
 <div id="message_stream">
 </div>
 <div id="message_input_area" class="input-group">
@@ -504,5 +526,24 @@
 <input type="hidden" id="room_hash">
 <input type="hidden" id="self_icon">
 <input type="hidden" id="last_send_date" value="">
+<div class="modal fade" id="input-modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <h4 class="modal-title">ユーザを作成</h4>
+      </div>
+      <div class="modal-body">
+          <input type="text" id="name" placeholder="名前" class="form-control">
+          <label class="radio-inline"><input type="radio" name="sex" class="sex" value="1" checked="checked">男</label>
+          <label class="radio-inline"><input type="radio" name="sex" class="sex" value="2">女</label>
+      </div>
+      <div class="modal-footer">
+        <!-- <button type="button" class="btn btn-default" data-dismiss="modal">閉じる</button> -->
+        <button type="button" class="btn btn-primary" onclick="validUserInfo()">作成</button>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>

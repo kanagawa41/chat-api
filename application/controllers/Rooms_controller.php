@@ -410,7 +410,11 @@ class Rooms_controller extends MY_Controller {
 		$this->output->set_json_output($data);
 	}
 
-	public function select_messages_ahead($room_hash, $message_id){
+	/**
+	 * 指定メッセージより過去のメッセージを取得する。
+	 * 取得数は設定値に依存する。
+	 */
+	public function select_messages_past($room_hash, $message_id){
 		$this->load->library('encrypt');
 
 		// ルームＩＤをデコードする
@@ -437,16 +441,27 @@ class Rooms_controller extends MY_Controller {
 			return;
 		}
 
+		$begin_message_id = $row->begin_message_id;
+
+		$past_message_max_count = $this->config->item('past_message_max_count');
+		$massage_count = $this->db->select('m.message_id, u.name, u.user_id, u.icon_id, u.sex, u.user_hash, m.body, m.type, m.created_at')->from('messages as m')->join('users as u', 'u.user_id = m.user_id', 'inner')->where(array (
+			'm.room_id' => $room_id,
+			'm.message_id>' => $begin_message_id,
+			'm.message_id<' => $message_id,
+		))->count_all_results();		
+		$massage_offset = $massage_count > $past_message_max_count ? $massage_count - $past_message_max_count : 0;
+
 		/**
 		 * FIXME 取得件数を変更できるようにする
 		 */
 		$select_results = $this->db->select('m.message_id, u.name, u.user_id, u.icon_id, u.sex, u.user_hash, m.body, m.type, m.created_at')->from('messages as m')->join('users as u', 'u.user_id = m.user_id', 'inner')->where(array (
 			'm.room_id' => $room_id,
+			'm.message_id>' => $begin_message_id,
 			'm.message_id<' => $message_id,
-		))->limit($this->config->item('past_message_max_count'))->get()->result();
+		))->limit($past_message_max_count)->offset($massage_offset)->get()->result();
 
 		// デバッグ用
-		//$this->output->set_json_error_output(array($this->db->last_query())); return;
+		// $this->output->set_json_error_output(array($this->db->last_query())); return;
 
 		$data = array ();
 		$last_message_id = null;

@@ -172,6 +172,13 @@
         },0);
 
         getPastMessages(LAST_MESSAGE_ID);
+
+        messageScrollButtom();
+
+        // 周期的にメッセージを取得する処理の発動
+        setInterval(function(){
+           getMessages();
+        }, GET_MESSAGE_INTERVAL);        
       }).fail(function(jqXHR, textStatus, errorThrown ) {
         TOASTR["error"]("接続が正しく行われませんでした。", "システムエラー");
 
@@ -188,7 +195,7 @@
     function getPastMessages(lastMessageID){
       $.ajax({
         type: 'GET',
-        url: 'rooms/' + $('#room_hash').val() + '/messages/ahead/' + lastMessageID,
+        url: 'rooms/' + $('#room_hash').val() + '/messages/past/' + lastMessageID,
         timeout: 10000,
         cache: false,
         data: {},
@@ -203,10 +210,20 @@
             TOASTR["warning"]("指定されたルームは存在しません。", "入力エラー"); return;
         }
 
-        var compareDate1 = null;
+        if(response.length == 0){
+          return;
+        }
+
+        var firstMessageId = null;
+        var compareDate1 = $('#first_send_date').val();
         var tempMessages = [];
         var tempDateIds = {};
         response.forEach(function(value) {
+            if(firstMessageId == null){
+              firstMessageId = value.message_id;
+              $('#first_send_date').val(calcDate(value.send_time));
+            }
+
             var compareDate2 = calcDate(value.send_time);
             if(compareDate1 != compareDate2){
               var id = value.send_time.split(' ')[0];
@@ -217,11 +234,14 @@
             tempMessages.push(create_message(value));
         });
 
+        $('#message_stream').prepend('<div id="move_mark"></div>'); //移動ようのマーク
+
         tempMessages.reverse();
         tempMessages.forEach(function(value) {
             $('#message_stream').prepend(value);
         });
 
+        // FIXME この処理は怪しい。過去のメッセージを取得して設定しているのに、last_send_dateを更新してもよいのか？
         for(key in tempDateIds) {
             $('#' + key).on('inview', function(event, isInView, visiblePartX, visiblePartY) {
                 if (isInView) { //要素が見えたときに実行する処理
@@ -233,12 +253,19 @@
 
         $('#now_date').text(compareDate1);
 
-        messageScrollButtom();
+        $('#message_stream').prepend('<div id="' + firstMessageId + '"></div>');
 
-        // 周期的にメッセージを取得する処理の発動
-        setInterval(function(){
-           getMessages();
-        }, GET_MESSAGE_INTERVAL);
+        // FIXME 一旦上へスクロールしてからもとに戻るので美しくない。
+        // prependした際に自動的に上へスクロールするので移動させている
+        $('#message_stream').animate({scrollTop: $('#move_mark').offset().top}, 'fast');
+        $('#move_mark').remove();
+
+        $('#' + firstMessageId).on('inview', function(event, isInView, visiblePartX, visiblePartY) {
+            if (isInView) { //要素が見えたときに実行する処理
+                $('#' + firstMessageId).remove();
+                getPastMessages(firstMessageId);
+            }
+        });
       }).fail(function(jqXHR, textStatus, errorThrown ) {
         TOASTR["error"]("接続が正しく行われませんでした。", "システムエラー");
 
@@ -554,6 +581,7 @@
 </div>
 <input type="hidden" id="room_hash">
 <input type="hidden" id="self_icon">
+<input type="hidden" id="first_send_date" value="">
 <input type="hidden" id="last_send_date" value="">
 <div class="modal fade" id="input-modal" tabindex="-1" role="dialog">
   <div class="modal-dialog">

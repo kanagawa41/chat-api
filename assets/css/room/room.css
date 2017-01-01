@@ -78,6 +78,18 @@ body {
      width:15%;
 }
 
+.sex_man,
+.sex_woman{
+     border-radius: 50px;
+}
+
+.sex_man{
+    background: #225fe7;    
+}
+
+.sex_woman{
+    background: #f19ec2;    
+}
 
 .answer_image img,
 .question_image img{

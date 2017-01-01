@@ -55,7 +55,7 @@ class Rooms_controller extends MY_Controller {
 		
 		$this->load->database();
 
-		$row = $this->db->select('room_id, name, description, updated_at')->from('rooms')->where('room_id', $room_id)->get()->row();
+		$row = $this->db->from('rooms')->where('room_id', $room_id)->get()->row();
 
 		if (empty($row)) {
 			$this->output->set_json_error_output(array('No target.')); return;
@@ -64,6 +64,7 @@ class Rooms_controller extends MY_Controller {
 		$data = array ();
 		$data['name'] = $row->name;
 		$data['description'] = $row->description;
+		$data['last_message_id'] = $this->db->select_max('message_id')->from('messages')->where('room_id', $room_id)->get()->row()->message_id;
 
 		$this->output->set_json_output($data);
 	}
@@ -301,7 +302,7 @@ class Rooms_controller extends MY_Controller {
 
 		$last_read_message_id = $last_read_message_id < $begin_message_id ? $begin_message_id : $last_read_message_id;
 
-		$select_results = $this->db->select('m.message_id, u.name, u.user_id, u.icon_id, u.user_hash, m.body, m.type, m.created_at')->from('messages as m')->join('users as u', 'u.user_id = m.user_id', 'inner')->where(array (
+		$select_results = $this->db->select('m.message_id, u.name, u.user_id, u.icon_id, u.sex, u.user_hash, m.body, m.type, m.created_at')->from('messages as m')->join('users as u', 'u.user_id = m.user_id', 'inner')->where(array (
 			'm.room_id' => $room_id,
 			'm.message_id >' => $last_read_message_id,
 			'm.user_id <>' => $user_id
@@ -320,6 +321,7 @@ class Rooms_controller extends MY_Controller {
 			$temp_user_info['name'] = $row->name;
 			$temp_user_info['who'] = $row->user_id == $user_id ? "self" : "other";
 			$temp_user_info['icon'] = $row->icon_id;
+			$temp_user_info['sex'] = $row->sex;
 			$temp_user_info['hash'] = $row->user_hash;
 			$temp_row['user'] = $temp_user_info;
 			$temp_row['body'] = $row->body;
@@ -380,7 +382,7 @@ class Rooms_controller extends MY_Controller {
 			return;
 		}
 
-		$row = $this->db->select('m.message_id, u.name, u.user_id, u.icon_id, u.user_hash, m.body, m.type, m.created_at')->from('messages as m')->join('users as u', 'u.user_id = m.user_id', 'inner')->where(array (
+		$row = $this->db->select('m.message_id, u.name, u.user_id, u.icon_id, u.sex, u.user_hash, m.body, m.type, m.created_at')->from('messages as m')->join('users as u', 'u.user_id = m.user_id', 'inner')->where(array (
 			'm.message_id' => $message_id,
 			'm.room_id' => $room_id,
 		))->get()->row();
@@ -395,6 +397,7 @@ class Rooms_controller extends MY_Controller {
 			$temp_user_info['name'] = $row->name;
 			$temp_user_info['who'] = $row->user_id == $user_id ? "self" : "other";
 			$temp_user_info['icon'] = $row->icon_id;
+			$temp_user_info['sex'] = $row->sex;
 			$temp_user_info['hash'] = $row->user_hash;
 			$data['user'] = $temp_user_info;
 			$data['body'] = $row->body;
@@ -407,7 +410,73 @@ class Rooms_controller extends MY_Controller {
 		$this->output->set_json_output($data);
 	}
 
+	public function select_messages_ahead($room_hash, $message_id){
+		$this->load->library('encrypt');
+
+		// ルームＩＤをデコードする
+		$room_data = $this->room_hash_decode($room_hash);
+
+		$this->load->database();
+
+		$room_id = $room_data['room_id'];
+		// 存在しないルームの場合
+		if ($this->db->from('rooms')->where(array ('room_id' => $room_id))->count_all_results() == 0) {
+			$this->output->set_json_error_output(array('It do not exist room.')); return;
+		}
+
+		$user_id = $room_data['user_id'];
+		// 存在しないユーザの場合
+		$row = $this->db->from('users')->where(array (
+			'user_id' => $user_id
+		))->get()->row();
+		if (empty ($row)) {
+			$data = array (
+				'error' => 'It do not exist user_id.'
+			);
+			$this->output->set_json_output($data);
+			return;
+		}
+
+		/**
+		 * FIXME 取得件数を変更できるようにする
+		 */
+		$select_results = $this->db->select('m.message_id, u.name, u.user_id, u.icon_id, u.sex, u.user_hash, m.body, m.type, m.created_at')->from('messages as m')->join('users as u', 'u.user_id = m.user_id', 'inner')->where(array (
+			'm.room_id' => $room_id,
+			'm.message_id<' => $message_id,
+		))->limit($this->config->item('past_message_max_count'))->get()->result();
+
+		// デバッグ用
+		//$this->output->set_json_error_output(array($this->db->last_query())); return;
+
+		$data = array ();
+		$last_message_id = null;
+		foreach ($select_results as $row) {
+			$temp_row = array ();
+			$temp_row['message_id'] = $row->message_id;
+			$temp_user_info = array ();
+			$temp_user_info['name'] = $row->name;
+			$temp_user_info['who'] = $row->user_id == $user_id ? "self" : "other";
+			$temp_user_info['icon'] = $row->icon_id;
+			$temp_user_info['sex'] = $row->sex;
+			$temp_user_info['hash'] = $row->user_hash;
+			$temp_row['user'] = $temp_user_info;
+			$temp_row['body'] = $row->body;
+			$temp_row['type'] = $row->type;
+			$temp_row['send_time'] = $row->created_at;
+
+			$data[] = $temp_row;
+			$last_message_id = $row->message_id;
+		}
+
+		if (empty ($last_message_id)) {
+			$this->output->set_json_output(array ()); return;
+		}
+
+		$this->output->set_json_output($data);
+	}
+
 	/**
+	 * FIXME: これは使用するべきか検討
 	 * チャットのメッセージ一覧を入室した時から全て取得。
 	 * 管理人ではない場合は、設定された最大件数に依存する。
 	 * GET
@@ -452,12 +521,12 @@ class Rooms_controller extends MY_Controller {
 		$massage_count = $this->db->from('messages')->where(array ('room_id' => $room_id))->count_all_results();
 		$massage_begin = $massage_count > $limit ? $massage_count - $limit : 0;
 
-		$select_results = $this->db->select('m.message_id, u.name, u.user_id, u.icon_id, u.user_hash, m.body, m.type, m.created_at')->from('messages as m')->join('users as u', 'u.user_id = m.user_id', 'inner')->where(array (
+		$select_results = $this->db->select('m.message_id, u.name, u.user_id, u.icon_id, u.sex, u.user_hash, m.body, m.type, m.created_at')->from('messages as m')->join('users as u', 'u.user_id = m.user_id', 'inner')->where(array (
 			'm.room_id' => $room_id,
-		))->limit($limit, $massage_begin)->get()->result();
+		))->limit($massage_begin, $limit)->get()->result();
 
 		// デバッグ用
-		// $this->output->set_json_error_output(array($this->db->last_query())); return;
+		//$this->output->set_json_error_output(array($this->db->last_query())); return;
 
 
 		$data = array ();
@@ -469,6 +538,7 @@ class Rooms_controller extends MY_Controller {
 			$temp_user_info['name'] = $row->name;
 			$temp_user_info['who'] = $row->user_id == $user_id ? "self" : "other";
 			$temp_user_info['icon'] = $row->icon_id;
+			$temp_user_info['sex'] = $row->sex;
 			$temp_user_info['hash'] = $row->user_hash;
 			$temp_row['user'] = $temp_user_info;
 			$temp_row['body'] = $row->body;

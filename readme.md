@@ -338,9 +338,9 @@ http://chat/rooms/FJOIngow2489u53345lFEklEC
 
 # TODO
 
-### ●画面のほうを新しいユーザ生成方法に対応させる。（roomid_role_userid）
-
-### ●ルームの画面にラインみたく日付を表示する。（https://github.com/protonet/jquery.inview）
+### アイコンイメージを男用、女用を集める
+・画像を収集
+・女：#f19ec2、男：#243a73　で背景色を染める
 
 ### ●管理者が気軽に更新できる、管理画面を作成する。
 
@@ -351,6 +351,10 @@ http://chat/rooms/FJOIngow2489u53345lFEklEC
 ### ●利用フローを書き直す。
 
 # DONE
+
+### ×ルームの画面にラインみたく日付を表示する。（https://github.com/protonet/jquery.inview）
+
+### ×画面のほうを新しいユーザ生成方法に対応させる。（roomid_role_userid）
 
 ### ×画面処理で送信する前に、再度受信をしてから送信するようにする。
 * ×たまに受信中に送信してエラーが発生する場合があるので対策をする。

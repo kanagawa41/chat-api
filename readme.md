@@ -72,7 +72,7 @@ CREATE TABLE messages (
     user_id INTEGER, --ユーザＩＤ
     room_id INTEGER, --ルームＩＤ
     body STRING NOT NULL, --メッセージ内容
-    type INTEGER DEFAULT 2, --メッセージの種類(1…ルーム作成、2…メッセージ、3…入室)
+    type INTEGER DEFAULT 2, --メッセージの種類(1…ルーム作成、2…メッセージ、3…入室、4…日付)
     created_at default CURRENT_TIMESTAMP NOT NULL, --作成日
     PRIMARY KEY(message_id AUTOINCREMENT)
 );
@@ -338,7 +338,7 @@ http://chat/rooms/FJOIngow2489u53345lFEklEC
 
 # TODO
 
-### ●ユーザがアイコンを指定できるようにする。
+### ●新着メッセージの位置判定が正しく行われていない。スクロール位置が正しく取得できていないため誤作動を起こす
 
 ### ●管理者が気軽に更新できる、管理画面を作成する。
 
@@ -349,6 +349,13 @@ http://chat/rooms/FJOIngow2489u53345lFEklEC
 ### ●利用フローを書き直す。
 
 # DONE
+
+### ×日付の表示がちゃんとされるようにする。
+* ×日付を各メッセージに要素として設定して、それを使用して比較を行うようにする。
+* ×日付もメッセージとして登録するようにする。
+* ×現状の日付を比較する処理の削除。
+
+### ×ユーザがアイコンを指定できるようにする。
 
 ### ×アイコンイメージを男用、女用を集める
 * ×画像を収集

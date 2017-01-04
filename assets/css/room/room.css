@@ -79,7 +79,8 @@ body {
 }
 
 .sex_man,
-.sex_woman{
+.sex_woman,
+.sex_none{
      border-radius: 50px;
 }
 
@@ -89,6 +90,10 @@ body {
 
 .sex_woman{
     background: #f19ec2;    
+}
+
+.sex_none{
+    background: #fff;    
 }
 
 .answer_image img,
@@ -130,6 +135,8 @@ p.answer_name{text-align: right;}
      text-align: center;
      color: #fff;
      background-color:rgba(119,136,153,0.5);
+     height: 50px;
+     line-height: 50px;
      width: 100%;
      overflow: hidden;
      margin-bottom: 8%;

@@ -491,99 +491,6 @@ class Rooms_controller extends MY_Controller {
 	}
 
 	/**
-	 * FIXME: これは使用するべきか検討
-	 * チャットのメッセージ一覧を入室した時から全て取得。
-	 * 管理人ではない場合は、設定された最大件数に依存する。
-	 * GET
-	 */
-	public function select_messages_all($room_hash) {
-		$this->load->library('encrypt');
-
-		// ルームＩＤをデコードする
-		$room_data = $this->room_hash_decode($room_hash);
-
-		$this->load->database();
-
-		$room_id = $room_data['room_id'];
-		// 存在しないルームの場合
-		if ($this->db->from('rooms')->where(array ('room_id' => $room_id))->count_all_results() == 0) {
-			$this->output->set_json_error_output(array('It do not exist room.')); return;
-		}
-
-		$user_id = $room_data['user_id'];
-		// 存在しないユーザの場合
-		$row = $this->db->from('users')->where(array (
-			'user_id' => $user_id
-		))->get()->row();
-		if (empty ($row)) {
-			$data = array (
-				'error' => 'It do not exist user_id.'
-			);
-			$this->output->set_json_output($data);
-			return;
-		}
-
-		// 役割によって取得できる数が変化する
-		$limit = -1;
-		if($row->user_role == 1){
-			$limit = $this->config->item('admin_reentry_max_count');
-		} else if($row->user_role == 2){
-			$limit = $this->config->item('specific_reentry_max_count');
-		} else {
-			$limit = $this->config->item('anonymous_reentry_max_count');
-		}
-
-		$massage_count = $this->db->from('messages')->where(array ('room_id' => $room_id))->count_all_results();
-		$massage_begin = $massage_count > $limit ? $massage_count - $limit : 0;
-
-		$select_results = $this->db->select('m.message_id, u.name, u.user_id, u.icon_id, u.sex, u.user_hash, m.body, m.type, m.created_at')->from('messages as m')->join('users as u', 'u.user_id = m.user_id', 'inner')->where(array (
-			'm.room_id' => $room_id,
-		))->limit($massage_begin, $limit)->get()->result();
-
-		// デバッグ用
-		//$this->output->set_json_error_output(array($this->db->last_query())); return;
-
-
-		$data = array ();
-		$last_message_id = null;
-		foreach ($select_results as $row) {
-			$temp_row = array ();
-			$temp_row['message_id'] = $row->message_id;
-			$temp_user_info = array ();
-			$temp_user_info['name'] = $row->name;
-			$temp_user_info['who'] = $row->user_id == $user_id ? "self" : "other";
-			$temp_user_info['icon'] = $row->icon_id;
-			$temp_user_info['sex'] = $row->sex;
-			$temp_user_info['hash'] = $row->user_hash;
-			$temp_row['user'] = $temp_user_info;
-			$temp_row['body'] = $row->body;
-			$temp_row['type'] = $row->type;
-			$temp_row['send_time'] = $row->created_at;
-
-			$data[] = $temp_row;
-			$last_message_id = $row->message_id;
-		}
-
-		if (empty ($last_message_id)) {
-			$this->output->set_json_output(array ()); return;
-		}
-
-		// 取得した最後のメッセージを既読済にする
-		$this->db->trans_start();
-
-		$insert_data = array (
-			'message_id' => $last_message_id,
-			'user_id' => $user_id,
-			'room_id' => $room_id
-		);
-		$this->db->insert('reads', $insert_data);
-
-		$this->db->trans_complete();
-
-		$this->output->set_json_output($data);
-	}
-
-	/**
 	 * チャットに新しいメッセージを追加。
 	 * POST
 	 */
@@ -611,6 +518,24 @@ class Rooms_controller extends MY_Controller {
 		}
 
 		$this->db->trans_start();
+
+		$row = $this->db->select('datetime(CURRENT_TIMESTAMP) as now_date, created_at as last_message_date')->from('messages')->where(array ('room_id' => $room_id))->order_by('message_id', 'DESC')->get()->row();
+
+		$temp_date = new DateTime($row->now_date);
+		$now_date = $temp_date->format('Y-m-d');
+		$temp_date = new DateTime($row->last_message_date);
+		$last_message_date = $temp_date->format('Y-m-d');
+
+		// 最終メッセージと日付が変わっていた場合
+		if(strtotime($now_date) > strtotime($last_message_date)){
+			$insert_data = array (
+				'user_id' => 0,
+				'room_id' => $room_id,
+				'body' => $now_date + array( '日', '月', '火', '水', '木', '金', '土' )[date('w', strtotime($now_date))],
+				'type' => 4, // 日付
+			);
+			$this->db->insert('messages', $insert_data);
+		}
 
 		$insert_data = array (
 			'user_id' => $user_id,
@@ -687,8 +612,6 @@ class Rooms_controller extends MY_Controller {
 		if(empty($icon_id)){
 			// ユーザのアイコンＩＤを設定します。（アイコンＩＤを増やしたらコンフィグの値を変更する。）
 			$icon_id = rand(1, $this->config->item('icon_num'));
-		} else {
-			$icon_id = $this->input->post('icon');
 		}
 
 		$this->load->model('user');

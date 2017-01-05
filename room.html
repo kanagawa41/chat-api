@@ -247,6 +247,7 @@
      */
     function intoRoom(){
       var ajaxRequest = AJAX_REQUEST_MODEL;
+      ajaxRequest['type'] = 'POST';
       ajaxRequest['url'] = 'rooms/' + $('#room_hash').val() + '/members';
       ajaxRequest['data'] = {
             name : $('#user_name').val(),
@@ -394,23 +395,18 @@
      */
     function sendMessage(){
       var message_body = $('#message_body').val();
-      if(! message_body) { return; }
+      if(!message_body) { return; }
       $('#message_body').val('');
-      
-      $.ajax({
-        type: 'POST',
-        url: 'rooms/' + $('#room_hash').val() + '/messages',
-        timeout: 10000,
-        cache: false,
-        data: {
+
+      var ajaxRequest = AJAX_REQUEST_MODEL;
+      ajaxRequest['type'] = 'POST';
+      ajaxRequest['url'] = 'rooms/' + $('#room_hash').val() + '/messages';
+      ajaxRequest['data'] = {
             body : message_body
-        },
-        dataType: 'json',
-        beforeSend: function(jqXHR) {
-          jqXHR.setRequestHeader("If-Modified-Since", "Thu, 01 Jun 1970 00:00:00 GMT");
-          return true;
-        },
-      }).done(function(response, textStatus, jqXHR) {
+      };
+
+      $.ajax(ajaxRequest
+      ).done(function(response, textStatus, jqXHR) {
         if(response["errors"]){
             console.log(response["errors"]);
             TOASTR["warning"]("指定されたルームは存在しません。", "入力エラー"); return;

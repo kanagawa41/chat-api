@@ -8,6 +8,7 @@ class Rooms_controller extends MY_Controller {
         parent::__construct();
 		
 		$this->load->library('encrypt');
+		$this->load->helper('hash');
     }	
 
 	/**
@@ -25,9 +26,9 @@ class Rooms_controller extends MY_Controller {
 		foreach ($select_results as $row) {
 			$temp_row = array ();
 			$temp_row['room_id'] = $row->room_id;
-			$temp_row['room_admin_hash'] = $this->room_hash_encode($row->room_id, 1, $row->user_id); // 管理者ユーザで入室するためのハッシュ
-			$temp_row['room_specificuser_hash'] = $this->room_hash_encode($row->room_id, 2, 0); // 特定ユーザで入室するための周知用のハッシュ
-			$temp_row['room_anonymous_hash'] = $this->room_hash_encode($row->room_id, 3, 0); // 匿名入室するための周知用のハッシュ
+			$temp_row['room_admin_hash'] = room_hash_encode($row->room_id, 1, $row->user_id); // 管理者ユーザで入室するためのハッシュ
+			$temp_row['room_specificuser_hash'] = room_hash_encode($row->room_id, 2, 0); // 特定ユーザで入室するための周知用のハッシュ
+			$temp_row['room_anonymous_hash'] = room_hash_encode($row->room_id, 3, 0); // 匿名入室するための周知用のハッシュ
 			$temp_row['name'] = $row->name;
 			$temp_row['message_num'] = $this->db->from('messages')->where('room_id', $row->room_id)->count_all_results();
 			$temp_row['last_update_time'] = $row->updated_at;
@@ -50,7 +51,7 @@ class Rooms_controller extends MY_Controller {
 		}
 
 		// ルームＩＤをデコードする
-		$room_data = $this->room_hash_decode($room_hash);
+		$room_data = room_hash_decode($room_hash);
 		$room_id = $room_data['room_id'];
 		
 		$this->load->database();
@@ -195,7 +196,7 @@ class Rooms_controller extends MY_Controller {
 		$token_flag = $this->exist_token();
 
 		// ルームＩＤをデコードする
-		$room_data = $this->room_hash_decode($room_hash);
+		$room_data = room_hash_decode($room_hash);
 		$room_id = $room_data['room_id'];
 
 		$this->load->database();
@@ -215,7 +216,7 @@ class Rooms_controller extends MY_Controller {
 			$temp_row['name'] = $row->name;
 			// 管理人が操作した場合
 			if($token_flag){
-				$temp_row['room_hash'] = $this->room_hash_encode($room_id, $row->user_role, $row->user_id);
+				$temp_row['room_hash'] = room_hash_encode($room_id, $row->user_role, $row->user_id);
 			}
 
 			$data[] = $temp_row;
@@ -231,7 +232,7 @@ class Rooms_controller extends MY_Controller {
 	 */
 	public function select_user($room_hash) {
 		// ルームＩＤをデコードする
-		$room_data = $this->room_hash_decode($room_hash);
+		$room_data = room_hash_decode($room_hash);
 
 		$this->load->database();
 
@@ -281,7 +282,7 @@ class Rooms_controller extends MY_Controller {
 		$this->load->library('encrypt');
 
 		// ルームＩＤをデコードする
-		$room_data = $this->room_hash_decode($room_hash);
+		$room_data = room_hash_decode($room_hash);
 
 		$this->load->database();
 
@@ -378,7 +379,7 @@ class Rooms_controller extends MY_Controller {
 		$this->load->library('encrypt');
 
 		// ルームＩＤをデコードする
-		$room_data = $this->room_hash_decode($room_hash);
+		$room_data = room_hash_decode($room_hash);
 
 		$this->load->database();
 
@@ -467,7 +468,7 @@ class Rooms_controller extends MY_Controller {
 		$this->load->library('encrypt');
 
 		// ルームＩＤをデコードする
-		$room_data = $this->room_hash_decode($room_hash);
+		$room_data = room_hash_decode($room_hash);
 
 		$this->load->database();
 
@@ -526,7 +527,7 @@ class Rooms_controller extends MY_Controller {
 		$this->load->library('encrypt');
 
 		// ルームＩＤをデコードする
-		$room_data = $this->room_hash_decode($room_hash);
+		$room_data = room_hash_decode($room_hash);
 
 		$this->load->database();
 
@@ -609,7 +610,7 @@ class Rooms_controller extends MY_Controller {
 		}
 
 		// ルームＩＤをデコードする
-		$room_data = $this->room_hash_decode($room_hash);
+		$room_data = room_hash_decode($room_hash);
 
 		$this->load->database();
 
@@ -683,7 +684,7 @@ class Rooms_controller extends MY_Controller {
 	 */
 	public function create_user($room_hash) {
 		// ルームＩＤをデコードする
-		$room_data = $this->room_hash_decode($room_hash);
+		$room_data = room_hash_decode($room_hash);
 		$room_id = $room_data['room_id'];
 
 		if (empty($room_id)) {
@@ -751,7 +752,7 @@ class Rooms_controller extends MY_Controller {
 		$this->db->trans_complete();
 
 		$data = array (
-			'room_hash' => $this->room_hash_encode($room_id, 2, $user_id), // ユーザ専用のハッシュ値を生成する
+			'room_hash' => room_hash_encode($room_id, 2, $user_id), // ユーザ専用のハッシュ値を生成する
 			'user_hash' => $select_result->user_hash
 		);
 
@@ -779,7 +780,7 @@ class Rooms_controller extends MY_Controller {
 		$this->db->trans_complete();
 
 		$data = array (
-			'room_hash' => $this->room_hash_encode($room_id, 3, $user_id), // ユーザ専用のハッシュ値を生成する
+			'room_hash' => room_hash_encode($room_id, 3, $user_id), // ユーザ専用のハッシュ値を生成する
 			'user_hash' => $select_result->user_hash
 		);
 

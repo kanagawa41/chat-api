@@ -91,18 +91,6 @@ CREATE TABLE reads (
 ```
 
 
-#※まだ製造未着手。これを使用してユニークなuser_hashを生成する。
-#### ハッシュプール
-```
-CREATE TABLE hashpools (
-    /** ハッシュプール **/
-    hash_id INTEGER, --ハッシュＩＤ
-    hash STRING NOT NULL, --ハッシュ値(10桁)
-    PRIMARY KEY(hash_id AUTOINCREMENT)
-);
-```
-
-
 ## APIの種類
 
 ### 3. _GET_ __/rooms__

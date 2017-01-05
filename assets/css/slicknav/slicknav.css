@@ -8,14 +8,16 @@
   display: block;
   vertical-align: middle;
   float: right;
-  padding: 0.438em 0.625em 0.438em 0.625em;
+  padding: 0.138em 0.325em 0.138em 0.325em;
   line-height: 1.125em;
   cursor: pointer; }
   .slicknav_btn .slicknav_icon-bar + .slicknav_icon-bar {
     margin-top: 0.188em; }
 
 .slicknav_menu {
-  *zoom: 1; }
+  *zoom: 1; 
+  box-shadow: 1px 0px 6px 0px;
+  border: 1px solid #000;　}
   .slicknav_menu .slicknav_menutxt {
     display: block;
     line-height: 1.188em;

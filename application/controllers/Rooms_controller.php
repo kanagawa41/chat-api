@@ -215,7 +215,7 @@ class Rooms_controller extends MY_Controller {
 			$temp_row['name'] = $row->name;
 			// 管理人が操作した場合
 			if($token_flag){
-				$temp_row['room_hash'] = $this->room_hash_encode($room_id, $row->user_id);
+				$temp_row['room_hash'] = $this->room_hash_encode($room_id, $row->user_role, $row->user_id);
 			}
 
 			$data[] = $temp_row;
@@ -260,6 +260,114 @@ class Rooms_controller extends MY_Controller {
 
 		//$dataをJSONにして返す
 		$this->output->set_json_output($data);
+	}
+
+	/**
+	 * チャットのメッセージ一覧を取得。前回取得分からの差分を返します。(SSE対応)
+	 * 送信は直打ちとしている。Codeigniterの方法だと連続で送信できなかったりするため。
+	 * GET
+	 */
+	public function select_messages_sse($room_hash) {
+		ini_set("max_execution_time", $this->config->item('sse_succession_time'));
+
+		header("Content-Type: text/event-stream; charset=UTF-8");
+		header('Cache-Control: no-cache');
+		header("Connection: keep-alive");
+
+		// 接続状態にするため、ダミー値を返却する。
+		ob_flush();
+		flush();
+
+		$this->load->library('encrypt');
+
+		// ルームＩＤをデコードする
+		$room_data = $this->room_hash_decode($room_hash);
+
+		$this->load->database();
+
+		$room_id = $room_data['room_id'];
+		// 存在しないルームの場合
+		if ($this->db->from('rooms')->where(array ('room_id' => $room_id))->count_all_results() == 0) {
+			$this->output->set_sse_error_output(array('It do not exist room.')); return;
+		}
+
+		$user_id = $room_data['user_id'];
+		// 存在しないユーザの場合
+		$row = $this->db->from('users')->where(array (
+			'user_id' => $user_id
+		))->get()->row();
+		if (empty ($row)) {
+			$this->output->set_sse_error_output(array('It do not exist user.')); return;
+		}
+
+		$begin_message_id = $row->begin_message_id;
+
+		// 処理を終えないように待機させる。
+		while(true){
+
+			// 既読済のメッセージIDを返却する
+			$sql = 'select COALESCE(max(r.message_id), 0) as last_read_message_id from messages m inner join reads r on r.user_id = ? and m.user_id = r.user_id;';
+
+			$query_result = $this->db->query($sql, array (
+				$user_id,
+			))->row();
+
+			$last_read_message_id = $query_result->last_read_message_id;
+
+			$last_read_message_id = $last_read_message_id < $begin_message_id ? $begin_message_id : $last_read_message_id;
+
+			$select_results = $this->db->select('m.message_id, u.name, u.user_id, u.icon_id, u.sex, u.user_hash, m.body, m.type, m.created_at')->from('messages as m')->join('users as u', 'u.user_id = m.user_id', 'inner')->where(array (
+				'm.room_id' => $room_id,
+				'm.message_id >' => $last_read_message_id,
+				'm.user_id <>' => $user_id
+			))->get()->result();
+
+			// デバッグ用
+			//$this->output->set_json_error_output(array($this->db->last_query())); return;
+
+			if (count ($select_results) == 0) {
+				sleep($this->config->item('sse_sleep_time'));
+				continue;
+			}
+
+			$data = array ();
+			$last_message_id = null;
+			foreach ($select_results as $row) {
+				$temp_row = array ();
+				$temp_row['message_id'] = $row->message_id;
+				$temp_user_info = array ();
+				$temp_user_info['name'] = $row->name;
+				$temp_user_info['who'] = $row->user_id == $user_id ? "self" : "other";
+				$temp_user_info['icon'] = $row->icon_id;
+				$temp_user_info['sex'] = $row->sex;
+				$temp_user_info['hash'] = $row->user_hash;
+				$temp_row['user'] = $temp_user_info;
+				$temp_row['body'] = (string)$row->body;
+				$temp_row['type'] = $row->type;
+				$temp_row['send_time'] = $row->created_at;
+
+				$data[] = $temp_row;
+				$last_message_id = $row->message_id;
+			}
+
+			// 取得した最後のメッセージを既読済にする
+			$this->db->trans_start();
+
+			$insert_data = array (
+				'message_id' => $last_message_id,
+				'user_id' => $user_id,
+				'room_id' => $room_id
+			);
+			$this->db->insert('reads', $insert_data);
+
+			$this->db->trans_complete();
+
+			$this->output->set_sse_output('messages', $data);
+
+			ob_flush();
+			flush();
+			sleep($this->config->item('sse_sleep_time'));
+		}
 	}
 
 	/**
@@ -324,7 +432,7 @@ class Rooms_controller extends MY_Controller {
 			$temp_user_info['sex'] = $row->sex;
 			$temp_user_info['hash'] = $row->user_hash;
 			$temp_row['user'] = $temp_user_info;
-			$temp_row['body'] = $row->body;
+			$temp_row['body'] = (string)$row->body;
 			$temp_row['type'] = $row->type;
 			$temp_row['send_time'] = $row->created_at;
 
@@ -400,7 +508,7 @@ class Rooms_controller extends MY_Controller {
 			$temp_user_info['sex'] = $row->sex;
 			$temp_user_info['hash'] = $row->user_hash;
 			$data['user'] = $temp_user_info;
-			$data['body'] = $row->body;
+			$data['body'] = (string)$row->body;
 			$data['type'] = $row->type;
 			$data['send_time'] = $row->created_at;
 		}
@@ -475,7 +583,7 @@ class Rooms_controller extends MY_Controller {
 			$temp_user_info['sex'] = $row->sex;
 			$temp_user_info['hash'] = $row->user_hash;
 			$temp_row['user'] = $temp_user_info;
-			$temp_row['body'] = $row->body;
+			$temp_row['body'] = (string)$row->body;
 			$temp_row['type'] = $row->type;
 			$temp_row['send_time'] = $row->created_at;
 
@@ -521,17 +629,14 @@ class Rooms_controller extends MY_Controller {
 
 		$row = $this->db->select('datetime(CURRENT_TIMESTAMP) as now_date, created_at as last_message_date')->from('messages')->where(array ('room_id' => $room_id))->order_by('message_id', 'DESC')->get()->row();
 
-		$temp_date = new DateTime($row->now_date);
-		$now_date = $temp_date->format('Y-m-d');
-		$temp_date = new DateTime($row->last_message_date);
-		$last_message_date = $temp_date->format('Y-m-d');
-
+		$this->load->helper('date');
+		
 		// 最終メッセージと日付が変わっていた場合
-		if(strtotime($now_date) > strtotime($last_message_date)){
+		if(compare_date($row->now_date, $row->last_message_date)){
 			$insert_data = array (
 				'user_id' => 0,
 				'room_id' => $room_id,
-				'body' => $now_date + array( '日', '月', '火', '水', '木', '金', '土' )[date('w', strtotime($now_date))],
+				'body' => $now_date + get_days($row->now_date),
 				'type' => 4, // 日付
 			);
 			$this->db->insert('messages', $insert_data);
@@ -546,9 +651,28 @@ class Rooms_controller extends MY_Controller {
 
 		$this->db->trans_complete();
 
-		$data = array (
-			'message_id' => $this->db->insert_id()
-		);
+		$row = $this->db->select('m.message_id, u.name, u.user_id, u.icon_id, u.sex, u.user_hash, m.body, m.type, m.created_at')->from('messages as m')->join('users as u', 'u.user_id = m.user_id', 'inner')->where(array (
+			'm.message_id' => $this->db->insert_id(),
+			'm.room_id' => $room_id,
+		))->get()->row();
+
+		// デバッグ用
+		//$this->output->set_json_error_output(array($this->db->last_query())); return;
+
+		$data = array ();
+		if (!empty($row)) {
+			$data['message_id'] = $row->message_id;
+			$temp_user_info = array ();
+			$temp_user_info['name'] = $row->name;
+			$temp_user_info['who'] = $row->user_id == $user_id ? "self" : "other";
+			$temp_user_info['icon'] = $row->icon_id;
+			$temp_user_info['sex'] = $row->sex;
+			$temp_user_info['hash'] = $row->user_hash;
+			$data['user'] = $temp_user_info;
+			$data['body'] = (string)$row->body;
+			$data['type'] = $row->type;
+			$data['send_time'] = $row->created_at;
+		}
 
 		$this->output->set_json_output($data);
 	}

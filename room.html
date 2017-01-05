@@ -30,6 +30,28 @@
     var FINGERPRINT = null;
     // ラストメッセージID
     var LAST_MESSAGE_ID = null;
+    // AJAXのリクエストパラメータのひな形
+    var AJAX_REQUEST_MODEL = {
+        type: 'GET',
+        url: '',
+        timeout: 10000,
+        cache: false,
+        data: {},
+        dataType: 'json',
+        beforeSend: function(jqXHR) {
+          jqXHR.setRequestHeader("If-Modified-Since", "Thu, 01 Jun 1970 00:00:00 GMT");
+          return true;
+        }
+    };
+    // AJAXの接続失敗の処理
+    var AJAX_FAIL = function(XMLHttpRequest, textStatus, errorThrown ) {
+        TOASTR["error"]("接続が正しく行われませんでした。", "システムエラー");
+
+        console.log("XMLHttpRequest : " + XMLHttpRequest.responseText);
+        console.log("textStatus : " + textStatus);
+        console.log("errorThrown : " + errorThrown);
+    };
+
 
     $(document).ready(function(){
         /* FIXME 画面を開いたときから制御不能状態のマスクをかけたい */
@@ -88,18 +110,12 @@
      * 部屋の存在チェック
      */
     function existRoom(room_hash) {
-      $.ajax({
-        type: 'GET',
-        url: 'rooms/' + room_hash,
-        timeout: 10000,
-        cache: false,
-        data: {},
-        dataType: 'json',
-        beforeSend: function(jqXHR) {
-          jqXHR.setRequestHeader("If-Modified-Since", "Thu, 01 Jun 1970 00:00:00 GMT");
-          return true;
-        },
-      }).done(function(response, textStatus, jqXHR) {
+      var ajaxRequest = AJAX_REQUEST_MODEL;
+      ajaxRequest['url'] = 'rooms/' + room_hash;
+      ajaxRequest['data'] = {};
+    
+      $.ajax(ajaxRequest
+      ).done(function(response, textStatus, jqXHR) {
         if(response["errors"]){
             console.log(response["errors"]);
             TOASTR["warning"]("指定されたルームは存在しません。", "入力エラー"); return;
@@ -108,7 +124,7 @@
         $('#room_hash').val(room_hash);
         LAST_MESSAGE_ID = response.last_message_id;
 
-      　　// スリックバー作動
+        // スリックバー作動
         $('#menu_navi').slicknav();
         var menuHeight = parseInt($('.slicknav_menu').outerHeight());
         // スリックバーの詳細と被らないようにメッセージの表示位置を指定している。
@@ -120,42 +136,30 @@
         // TODO　この機能はメッセージをスクロールした際に日付の変わり目で値を変えられるようにできたら実装する。
         //$('.slicknav_menu').after('<div id="now_date" style="top:' + (menuHeight + 10) + 'px;"></div>');
 
-        var titleName = null;
-        if(response.name.length > 8){
-          titleName = response.name.substring(0, 8) + '...';
-        } else {
-          titleName　= response.name;
-        }
-        $('.slicknav_btn').after('<div style="font-size: 0.9em; text-align: center; line-height: ' + parseInt($('.slicknav_menu').height()) + 'px;">' + titleName　+ '</div>');
+        $('.slicknav_btn').after('<div style="font-size: 0.9em; text-align: center; line-height: ' + parseInt($('.slicknav_menu').height()) + 'px;">' + chop(response.name, 8, '...') + '</div>');
 
         // ユーザが指定されている場合は、ユーザ情報を取得する。
         existUser(room_hash);
-      }).fail(function(jqXHR, textStatus, errorThrown ) {
-        TOASTR["error"]("接続が正しく行われませんでした。", "システムエラー");
-
-        console.log("XMLHttpRequest : " + XMLHttpRequest.status);
-        console.log("textStatus : " + textStatus);
-        console.log("errorThrown : " + errorThrown.message);
-      }).always(function(data_or_jqXHR, textStatus, jqXHR_or_errorThrown) {
-      });
+      }).fail(AJAX_FAIL);
     }
     
+    /**
+     * 指定数で文字を切り抜き、指定の文字を付与する
+     */
+    function chop(targetString, strLength, char){
+        return targetString.length > strLength ? targetString.substring(0, strLength) + char : targetString;
+    }
+
     /**
      * ユーザの存在チェック
      */
     function existUser(room_hash) {
-      $.ajax({
-        type: 'GET',
-        url: 'rooms/' + room_hash + '/members',
-        timeout: 10000,
-        cache: false,
-        data: {},
-        dataType: 'json',
-        beforeSend: function(jqXHR) {
-          jqXHR.setRequestHeader("If-Modified-Since", "Thu, 01 Jun 1970 00:00:00 GMT");
-          return true;
-        },
-      }).done(function(response, textStatus, jqXHR) {
+      var ajaxRequest = AJAX_REQUEST_MODEL;
+      ajaxRequest['url'] = 'rooms/' + room_hash + '/members';
+      ajaxRequest['data'] = {};
+    
+      $.ajax(ajaxRequest
+      ).done(function(response, textStatus, jqXHR) {
         if(response["errors"]){
             //ユーザ情報入力モーダルを表示
             $('#input-modal').modal('show'); 
@@ -181,36 +185,21 @@
 
         messageScrollButtom();
 
-        // 周期的にメッセージを取得する処理の発動
-        setInterval(function(){
-           getMessages();
-        }, GET_MESSAGE_INTERVAL);        
-      }).fail(function(jqXHR, textStatus, errorThrown ) {
-        TOASTR["error"]("接続が正しく行われませんでした。", "システムエラー");
+        fetchMessagesSse();
 
-        console.log("XMLHttpRequest : " + jqXHR.status);
-        console.log("textStatus : " + textStatus);
-        console.log("errorThrown : " + errorThrown.message);
-      }).always(function(data_or_jqXHR, textStatus, jqXHR_or_errorThrown) {
-      });
+      }).fail(AJAX_FAIL);
     }
 
     /**
      * 過去のメッセージを取得する
      */
     function getPastMessages(lastMessageID){
-      $.ajax({
-        type: 'GET',
-        url: 'rooms/' + $('#room_hash').val() + '/messages/past/' + lastMessageID,
-        timeout: 10000,
-        cache: false,
-        data: {},
-        dataType: 'json',
-        beforeSend: function(jqXHR) {
-          jqXHR.setRequestHeader("If-Modified-Since", "Thu, 01 Jun 1970 00:00:00 GMT");
-          return true;
-        },
-      }).done(function(response, textStatus, jqXHR) {
+      var ajaxRequest = AJAX_REQUEST_MODEL;
+      ajaxRequest['url'] = 'rooms/' + $('#room_hash').val() + '/messages/past/' + lastMessageID;
+      ajaxRequest['data'] = {};
+
+      $.ajax(ajaxRequest
+      ).done(function(response, textStatus, jqXHR) {
         if(response["errors"]){
             console.log(response["errors"]);
             TOASTR["warning"]("指定されたルームは存在しません。", "入力エラー"); return;
@@ -250,36 +239,24 @@
             }
         });
 
-      }).fail(function(jqXHR, textStatus, errorThrown ) {
-        TOASTR["error"]("接続が正しく行われませんでした。", "システムエラー");
-
-        console.log("XMLHttpRequest : " + jqXHR.status);
-        console.log("textStatus : " + textStatus);
-        console.log("errorThrown : " + errorThrown.message);
-      }).always(function(data_or_jqXHR, textStatus, jqXHR_or_errorThrown) {
-      });
+      }).fail(AJAX_FAIL);
     }
 
     /**
      * ルームに入室する
      */
     function intoRoom(){
-      $.ajax({
-        type: 'POST',
-        url: 'rooms/' + $('#room_hash').val() + '/members',
-        timeout: 10000,
-        cache: false,
-        data: {
+      var ajaxRequest = AJAX_REQUEST_MODEL;
+      ajaxRequest['url'] = 'rooms/' + $('#room_hash').val() + '/members';
+      ajaxRequest['data'] = {
             name : $('#user_name').val(),
             sex : $('#user_sex').val(),
             icon : $('#user_icon').val(),
             fingerprint : FINGERPRINT
-        },
-        dataType: 'json',
-        beforeSend: function(jqXHR) {
-          return true;
-        },
-      }).done(function(response, textStatus, jqXHR) {
+      };
+
+      $.ajax(ajaxRequest
+      ).done(function(response, textStatus, jqXHR) {
         if(response["errors"]){
             console.log(response["errors"]);
             if(response["errors"][0] == 'User already exist.'){
@@ -290,71 +267,70 @@
         }
         window.location.href = window.location.href.split('?')[0] + "?room=" + response.room_hash;
 
-      }).fail(function(jqXHR, textStatus, errorThrown ) {
-        TOASTR["error"]("接続が正しく行われませんでした。", "システムエラー");
-
-        console.log("XMLHttpRequest : " + jqXHR.status);
-        console.log("textStatus : " + textStatus);
-        console.log("errorThrown : " + errorThrown.message);
-      }).always(function(data_or_jqXHR, textStatus, jqXHR_or_errorThrown) {
-      });
+      }).fail(AJAX_FAIL);
     }
 
     /**
      * メッセージを取得する
      */
-    function getMessages(){
-      $.ajax({
-        type: 'GET',
-        url: 'rooms/' + $('#room_hash').val() + '/messages',
-        timeout: 10000,
-        cache: false,
-        data: {},
-        dataType: 'json',
-        beforeSend: function(jqXHR) {
-          jqXHR.setRequestHeader("If-Modified-Since", "Thu, 01 Jun 1970 00:00:00 GMT");
-          return true;
-        },
-      }).done(function(response, textStatus, jqXHR) {
-        if(response["errors"]){
-            console.log(response["errors"]);
-            TOASTR["warning"]("指定されたルームは存在しません。", "入力エラー"); return;
-        }
+    function fetchMessagesSse(){
+      var es = new EventSource('rooms/' + $('#room_hash').val() + '/messages/sse');
 
-        var addCommendFlag = null;
-        var compareDate1 = $('#message_stream div:last-child .send_date').val();
-        response.forEach(function(value) {
-            addCommendFlag = value.body;
-            var compareDate2 = calcDate(value.send_time, true);
-            if(compareDate1 != compareDate2){
-              settingDateMessage(value.send_time, compareDate2);
-              compareDate1 = compareDate2;
+      // メッセージを取得
+      es.addEventListener('messages', function (event) {
+          var addCommendFlag = null;
+          console.log(JSON.stringify(JSON.parse(event.data)));
+          JSON.parse(event.data).forEach(function(value) {
+              addCommendFlag = value.body;
+              $('#message_stream').append(create_message(value));
+          });
+
+          if(addCommendFlag){
+            // メッセージの表示位置が最後と離れている場合
+            if($('#message_stream div:last-child').offset().top != MESSAGE_Y_POSITION){
+              TOASTR["info"]('<a href="javascript:void(0);" class="clear" onclick="messageScrollButtom();">' + addCommendFlag + '</a>', '新着メッセージ');
+            } else {
+              messageScrollButtom();
             }
-            $('#message_stream').append(create_message(value));
-        });
-
-        if(addCommendFlag){
-          console.log("●outerHeight:" + $('#message_stream').outerHeight() + ' ●scrollTop:' + $('#message_stream').scrollTop() + '●scrollHeight:' + $('#message_stream').get(0).scrollHeight);
-          // メッセージの表示位置が最後と離れている場合
-          if($('#message_stream div:last-child').offset().top != MESSAGE_Y_POSITION){
-            TOASTR["info"]('<a href="javascript:void(0);" class="clear" onclick="messageScrollButtom();">' + addCommendFlag + '</a>', '新着メッセージ');
-          } else {
-            $('#message_stream').append(create_message(response));
-            messageScrollButtom();
           }
-        }
-      }).fail(function(jqXHR, textStatus, errorThrown ) {
-        TOASTR["error"]("接続が正しく行われませんでした。", "システムエラー");
 
-        console.log("XMLHttpRequest : " + jqXHR.status);
-        console.log("textStatus : " + textStatus);
-        console.log("errorThrown : " + errorThrown.message);
-      }).always(function(data_or_jqXHR, textStatus, jqXHR_or_errorThrown) {
       });
+
+      // バリデーションエラー
+      es.addEventListener('errors', function (event) {
+          console.log(event.data);
+          TOASTR["warning"]("指定されたルームは存在しません。", "入力エラー");
+          es.close();
+      });
+
+      es.onopen = function() {
+          console.log('EventSource open');
+      };
+
+      es.onclose = function(code, reason) {
+          console.log(code, reason);
+          TOASTR["error"]("接続が切断されました。", "システムエラー");
+      }
+
+      // ＰＨＰ側のタイムアウトで発生することもある。
+      es.onerror = function(e) {
+          if (e.readyState === EventSource.CONNECTING) { // === 0 
+            console.log("EventSource error: 再接続中");
+          } else if (e.readyState === EventSource.OPEN) { // === 1
+            console.log("EventSource error: 接続中");
+          } else if (e.readyState === EventSource.CLOSED) { // === 2
+            console.log("EventSource error: 終了");
+          }
+      };
     }
 
-    function calcDate(dateStr, daysFLag){
-      //文字列からミリ秒を取得
+    /**
+     * 日付を指定のフォーマットに変換する。
+     * 2016/01/01 (月)
+     * ※曜日はフラグで出力変更可能
+     */
+    function formatDate(dateStr, daysFLag){
+      // 置換をしているのはChromeとsafari対策
       var time = Date.parse(dateStr.replace(/-/g,"/"));
 
       //ミリ秒から日付を求める
@@ -386,8 +362,12 @@
       return result;
     }
 
-    function calcTime(dateStr){
-      //文字列からミリ秒を取得
+    /**
+     * 時間を指定のフォーマットに変換する。
+     * 01:01
+     */
+    function formatTime(dateStr){
+      // 置換をしているのはChromeとsafari対策
       var time = Date.parse(dateStr.replace(/-/g,"/"));
 
       //ミリ秒から日付を求める
@@ -410,7 +390,6 @@
     }
 
     /**
-     * FIXME メッセージが送信している間に抜けたりするなどの不具合がありそうなので、送信前に受信するようにする。
      * メッセージを送信する
      */
     function sendMessage(){
@@ -437,58 +416,29 @@
             TOASTR["warning"]("指定されたルームは存在しません。", "入力エラー"); return;
         }
 
-        getMessage(response.message_id);
-      }).fail(function(jqXHR, textStatus, errorThrown ) {
-        TOASTR["error"]("接続が正しく行われませんでした。", "システムエラー");
-
-        console.log("XMLHttpRequest : " + jqXHR.status);
-        console.log("textStatus : " + textStatus);
-        console.log("errorThrown : " + errorThrown.message);
-      }).always(function(data_or_jqXHR, textStatus, jqXHR_or_errorThrown) {
-      });
+        $('#message_stream').append(create_message(response));
+        messageScrollButtom();
+      }).fail(AJAX_FAIL);
     }
 
     /**
      * メッセージを取得する
      */
     function getMessage(message_id){
-      $.ajax({
-        type: 'GET',
-        url: 'rooms/' + $('#room_hash').val() + '/messages/' + message_id,
-        timeout: 10000,
-        cache: false,
-        data: {},
-        dataType: 'json',
-        beforeSend: function(jqXHR) {
-          jqXHR.setRequestHeader("If-Modified-Since", "Thu, 01 Jun 1970 00:00:00 GMT");
-          return true;
-        },
-      }).done(function(response, textStatus, jqXHR) {
+      var ajaxRequest = AJAX_REQUEST_MODEL;
+      ajaxRequest['url'] = 'rooms/' + $('#room_hash').val() + '/messages/' + message_id;
+      ajaxRequest['data'] = {};
+
+      $.ajax(ajaxRequest
+      ).done(function(response, textStatus, jqXHR) {
         if(response["errors"]){
             console.log(response["errors"]);
             TOASTR["warning"]("指定されたルームは存在しません。", "入力エラー"); return;
         }
 
-        var compareDate1 = $('#message_stream div:last-child .send_date').val();
-        var compareDate2 = calcDate(response.send_time, true);
-
-        if(compareDate1 != compareDate2){
-          settingDateMessage(response.send_time, compareDate2);
-        }
-
-        var message = create_message(response);
-        if(message != null){
-            $('#message_stream').append(create_message(response));
-            messageScrollButtom();
-        }
-      }).fail(function(jqXHR, textStatus, errorThrown ) {
-        TOASTR["error"]("接続が正しく行われませんでした。", "システムエラー");
-
-        console.log("XMLHttpRequest : " + jqXHR.status);
-        console.log("textStatus : " + textStatus);
-        console.log("errorThrown : " + errorThrown.message);
-      }).always(function(data_or_jqXHR, textStatus, jqXHR_or_errorThrown) {
-      });
+        $('#message_stream').append(create_message(response));
+        messageScrollButtom();
+      }).fail(AJAX_FAIL);
     }
 
     /**
@@ -510,12 +460,14 @@
         var icon = value.user.icon;
         var hash = value.user.hash;
         var type = value.type;
-        var sendTime = calcTime(value.send_time);
-        var sendDate = calcDate(value.send_time, false);
+        var sendTime = formatTime(value.send_time);
+        var sendDate = formatDate(value.send_time, false);
 
         var result = '';
 
-        if(type == 3){ // 入室の場合
+        if(type == 4){ // 日付の場合
+            result = '<div class="information_box">' + body + '<input type="hidden" class="send_date" value="' + sendDate + '">' + '</div>';
+        } else if(type == 3){ // 入室の場合
             result = '<div class="information_box">' + body + ' さんが入室しました。' + '<input type="hidden" class="send_date" value="' + sendDate + '">' + '</div>';
         } else if(type == 1){ // ルーム作成の場合
             //bodyに部屋名が入力されているが、部屋名を表示すると途中で部屋名を変更したときの齟齬の調整が面倒なので表示しない。
@@ -539,14 +491,6 @@
     function createDateMessage(id, dateValue){
         return '<div class="information_box" id="' + id + '">' + dateValue + '<input type="hidden" class="send_date" value="' + id + '">' + '</div>';
     }
-
-    /**
-     * 日付メッセージの表示共通処理
-     */
-    function settingDateMessage(rawDateValue, dateValue){
-        var id = rawDateValue.split(' ')[0];
-        $('#message_stream').append(createDateMessage(id, dateValue));
-    }
     
     /**
      * メッセージ欄を一番下までスクロールする
@@ -563,7 +507,7 @@
 </head>
 <body>
 <ul id="menu_navi" class="clearfix">
-      <li><h2 id="description"></h2></li>
+      <li><div id="description"></div></li>
 </ul>
 <input type="hidden" id="user_name">
 <input type="hidden" id="user_sex">

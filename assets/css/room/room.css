@@ -55,16 +55,18 @@ body {
     background: #fff;
     border: 1px solid #c8c8c8;
     border-radius: 10px;
-    width:85%;
+    width:83%;
     padding:3%;
 }
 
 .arrow_question {
     float: right;
+    margin-right: 1%;
 }
 
 .arrow_answer {
     background: #85e249;
+    margin-left: 1%;
 }
 
 .question_image{
@@ -144,4 +146,9 @@ p.answer_name{text-align: right;}
 
 #message_input_area{
      background: #6f92c0;　　/* メッセージ欄の背景色と同一にする必要がある */
+}
+
+/* トースターのスタイルをオーバーライド */
+#toast-container.toast-top-full-width{
+    margin-top:50px;
 }

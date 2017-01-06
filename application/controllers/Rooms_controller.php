@@ -9,6 +9,7 @@ class Rooms_controller extends MY_Controller {
 		
 		$this->load->library('encrypt');
 		$this->load->helper('hash');
+		$this->load->model('user');
     }	
 
 	/**
@@ -144,7 +145,6 @@ class Rooms_controller extends MY_Controller {
 		}
 
 		$this->load->database();
-		$this->load->model('user');
 
 		$this->db->trans_start();
 
@@ -237,19 +237,17 @@ class Rooms_controller extends MY_Controller {
 		$this->load->database();
 
 		$room_id = $room_data['room_id'];
-		// 存在しないルームの場合
-		if ($this->db->from('rooms')->where(array ('room_id' => $room_id))->count_all_results() == 0) {
-			$this->output->set_json_error_output(array('It do not exist room.')); return;
-		}
-
 		$user_id = $room_data['user_id'];
-		// 存在しないユーザの場合
-		$row = $this->db->from('users')->where(array ('user_id' => $user_id))->get()->row();
-		if (empty ($row)) {
+
+		if(!$this->user->existUser($room_id, $user_id)){
 			$this->output->set_json_error_output(array('It do not exist user.')); return;
 		}
 
+		$this->db->from('messages')->where(array('room_id' => $room_id, 'user_id' => $user_id))->count_all_results();		
+
 		$message_count = $this->db->from('messages')->where(array('room_id' => $room_id, 'user_id' => $user_id))->count_all_results();
+
+		$row = $this->user->find($user_id);
 
 		$data = array ();
 		$data['name'] = $row->name;
@@ -401,7 +399,7 @@ class Rooms_controller extends MY_Controller {
 		$begin_message_id = $row->begin_message_id;
 
 		// 既読済のメッセージIDを返却する
-		$sql = 'select COALESCE(max(r.message_id), 0) as last_read_message_id from messages m inner join reads r on r.user_id = ? and m.user_id = r.user_id;';
+		$sql = 'select COALESCE(max(r.message_id), 0) as last_read_message_id from messages m inner join reads r on r.user_id = ? and m.user_id = r.user_id';
 
 		$query_result = $this->db->query($sql, array (
 			$user_id,
@@ -739,7 +737,6 @@ class Rooms_controller extends MY_Controller {
 			$icon_id = rand(1, $this->config->item('icon_num'));
 		}
 
-		$this->load->model('user');
 		$this->db->trans_start();
 
 		// 特定ユーザを生成する。
@@ -767,7 +764,6 @@ class Rooms_controller extends MY_Controller {
 		// ユーザのアイコンＩＤを設定します。（アノニマスアイコン）
 		$icon_id = 999;
 
-		$this->load->model('user');
 		$this->db->trans_start();
 
 		// アノニマスユーザを生成する。

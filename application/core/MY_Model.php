@@ -36,10 +36,9 @@ class MY_Model extends CI_Model {
      * 
      * @return integer 
      */
-    public function insert() {
+    public function insert(array $values) {
         $now = $this->now();
-        $this->db->set(array('created_at' => $now, 'updated_at' => $now));
-        $ret = $this->db->insert($this->_table, $this);
+        $ret = $this->db->insert($this->_table, $values);
         if ($ret === FALSE) {
             return FALSE;
         }

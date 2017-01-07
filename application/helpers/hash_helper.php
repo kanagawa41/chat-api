@@ -7,8 +7,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * 「０」は自分でユーザ名を決められるアノニマスが使用できる。
  * 
  */
-function room_hash_encode($room_id, $role, $user_id) {
-	return base64_urlsafe_encode($room_id . '_' . $role . '_' . $user_id);
+function room_hash_encode($room_id, DefineImpl $role, $user_id) {
+	return base64_urlsafe_encode($room_id . '_' . $role->valueOf() . '_' . $user_id);
 }
 
 /**

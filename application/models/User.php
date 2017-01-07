@@ -4,20 +4,6 @@ defined('BASEPATH') OR exit ('No direct script access allowed');
 class User extends MY_Model {
 	protected $_primary_key = 'user_id';
 
-    public $user_id; //--ユーザＩＤ
-    public $user_hash; //--ユーザハッシュ
-    public $user_role; //--ユーザロール(1…admin, 2…specific-user, 3…anonymous)
-    public $name; //--ユーザ名
-    public $sex; //--性別(1…男, 2…女)
-    public $room_id; //--ルームＩＤ
-    public $begin_message_id; //--入室した際の開始メッセージＩＤ
-    public $icon_id; //--アイコンＩＤ
-    public $fingerprint; //--フィンガープリント
-    public $user_agent; //--ユーザエージェント
-    public $ip_address; //--ユーザのアドレス
-    public $port; //--ユーザのポート
-    public $created_at; //--作成日
-
 	public function __construct() {
 		// CI_Model constructor の呼び出し
 		parent :: __construct();
@@ -27,7 +13,7 @@ class User extends MY_Model {
 	 * ユーザの存在チェックを厳密に行う。
 	 * trueの場合はユーザが存在する。でない場合はfalse。
 	 */
-	public function existUser($room_id, $user_id) {
+	public function exist_user($room_id, $user_id) {
 		return $this->db->from('rooms r')
 		->join('users as u', 'u.room_id = r.room_id', 'inner')
 		->where(array (
@@ -37,15 +23,24 @@ class User extends MY_Model {
 	}
 
 	/**
+	 * ユーザが既に登録されていないか確認する。
+	 * 登録されていた場合はtrue、でない場合はfalseを返却する。
+	 */
+	public function duplicate_user($room_id, $fingerprint) {
+		return $this->db->from('users')
+		->where(array (
+			'room_id' => $room_id,
+			'fingerprint' => $fingerprint,
+		))->count_all_results() > 0;
+	}
+
+	/**
 	 * ユーザを追加する。
 	 * 追加したユーザIDを返却する。
 	 */
-	public function insert_user($name, $room_id, $user_role, $fingerprint, $sex, $icon_id) 
-	{
-	    $this->db->select_max('message_id');
-	    $this->db->where('room_id', $room_id);
-	    $result_row = $this->db->get('messages')->row();
-		$max_message_id = empty($result_row->message_id) ? 0: $result_row->message_id;
+	public function insert_user($name, $room_id, DefineImpl $user_role, $fingerprint, $sex, $icon_id) {
+	    $raw_max_message_id = $this->db->select_max('message_id')->from('messages')->where('room_id', $room_id)->get()->row()->message_id;
+		$max_message_id = empty($raw_max_message_id) ? 0: $raw_max_message_id;
 
 		$this->load->helper('string');
 
@@ -54,7 +49,7 @@ class User extends MY_Model {
 
 		$data = array(
 		   'user_hash' => $user_hash ,
-		   'user_role' => $user_role ,
+		   'user_role' => $user_role->valueOf() ,
 		   'name' => $name ,
 		   'sex' => $sex ,
 		   'room_id' => $room_id ,
@@ -68,6 +63,8 @@ class User extends MY_Model {
 
 		$this->db->insert('users', $data);
 		$user_id = $this->db->insert_id();
+
+		$this->message->insert_date_message($room_id);
 
 		$data = array(
 		   'user_id' => $user_id ,

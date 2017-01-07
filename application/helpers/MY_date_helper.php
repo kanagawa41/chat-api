@@ -20,3 +20,11 @@ function get_days($date){
 	$days = array( '日', '月', '火', '水', '木', '金', '土' );
 	return $days[date('w', strtotime($date))];
 }
+
+/**
+ * 現在日付を返却する。
+ */
+function get_now_date(){
+    $CI = &get_instance();
+	return $CI->db->select('datetime(CURRENT_TIMESTAMP) as now_date')->get()->row()->now_date;
+}

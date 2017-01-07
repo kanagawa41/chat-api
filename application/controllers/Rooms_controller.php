@@ -256,61 +256,30 @@ class Rooms_controller extends MY_Controller {
 		ob_flush();
 		flush();
 
-		$this->load->library('encrypt');
-
 		// ルームＩＤをデコードする
 		$room_data = room_hash_decode($room_hash);
-
-		$this->load->database();
-
 		$room_id = $room_data['room_id'];
-		// 存在しないルームの場合
-		if ($this->db->from('rooms')->where(array ('room_id' => $room_id))->count_all_results() == 0) {
-			$this->output->set_sse_error_output(array('It do not exist room.')); return;
-		}
-
 		$user_id = $room_data['user_id'];
-		// 存在しないユーザの場合
-		$row = $this->db->from('users')->where(array (
-			'user_id' => $user_id
-		))->get()->row();
-		if (empty ($row)) {
-			$this->output->set_sse_error_output(array('It do not exist user.')); return;
-		}
 
-		$begin_message_id = $row->begin_message_id;
+		if(!$this->user->exist_user($room_id, $user_id)){
+			$this->output->set_json_error_output(array('It do not exist user.')); return;
+		}
 
 		// 処理を終えないように待機させる。
 		while(true){
+			$col = $this->message->unread_messages($room_id, $user_id);
 
-			// 既読済のメッセージIDを返却する
-			$sql = 'select COALESCE(max(r.message_id), 0) as last_read_message_id from messages m inner join reads r on r.user_id = ? and m.user_id = r.user_id;';
-
-			$query_result = $this->db->query($sql, array (
-				$user_id,
-			))->row();
-
-			$last_read_message_id = $query_result->last_read_message_id;
-
-			$last_read_message_id = $last_read_message_id < $begin_message_id ? $begin_message_id : $last_read_message_id;
-
-			$select_results = $this->db->select('m.message_id, u.name, u.user_id, u.icon_id, u.sex, u.user_hash, m.body, m.type, m.created_at')->from('messages as m')->join('users as u', 'u.user_id = m.user_id', 'inner')->where(array (
-				'm.room_id' => $room_id,
-				'm.message_id >' => $last_read_message_id,
-				'm.user_id <>' => $user_id
-			))->get()->result();
-
-			// デバッグ用
-			//$this->output->set_json_error_output(array($this->db->last_query())); return;
-
-			if (count ($select_results) == 0) {
+			if (count ($col) == 0) {
 				sleep($this->config->item('sse_sleep_time'));
 				continue;
 			}
 
+			// デバッグ用
+			//$this->output->set_json_error_output(array($this->db->last_query())); return;
+
 			$data = array ();
 			$last_message_id = null;
-			foreach ($select_results as $row) {
+			foreach ($col as $row) {
 				$temp_row = array ();
 				$temp_row['message_id'] = $row->message_id;
 				$temp_user_info = array ();
@@ -326,6 +295,10 @@ class Rooms_controller extends MY_Controller {
 
 				$data[] = $temp_row;
 				$last_message_id = $row->message_id;
+			}
+
+			if (empty ($last_message_id)) {
+				$this->output->set_json_output(array ()); return;
 			}
 
 			// 取得した最後のメッセージを既読済にする

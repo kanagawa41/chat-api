@@ -52,14 +52,28 @@ class Message extends MY_Model {
 		$raw_last_read_message_id = $this->read->read_message($user_id);
 		$last_read_message_id = $raw_last_read_message_id < $begin_message_id ? $begin_message_id : $raw_last_read_message_id;
 
-		return $this->db->select('m.message_id, u.name, u.user_id, u.icon_id, u.sex, u.user_hash, m.body, m.type, m.created_at')
-		->from('messages as m')
-		->join('users as u', 'u.user_id = m.user_id', 'inner')
-		->where(array (
-			'm.room_id' => $room_id,
-			'm.message_id >' => $last_read_message_id,
-			'm.user_id <>' => $user_id
-		))->get()->result();
+		$sql = "
+			SELECT
+			  m.message_id
+			  , u.name
+			  , u.user_id
+			  , u.icon_id
+			  , u.sex
+			  , u.user_hash
+			  , m.body
+			  , m.type
+			  , m.created_at 
+			FROM
+			  messages AS m JOIN users AS u 
+			    ON u.user_id = m.user_id 
+			    OR m.user_id IS NULL 
+			WHERE
+			  m.room_id = ? 
+			  AND m.message_id > ? 
+			  AND m.user_id <> ? 
+		";
+
+		return $this->db->query($sql, array($room_id, $last_read_message_id, $user_id))->result();
 	}
 
 	
@@ -130,7 +144,7 @@ class Message extends MY_Model {
 		// 最終メッセージと日付が変わっていた場合
 		if($this->message->changed_date($room_id)){
 			return $this->message->insert(array (
-				'user_id' => 0,
+				'user_id' => null,
 				'room_id' => $room_id,
 				'body' => $now_date + get_days($now_date),
 				'type' => MessageType::DATE, // 日付

@@ -4,13 +4,6 @@ defined('BASEPATH') OR exit ('No direct script access allowed');
 class Message extends MY_Model {
 	protected $_primary_key = 'message_id';
 
-    public $message_id; //--メッセージＩＤ
-    public $user_id; //--ユーザＩＤ
-    public $room_id; //--ルームＩＤ
-    public $body; //--メッセージ内容
-    public $type; //--メッセージの種類(1…ルーム作成、2…メッセージ、3…入室、4…日付)
-    public $created_at; //--作成日
-
 	public function __construct() {
 		// CI_Model constructor の呼び出し
 		parent :: __construct();

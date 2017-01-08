@@ -38,7 +38,7 @@ class User extends MY_Model {
 	 * ユーザを追加する。
 	 * 追加したユーザIDを返却する。
 	 */
-	public function insert_user($name, $room_id, DefineImpl $user_role, $fingerprint, $sex, $icon_id) {
+	public function insert_user($name, $room_id, DefineImpl $user_role, $fingerprint, DefineImpl $sex, $icon_id) {
 	    $raw_max_message_id = $this->db->select_max('message_id')->from('messages')->where('room_id', $room_id)->get()->row()->message_id;
 		$max_message_id = empty($raw_max_message_id) ? 0: $raw_max_message_id;
 

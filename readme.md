@@ -11,7 +11,7 @@
 
 ## 実装する機能
 
-###参考
+###システム作り参考
 [ChatWork](http://developer.chatwork.com/ja/)
 
 [jqueryチャット](http://studio-key.com/646.html)
@@ -23,10 +23,14 @@
 * ユーザにくばられたハッシュ化したIDで入室が可能となる
 * ユーザは任意のハッシュ値を保持し、次回以降はそれを使用して入室ができる。（つまり同一ユーザを使い続けられる。）
 
-###技術録
+###技術参考
 [phpLiteAdmin](http://www.hiskip.com/pg-notes/dbtools/phpLiteAdmin.html)
 
 [CSSで作った対談（会話）式吹き出しをLINE風にしてスマホにも対応させる](http://webkcampus.com/201411/829/)
+
+[ローカルストレージ](http://qiita.com/mima_ita/items/363fd434f9c655944e3f)
+
+[Redis](http://d.hatena.ne.jp/yk5656/touch/20140923/1411889810)
 
 ## DDL
 
@@ -52,7 +56,7 @@ CREATE TABLE users (
     user_hash STRING NOT NULL, --ユーザハッシュ
     user_role INTEGER DEFAULT 3, --ユーザロール(1…admin, 2…specific-user, 3…anonymous)
     name STRING NOT NULL, --ユーザ名
-    sex STRING, --性別(1…男, 2…女)
+    sex STRING, --性別(0…性別なし, 1…男, 2…女)
     room_id INTEGER, --ルームＩＤ
     begin_message_id INTEGER, --入室した際の開始メッセージＩＤ
     icon_id INTEGER, --アイコンＩＤ
@@ -325,6 +329,8 @@ http://chat/rooms/FJOIngow2489u53345lFEklEC
 * 過去分を参照する。(API構想済み)
 レスポンス：[{"message_id": 5,"user": {"name": "Bob"},"body": "Hello Chatwork!","send_time": 1384242850,"update_time": 0}]
 
+---
+---
 
 # TODO
 

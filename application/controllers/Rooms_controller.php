@@ -152,7 +152,7 @@ class Rooms_controller extends MY_Controller {
 		$admin_name = $this->config->item('admin_name');
 		
 		// 管理者ユーザを生成する。
-		$user_id = $this->user->insert_user($admin_name, $room_id, UserRole::ADMIN, 0, null, 0);
+		$user_id = $this->user->insert_user($admin_name, $room_id, UserRole::ADMIN, Sex::NONE, null, 0);
 
 		$this->message->insert(array(
 		   'user_id' => $user_id ,
@@ -547,7 +547,7 @@ class Rooms_controller extends MY_Controller {
 		} else if(!in_array($role, array(UserRole::SPECIFIC_USER, UserRole::ANONYMOUS_USER)) || $room_data['user_id'] !== '0') { // 特定ユーザ、アノニマスユーザ以外が指定
 			$this->output->set_json_error_output(array('This is not right hash.')); return;
 		}
-		
+
 		// 存在しないルームの場合
 		if (!$this->room->exit_room($room_id)) {
 			$this->output->set_json_error_output(array('It do not exist room.')); return;
@@ -570,7 +570,6 @@ class Rooms_controller extends MY_Controller {
 	 */
 	private function create_specific_user($room_id, $name) {
 		$icon_id = $this->input->post('icon');
-		$sex = $this->input->post('sex');
 		if(empty($icon_id)){
 			// ユーザのアイコンＩＤを設定します。（アイコンＩＤを増やしたらコンフィグの値を変更する。）
 			$icon_id = rand(1, $this->config->item('icon_num'));
@@ -579,7 +578,7 @@ class Rooms_controller extends MY_Controller {
 		$this->db->trans_start();
 
 		// 特定ユーザを生成する。
-		$user_id = $this->user->insert_user($name, $room_id, new UserRole(UserRole::SPECIFIC_USER), $this->input->post('fingerprint'), $sex, $icon_id);
+		$user_id = $this->user->insert_user($name, $room_id, new UserRole(UserRole::SPECIFIC_USER), $this->input->post('fingerprint'), new UserRole($this->input->post('sex')), $icon_id);
 
 		$this->db->trans_complete();
 
@@ -602,7 +601,7 @@ class Rooms_controller extends MY_Controller {
 		$this->db->trans_start();
 
 		// アノニマスユーザを生成する。
-		$user_id = $this->user->insert_user($name, $room_id, new UserRole(UserRole::ANONYMOUS_USER), $this->input->post('fingerprint'), $this->input->post('sex'),$icon_id);
+		$user_id = $this->user->insert_user($name, $room_id, new UserRole(UserRole::ANONYMOUS_USER), $this->input->post('fingerprint'), new UserRole($this->input->post('sex')),$icon_id);
 
 		$this->db->trans_complete();
 

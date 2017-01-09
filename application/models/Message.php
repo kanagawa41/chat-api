@@ -77,15 +77,21 @@ class Message extends MY_Model {
 		$begin_message_id = $this->user->find($user_id)->begin_message_id;
 
 		// ユーザが参照できる過去のメッセージ数を取得する。
-		$massage_count = $this->db->select('m.message_id, u.name, u.user_id, u.icon_id, u.sex, u.user_hash, m.body, m.type, m.created_at')
-		->from('messages as m')
-		->join('users as u', 'u.user_id = m.user_id', 'inner')
-		->where(array (
-			'm.room_id' => $room_id,
-			'm.message_id>' => $begin_message_id,
-			'm.message_id<' => $message_id,
-		))->count_all_results();
+		$raw_sql = "
+			SELECT
+			  %s
+			FROM
+			  messages AS m JOIN users AS u 
+			    ON u.user_id = m.user_id 
+			    OR m.user_id IS NULL
+			WHERE
+			  m.room_id = ? 
+			  AND m.message_id BETWEEN ? AND ?
+			%s
+		";
 
+		$sql = sprintf($raw_sql, 'count(*) as message_count', '');
+		$massage_count = $this->db->query($sql, array($room_id, $begin_message_id, $message_id))->row()->message_count;
 		if($massage_count == 0){
 			return array();
 		}
@@ -94,17 +100,12 @@ class Message extends MY_Model {
 		// FIXME このロジックは正しいか調査する必要がある。
 		$massage_offset = $massage_count > $past_message_max_count ? $massage_count - $past_message_max_count : 0;
 
-		return $this->db->select('m.message_id, u.name, u.user_id, u.icon_id, u.sex, u.user_hash, m.body, m.type, m.created_at')
-		->from('messages as m')
-		->join('users as u', 'u.user_id = m.user_id', 'inner')
-		->where(array (
-			'm.room_id' => $room_id,
-			'm.message_id>' => $begin_message_id,
-			'm.message_id<' => $message_id,
-		))
-		->limit($past_message_max_count)
-		->offset($massage_offset)
-		->get()->result();
+		$sql = sprintf($raw_sql
+			,'m.message_id, u.name, u.user_id, u.icon_id, u.sex, u.user_hash, m.body, m.type, m.created_at'
+			, ' LIMIT ' . $past_message_max_count . ' OFFSET '. $massage_offset
+		);
+
+		return $this->db->query($sql, array($room_id, $begin_message_id, $message_id))->result();
 	}
 	
 	/**
@@ -122,6 +123,10 @@ class Message extends MY_Model {
 
 		$this->load->helper('date');
 		
+		if(empty($row->last_message_date)){
+			return true;
+		}
+
 		// 最終メッセージと日付が変わっていた場合
 		return compare_date($row->now_date, $row->last_message_date);
 	 }

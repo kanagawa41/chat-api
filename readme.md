@@ -34,7 +34,7 @@
 
 ## DDL
 
-#### ルーム情報
+#### ルーム
 ```
 CREATE TABLE rooms (
     /** ルーム情報 **/
@@ -48,7 +48,7 @@ CREATE TABLE rooms (
 ```
 
 
-#### ユーザ情報
+#### ユーザ
 ```
 CREATE TABLE users (
     /** ユーザ情報 **/
@@ -70,22 +70,41 @@ CREATE TABLE users (
 ```
 
 
-#### メッセージ情報
+#### メッセージストリーム
 ```
-CREATE TABLE messages (
+CREATE TABLE stream_messages (
     /** メッセージ情報 **/
     message_id INTEGER, --メッセージＩＤ
     user_id INTEGER, --ユーザＩＤ
     room_id INTEGER, --ルームＩＤ
-    body STRING NOT NULL, --メッセージ内容
-    type INTEGER DEFAULT 2, --メッセージの種類(1…ルーム作成、2…メッセージ、3…入室、4…日付)
     created_at default CURRENT_TIMESTAMP NOT NULL, --作成日
     PRIMARY KEY(message_id AUTOINCREMENT)
 );
 ```
 
+#### ユーザメッセージ
+```
+CREATE TABLE user_messages (
+    /** メッセージ情報 **/
+    message_id INTEGER, --メッセージＩＤ
+    body STRING NOT NULL, --メッセージ内容
+    PRIMARY KEY(message_id AUTOINCREMENT)
+);
+```
 
-#### 既読情報
+#### お知らせメッセージ
+```
+CREATE TABLE info_messages (
+    /** メッセージ情報 **/
+    message_id INTEGER, --メッセージＩＤ
+    body STRING NOT NULL, --メッセージ内容
+    type INTEGER, --メッセージの種類(1…ルーム作成、2…入室、3…日付)
+    PRIMARY KEY(message_id AUTOINCREMENT)
+);
+```
+
+
+#### 既読
 ```
 CREATE TABLE reads (
     /** 既読情報 **/
@@ -334,9 +353,9 @@ http://chat/rooms/FJOIngow2489u53345lFEklEC
 
 # TODO
 
-### ●画面を開いた際のＡＰＩを作成する。（既読をチェックしている）
+### ●メッセージをユーザ用テーブルとお知らせ用テーブルで分離させる。
 
-### ●サーバでＳＳＥが効いていない可能性がある。
+### ●画面を開いた際のＡＰＩを作成する。（既読をチェックしている）
 
 ### ●画面とＡＰＩを切り分ける
 
@@ -357,6 +376,8 @@ http://chat/rooms/FJOIngow2489u53345lFEklEC
 
 
 # DONE
+
+### ×サーバでＳＳＥが効いていない可能性がある。
 
 ### ×新着メッセージの位置判定が正しく行われていない。スクロール位置が正しく取得できていないため誤作動を起こす
 

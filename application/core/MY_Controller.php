@@ -15,7 +15,7 @@ class MY_Controller extends CI_Controller
 	 * トークンが存在するか確認する。
 	 * 正しいトークンがない場合は、falseを返却する。
 	 */
-	public function exist_token() {
+	protected function _exist_token() {
 		$this->config->load('my_config');
 
 		$token = $this->input->get_request_header('X-ChatToken');

@@ -75,7 +75,6 @@ CREATE TABLE users (
 CREATE TABLE stream_messages (
     /** メッセージ情報 **/
     message_id INTEGER, --メッセージＩＤ
-    user_id INTEGER, --ユーザＩＤ
     room_id INTEGER, --ルームＩＤ
     created_at default CURRENT_TIMESTAMP NOT NULL, --作成日
     PRIMARY KEY(message_id AUTOINCREMENT)
@@ -87,8 +86,9 @@ CREATE TABLE stream_messages (
 CREATE TABLE user_messages (
     /** メッセージ情報 **/
     message_id INTEGER, --メッセージＩＤ
+    user_id INTEGER, --ユーザＩＤ
     body STRING NOT NULL, --メッセージ内容
-    PRIMARY KEY(message_id AUTOINCREMENT)
+    PRIMARY KEY(message_id)
 );
 ```
 
@@ -99,7 +99,7 @@ CREATE TABLE info_messages (
     message_id INTEGER, --メッセージＩＤ
     body STRING NOT NULL, --メッセージ内容
     type INTEGER, --メッセージの種類(1…ルーム作成、2…入室、3…日付)
-    PRIMARY KEY(message_id AUTOINCREMENT)
+    PRIMARY KEY(message_id)
 );
 ```
 

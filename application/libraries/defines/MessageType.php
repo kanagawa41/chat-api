@@ -4,7 +4,6 @@
  */
 final class MessageType extends Enum implements DefineImpl{
   const MAKE_ROOM = '1';
-  const MESSAGE = '2';
-  const INTO_ROOM = '3';
-  const DATE = '4';
+  const INTO_ROOM = '2';
+  const DATE = '3';
 }

@@ -1,7 +1,7 @@
 <?php
 defined('BASEPATH') OR exit ('No direct script access allowed');
 
-class Message extends MY_Model {
+class Stream_message extends MY_Model {
 	protected $_primary_key = 'message_id';
 
 	public function __construct() {
@@ -132,6 +132,50 @@ class Message extends MY_Model {
 	 }
 
 	/**
+	 * ユーザメッセージを追加する。
+	 */
+	public function insert_user_message($room_id, $user_id, $body) {
+		$this->db->trans_start();
+
+		$this->stream_message->insert_date_message($room_id);
+
+		$message_id = $this->stream_message->insert(array (
+			'room_id' => $room_id,
+		));
+
+		return $this->user_message->insert(array (
+			'message_id' => $message_id,
+			'room_id' => $room_id,
+			'user_id' => $user_id,
+			'body' => $body,
+		));
+
+		$this->db->trans_complete();
+
+		return null;
+	}
+
+	/**
+	 * インフォメッセージを追加する。
+	 */
+	public function insert_info_message($room_id, $body, DefineImpl $type) {
+		$this->stream_message->insert_date_message($room_id);
+
+			$message_id = $this->stream_message->insert(array (
+				'room_id' => $room_id,
+			));
+
+			return $this->info_message->insert(array (
+				'message_id' => $message_id,
+				'room_id' => $room_id,
+				'body' => $body,
+				'type' => $type,
+			));
+
+		return null;
+	}
+
+	/**
 	 * 最終メッセージと日付が変わっていた場合、日付メッセージを追加する。
 	 * 追加した場合はmessage_idを返却する。でない場合はnull。
 	 */
@@ -140,13 +184,9 @@ class Message extends MY_Model {
 		$now_date = get_now_date();
 		
 		// 最終メッセージと日付が変わっていた場合
-		if($this->message->changed_date($room_id)){
-			return $this->message->insert(array (
-				'user_id' => null,
-				'room_id' => $room_id,
-				'body' => $now_date + get_days($now_date),
-				'type' => MessageType::DATE, // 日付
-			));
+		if($this->stream_message->changed_date($room_id)){
+			$body = $now_date + get_days($now_date);
+			$this->stream_message->insert_info_message($room_id, $body, new MessageType(MessageType::DATE));
 		}
 
 		return null;

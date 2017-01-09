@@ -10,7 +10,7 @@ class Rooms_controller extends MY_Controller {
 		$this->lang->load('form_validation');
 		$this->load->library(array('form_validation', 'encrypt', 'classLoad'));
 		$this->load->helper('hash');
-		$this->load->model(array('user', 'message', 'room', 'read'));
+		$this->load->model(array('user', 'stream_message', 'user_message', 'info_message', 'room', 'read'));
     }	
 
 	/**
@@ -141,20 +141,10 @@ class Rooms_controller extends MY_Controller {
 		// 管理者ユーザを生成する。
 		$user_id = $this->user->insert_user($admin_name, $room_id, new UserRole(UserRole::ADMIN), null, new Sex(Sex::NONE), 0);
 
-		// メッセージを追加する。
-		$this->message->insert(array(
-		   'user_id' => $user_id ,
-		   'room_id' => $room_id ,
-		   'body' => $name ,
-		   'type' => MessageType::MAKE_ROOM , // ルーム作成
-		));
-
-		$this->message->insert(array(
-		   'user_id' => $user_id ,
-		   'room_id' => $room_id ,
-		   'body' => $admin_name ,
-		   'type' => MessageType::INTO_ROOM , // 入室
-		));
+		// 部屋作成メッセージ
+		$this->stream_message->insert_info_message($room_id, $name, MessageType::MAKE_ROOM);
+		// 入室メッセージ
+		$this->stream_message->insert_info_message($room_id, $admin_name, MessageType::INTO_ROOM);
 
 		$this->db->trans_complete();
 
@@ -220,7 +210,7 @@ class Rooms_controller extends MY_Controller {
 		$data['name'] = $row->name;
 		$data['sex'] = $row->sex;
 		$data['icon'] = $row->icon_id;
-		$data['message_count'] = $this->message->message_count($room_id, $user_id);
+		$data['message_count'] = $this->stream_message->message_count($room_id, $user_id);
 		$data['begin_message_id'] = $row->begin_message_id;
 		$data['last_create_time'] = $row->created_at;
 
@@ -255,7 +245,7 @@ class Rooms_controller extends MY_Controller {
 
 		// 処理を終えないように待機させる。
 		while(true){
-			$col = $this->message->unread_messages($room_id, $user_id);
+			$col = $this->stream_message->unread_messages($room_id, $user_id);
 
 			if (count ($col) == 0) {
 				sleep($this->config->item('sse_sleep_time'));
@@ -322,7 +312,7 @@ class Rooms_controller extends MY_Controller {
 			$this->output->set_json_error_output(array('room_hash' => $this->lang->line('exist_user'))); return;
 		}
 
-		$col = $this->message->unread_messages($room_id, $user_id);
+		$col = $this->stream_message->unread_messages($room_id, $user_id);
 
 		// デバッグ用
 		//$this->output->set_json_error_output(array($this->db->last_query())); return;
@@ -379,7 +369,7 @@ class Rooms_controller extends MY_Controller {
 			$this->output->set_json_error_output(array('room_hash' => $this->lang->line('exist_user'))); return;
 		}
 
-		$row = $this->message->specific_message($room_id, $message_id);
+		$row = $this->stream_message->specific_message($room_id, $message_id);
 
 		// デバッグ用
 		//$this->output->set_json_error_output(array($this->db->last_query())); return;
@@ -418,7 +408,7 @@ class Rooms_controller extends MY_Controller {
 			$this->output->set_json_error_output(array('room_hash' => $this->lang->line('exist_user'))); return;
 		}
 
-		$col = $this->message->past_messages($room_id, $user_id, $message_id);
+		$col = $this->stream_message->past_messages($room_id, $user_id, $message_id);
 $this->output->set_json_error_output(array($col)); return;
 
 		// デバッグ用
@@ -473,9 +463,9 @@ $this->output->set_json_error_output(array($col)); return;
 
 		$this->db->trans_start();
 
-		$this->message->insert_date_message($room_id);
+		$this->stream_message->insert_date_message($room_id);
 
-		$message_id = $this->message->insert(array (
+		$message_id = $this->stream_message->insert(array (
 			'user_id' => $user_id,
 			'room_id' => $room_id,
 			'body' => $body
@@ -483,7 +473,7 @@ $this->output->set_json_error_output(array($col)); return;
 
 		$this->db->trans_complete();
 
-		$row = $this->message->specific_message($room_id, $message_id);
+		$row = $this->stream_message->specific_message($room_id, $message_id);
 
 		// デバッグ用
 		//$this->output->set_json_error_output(array($this->db->last_query())); return;

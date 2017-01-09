@@ -39,7 +39,8 @@ class User extends MY_Model {
 	 * 追加したユーザIDを返却する。
 	 */
 	public function insert_user($name, $room_id, DefineImpl $user_role, $fingerprint, DefineImpl $sex, $icon_id) {
-	    $raw_max_message_id = $this->db->select_max('message_id')->from('messages')->where('room_id', $room_id)->get()->row()->message_id;
+		// FIXME モデルを使用するように修正
+	    $raw_max_message_id = $this->db->select_max('message_id')->from('stream_messages')->where('room_id', $room_id)->get()->row()->message_id;
 		$max_message_id = empty($raw_max_message_id) ? 0: $raw_max_message_id;
 
 		$this->load->helper('string');
@@ -64,7 +65,7 @@ class User extends MY_Model {
 		$this->db->insert('users', $data);
 		$user_id = $this->db->insert_id();
 
-		$this->message->insert_date_message($room_id);
+		$this->stream_message->insert_date_message($room_id);
 
 		$data = array(
 		   'user_id' => $user_id ,
@@ -73,7 +74,7 @@ class User extends MY_Model {
 		   'type' => 3 , // 入室
 		);
 
-		$this->db->insert('messages', $data);
+		$this->db->insert('stream_message', $data);
 
 		return $user_id;
 	}

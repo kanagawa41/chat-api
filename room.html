@@ -280,7 +280,7 @@
       // メッセージを取得
       es.addEventListener('messages', function (event) {
           var addCommendFlag = null;
-          console.log(JSON.stringify(JSON.parse(event.data)));
+          // console.log(JSON.stringify(JSON.parse(event.data)));
           JSON.parse(event.data).forEach(function(value) {
               addCommendFlag = value.body;
               $('#message_stream').append(create_message(value));
@@ -442,7 +442,7 @@
      */
     function create_message(value){
         //デバッグ用
-        console.log(JSON.stringify(value));
+        // console.log(JSON.stringify(value));
 
         var message_id = value.message_id;
         var body = value.body.replace(/\n/g, '<br>'); // 改行コード置換
@@ -464,9 +464,9 @@
 
         var result = '';
 
-        if(type == 4){ // 日付の場合
+        if(type == 3){ // 日付の場合
             result = '<div class="information_box">' + body + '<input type="hidden" class="send_date" value="' + sendDate + '">' + '</div>';
-        } else if(type == 3){ // 入室の場合
+        } else if(type == 2){ // 入室の場合
             result = '<div class="information_box">' + body + ' さんが入室しました。' + '<input type="hidden" class="send_date" value="' + sendDate + '">' + '</div>';
         } else if(type == 1){ // ルーム作成の場合
             //bodyに部屋名が入力されているが、部屋名を表示すると途中で部屋名を変更したときの齟齬の調整が面倒なので表示しない。

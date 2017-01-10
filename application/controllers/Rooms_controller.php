@@ -129,24 +129,18 @@ class Rooms_controller extends MY_Controller {
 		$description = $this->input->post('description');
 		$name = $this->input->post('name');
 
-		$this->db->trans_start();
-
 		$room_id = $this->room->insert(array (
 			'name' => $name,
 			'description' => $description,
 		));
 
 		$admin_name = $this->config->item('admin_name');
-		
-		// 管理者ユーザを生成する。
-		$user_id = $this->user->insert_user($admin_name, $room_id, new UserRole(UserRole::ADMIN), null, new Sex(Sex::NONE), 0);
 
 		// 部屋作成メッセージ
 		$this->stream_message->insert_info_message($room_id, $name, new MessageType(MessageType::MAKE_ROOM));
-		// 入室メッセージ
-		$this->stream_message->insert_info_message($room_id, $admin_name, new MessageType(MessageType::INTO_ROOM));
-
-		$this->db->trans_complete();
+		
+		// 管理者ユーザを生成する。
+		$user_id = $this->user->insert_user($admin_name, $room_id, new UserRole(UserRole::ADMIN), null, new Sex(Sex::NONE), 0);
 
 		$response_data = array (
 			'room_id' => $room_id
@@ -315,7 +309,7 @@ class Rooms_controller extends MY_Controller {
 		$col = $this->stream_message->unread_messages($room_id, $user_id);
 
 		// デバッグ用
-		//$this->output->set_json_error_output(array($this->db->last_query())); return;
+		$this->output->set_json_error_output(array($this->db->last_query())); return;
 
 		$data = array ();
 		$last_message_id = null;

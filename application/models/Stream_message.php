@@ -54,7 +54,7 @@ class Stream_message extends MY_Model {
         ->from('stream_messages as sm')
         ->join('info_messages as im', 'im.message_id = sm.message_id', 'left')
         ->join('user_messages as um', 'um.message_id = sm.message_id', 'left')
-        ->join('users as u', 'u.user_id = um.user_id', 'inner')
+        ->join('users as u', 'u.user_id = um.user_id', 'left')
         ->where(array (
             'sm.message_id' => $message_id,
             'sm.room_id' => $room_id,
@@ -65,12 +65,8 @@ class Stream_message extends MY_Model {
      * 未読のメッセージを取得する。
      */
     public function unread_messages($room_id, $user_id) {
-        // 開始メッセージＩＤ
-        $begin_message_id = $this->user->find($user_id)->begin_message_id;
-
         // 既読済のメッセージID
-        $raw_last_read_message_id = $this->read->read_message($user_id);
-        $last_read_message_id = $raw_last_read_message_id < $begin_message_id ? $begin_message_id : $raw_last_read_message_id;
+        $last_read_message_id = $this->read->read_message($user_id);
 
         return $this->db->select(
             '
@@ -92,7 +88,7 @@ class Stream_message extends MY_Model {
         ->from('stream_messages as sm')
         ->join('info_messages as im', 'im.message_id = sm.message_id', 'left')
         ->join('user_messages as um', 'um.message_id = sm.message_id', 'left')
-        ->join('users as u', 'u.user_id = um.user_id', 'inner')
+        ->join('users as u', 'u.user_id = um.user_id', 'left')
         ->where(array (
             'sm.room_id' => $room_id,
             'sm.message_id >' => $last_read_message_id,
@@ -108,24 +104,11 @@ class Stream_message extends MY_Model {
         $begin_message_id = $this->user->find($user_id)->begin_message_id;
 
         // ユーザが参照できる過去のメッセージ数を取得する。
-        $raw_sql = "
-            SELECT
-              %s
-            FROM
-              messages AS m JOIN users AS u 
-                ON u.user_id = m.user_id 
-                OR m.user_id IS NULL
-            WHERE
-              m.room_id = ? 
-              AND m.message_id BETWEEN ? AND ?
-            %s
-        ";
-
         $massage_count = $this->db->select('count(*) as message_count')
         ->from('stream_messages as sm')
         ->join('info_messages as im', 'im.message_id = sm.message_id', 'left')
         ->join('user_messages as um', 'um.message_id = sm.message_id', 'left')
-        ->join('users as u', 'u.user_id = um.user_id', 'inner')
+        ->join('users as u', 'u.user_id = um.user_id', 'left')
         ->where(array (
             'sm.room_id' => $room_id,
             'sm.message_id >' => $begin_message_id,
@@ -160,7 +143,7 @@ class Stream_message extends MY_Model {
         ->from('stream_messages as sm')
         ->join('info_messages as im', 'im.message_id = sm.message_id', 'left')
         ->join('user_messages as um', 'um.message_id = sm.message_id', 'left')
-        ->join('users as u', 'u.user_id = um.user_id', 'inner')
+        ->join('users as u', 'u.user_id = um.user_id', 'left')
         ->where(array (
             'sm.room_id' => $room_id,
             'sm.message_id >' => $begin_message_id,

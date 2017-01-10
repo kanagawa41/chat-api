@@ -32,7 +32,7 @@ class Rooms_controller extends MY_Controller {
 			$temp_row['room_specificuser_hash'] = room_hash_encode($row->room_id, new UserRole(UserRole::SPECIFIC_USER), 0); // 特定ユーザで入室するための周知用のハッシュ
 			$temp_row['room_anonymous_hash'] = room_hash_encode($row->room_id, new UserRole(UserRole::ANONYMOUS_USER), 0); // 匿名入室するための周知用のハッシュ
 			$temp_row['name'] = $row->name;
-			$temp_row['message_num'] = $this->db->from('messages')->where('room_id', $row->room_id)->count_all_results();
+			$temp_row['message_num'] = $this->db->from('stream_messages')->where('room_id', $row->room_id)->count_all_results();
 			$temp_row['last_update_time'] = $row->updated_at;
 
 			$data[] = $temp_row;
@@ -62,7 +62,7 @@ class Rooms_controller extends MY_Controller {
 		$data = array ();
 		$data['name'] = $row->name;
 		$data['description'] = $row->description;
-		$data['last_message_id'] = $this->db->select_max('message_id')->from('messages')->where('room_id', $room_id)->get()->row()->message_id;
+		$data['last_message_id'] = $this->stream_message->max_message_id($room_id);
 
 		$this->output->set_json_output($data);
 	}
@@ -142,9 +142,9 @@ class Rooms_controller extends MY_Controller {
 		$user_id = $this->user->insert_user($admin_name, $room_id, new UserRole(UserRole::ADMIN), null, new Sex(Sex::NONE), 0);
 
 		// 部屋作成メッセージ
-		$this->stream_message->insert_info_message($room_id, $name, MessageType::MAKE_ROOM);
+		$this->stream_message->insert_info_message($room_id, $name, new MessageType(MessageType::MAKE_ROOM));
 		// 入室メッセージ
-		$this->stream_message->insert_info_message($room_id, $admin_name, MessageType::INTO_ROOM);
+		$this->stream_message->insert_info_message($room_id, $admin_name, new MessageType(MessageType::INTO_ROOM));
 
 		$this->db->trans_complete();
 
@@ -409,7 +409,6 @@ class Rooms_controller extends MY_Controller {
 		}
 
 		$col = $this->stream_message->past_messages($room_id, $user_id, $message_id);
-$this->output->set_json_error_output(array($col)); return;
 
 		// デバッグ用
 		// $this->output->set_json_error_output(array($this->db->last_query())); return;
@@ -461,17 +460,7 @@ $this->output->set_json_error_output(array($col)); return;
 			$this->output->set_json_error_output(array('room_hash' => $this->lang->line('exist_user'))); return;
 		}
 
-		$this->db->trans_start();
-
-		$this->stream_message->insert_date_message($room_id);
-
-		$message_id = $this->stream_message->insert(array (
-			'user_id' => $user_id,
-			'room_id' => $room_id,
-			'body' => $body
-		));
-
-		$this->db->trans_complete();
+		$message_id = $this->stream_message->insert_user_message($room_id, $user_id, $body);
 
 		$row = $this->stream_message->specific_message($room_id, $message_id);
 

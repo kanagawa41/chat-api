@@ -441,6 +441,9 @@
      *　メッセージ構成を作成し返却する。
      */
     function create_message(value){
+        //デバッグ用
+        console.log(JSON.stringify(value));
+
         var message_id = value.message_id;
         var body = value.body.replace(/\n/g, '<br>'); // 改行コード置換
         var user_name = value.user.name;
@@ -468,7 +471,7 @@
         } else if(type == 1){ // ルーム作成の場合
             //bodyに部屋名が入力されているが、部屋名を表示すると途中で部屋名を変更したときの齟齬の調整が面倒なので表示しない。
             result = '<div class="information_box">ルームが作成されました。<input type="hidden" class="send_date" value="' + sendDate + '">' + '</div>';
-        }　else if(type == 2){ // メッセージの場合
+        }　else if(type == null){ // メッセージの場合
             if(who == 'self'){
                 result = '<div class="question_box"><div class="answer_image"><div class="' + sexClass + '"><img src="assets/image/user_icon/' + icon + '.png' + '" alt="' + user_name + '"/></div>' + '<div class="send_time">' + sendTime + '</div>' + '</div><p class="answer_name">' + user_name + '　' + hash + '</p><div class="arrow_answer">' + body + '</div><input type="hidden" class="message_id" value="' + message_id + '">' + '<input type="hidden" class="send_date" value="' + sendDate + '">' + '</div>';
             } else if(who == 'other') {

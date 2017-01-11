@@ -148,6 +148,27 @@ p.answer_name{text-align: right;}
      background: #6f92c0;　　/* メッセージ欄の背景色と同一にする必要がある */
 }
 
+#overlay{
+    display: none;
+    width: 100%;
+    height:100%;
+    text-align: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    background: rgba(90, 230, 40, 1);
+}
+
+#overlay #text{
+    font-size: 40px;
+    color: #fff;
+    /* FIXME 中央になるように計算して配置する*/
+    padding-top: 200px;
+    vertical-align: middle;
+    font-weight: bold;
+}
+
 /* トースターのスタイルをオーバーライド */
 #toast-container.toast-top-full-width{
     margin-top:50px;

@@ -20,6 +20,11 @@ $config = array(
                         'label' => 'フィンガープリント',
                         'rules' => 'required|numeric|max_length[20]'
                 ),
+                array(
+                        'field' => 'sex',
+                        'label' => '性別',
+                        'rules' => 'required|callback__validate_sex'
+                ),
         )
 		,'create_room' => array(
                 array(

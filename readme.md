@@ -353,15 +353,11 @@ http://chat/rooms/FJOIngow2489u53345lFEklEC
 
 # TODO
 
-### ●メッセージをユーザ用テーブルとお知らせ用テーブルで分離させる。
-
 ### ●画面を開いた際のＡＰＩを作成する。（既読をチェックしている）
 
-### ●画面とＡＰＩを切り分ける
+### ●画面とＡＰＩのフォルダを切り分ける
 
 ### ●例外処理の仕組みを作る
-
-### ●管理者が気軽に更新できる、管理画面を作成する。
 
 ### ●ルームをリードオンリー（送信できない）モードをつける。
 
@@ -372,10 +368,17 @@ http://chat/rooms/FJOIngow2489u53345lFEklEC
 
 # TASK
 
+### SSE処理？でエラーが発生する。
+* Blink deferred a task in order to make scrolling smoother. Your timer and network tasks should take less than 50ms to run to avoid this. Please see https://developers.google.com/web/tools/chrome-devtools/profile/evaluate-performance/rail and https://crbug.com/574343#c40 for more information.
+
 ### ●過去のメッセージを参照しようとした場合にたまにエラーが発生する。しかし改めてＵＲＬを送信してもエラーは発現しない。
 
 
 # DONE
+
+### ×メッセージをユーザ用テーブルとお知らせ用テーブルで分離させる。
+
+### ×管理者が気軽に更新できる、管理画面を作成する。
 
 ### ×サーバでＳＳＥが効いていない可能性がある。
 

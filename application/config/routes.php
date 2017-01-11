@@ -53,11 +53,16 @@ $route['default_controller'] = 'health_controller';
 $route['404_override'] = '';
 $route['translate_uri_dashes'] = FALSE;
 
+/* 管理ユーザが扱えるAPI */
+$route['admin/rooms']['post'] = 'admins_controller/create_room';
+$route['admin/rooms/(:any)']['get'] = 'admins_controller/select_room/$1';
+$route['admin/rooms/(:num)']['put'] = 'admins_controller/update_room/$1';
+$route['admin/rooms/(:num)']['delete'] = 'admins_controller/delete_room/$1';
+$route['admin/rooms/(:any)/members/all']['get'] = 'admins_controller/select_users/$1';
+
+/* 一般ユーザが扱えるAPI */
 $route['rooms']['get'] = 'rooms_controller/select_rooms';
 $route['rooms/(:any)']['get'] = 'rooms_controller/select_room/$1';
-$route['rooms/(:num)']['put'] = 'rooms_controller/update_room/$1';
-$route['rooms/(:num)']['delete'] = 'rooms_controller/delete_room/$1';
-$route['rooms']['post'] = 'rooms_controller/create_room';
 $route['rooms/(:any)/members/all']['get'] = 'rooms_controller/select_users/$1';
 $route['rooms/(:any)/members']['get'] = 'rooms_controller/select_user/$1';
 $route['rooms/(:any)/members']['post'] = 'rooms_controller/create_user/$1';

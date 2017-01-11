@@ -13,7 +13,7 @@ class MY_Controller extends CI_Controller
 	
 	/**
 	 * トークンが存在するか確認する。
-	 * 正しいトークンがない場合は、falseを返却する。
+	 * 正しいトークンの場合はtrue、でない場合はfalse。
 	 */
 	protected function _exist_token() {
 		$this->config->load('my_config');
@@ -39,5 +39,15 @@ class MY_Controller extends CI_Controller
 		}
 		
 		return true;
+	}
+
+	
+	/**
+	 * 管理ユーザか確認する。
+	 * 管理ユーザの場合はtrue、でない場合はfalse。
+	 */
+	protected function _is_admin($room_hash) {
+        // ルームＩＤをデコードする
+        return room_hash_decode($room_hash)['role'] === UserRole::ADMIN;
 	}
 }

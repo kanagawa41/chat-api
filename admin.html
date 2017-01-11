@@ -4,35 +4,238 @@
 <meta charset="UTF-8" />
 <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ルーム</title>
+<title>ルーム作成</title>
 <link rel="stylesheet" type="text/css" href="assets/css/common/reset.css">
 <link rel="stylesheet" type="text/css" href="assets/css/common/setting.css">
 <link rel="stylesheet" type="text/css" href="assets/css/bootstrap-v3-3-7/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="assets/css/toastr/toastr.min.css"/>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+<script type="text/javascript" src="assets/js/common/http-input.js"></script>
 <script type="text/javascript" src="assets/js/bootstrap-v3-3-7/bootstrap.min.js"></script>
-<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.0/jquery.mobile-1.4.0.min.css" />
-<script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
-<script src="http://code.jquery.com/mobile/1.4.0/jquery.mobile-1.4.0.min.js"></script> 
+<script type="text/javascript" src="assets/js/toastr/toastr.min.js"></script>
+<script type="text/javascript" src="assets/js/fingerprint/fingerprint.js"></script>
+<script type="text/javascript" src="assets/js/clipboard/clipboard.min.js"></script>
+
 <script type="text/javascript">
+    // トースター情報
+    var TOASTR = null;
+    // フィンガープリント
+    var fp = new Fingerprint();
+    const FINGERPRINT = fp.get();
+
+    // AJAXのリクエストパラメータのひな形
+    var AJAX_REQUEST_MODEL = {
+        type: 'GET',
+        url: '',
+        timeout: 10000,
+        cache: false,
+        data: {},
+        dataType: 'json',
+        beforeSend: function(jqXHR, settings) {
+          jqXHR.setRequestHeader("If-Modified-Since", "Thu, 01 Jun 1970 00:00:00 GMT");
+　　　　　    jqXHR.requestURL = settings.url;
+          return true;
+        }
+    };
+    // AJAXの接続失敗の処理
+    var AJAX_FAIL = function(XMLHttpRequest, textStatus, errorThrown ) {
+        TOASTR["error"]("接続が正しく行われませんでした。", "システムエラー");
+
+        console.log("URL : " + XMLHttpRequest.requestURL);
+        console.log("XMLHttpRequest : " + XMLHttpRequest.responseText);
+        console.log("textStatus : " + textStatus);
+        console.log("errorThrown : " + errorThrown);
+    };
+
+
     $(document).ready(function(){
+        /* FIXME 画面を開いたときから制御不能状態のマスクをかけたい */
+
+        // トースター
+        toastr.options.timeOut = 3000;
+        toastr.options = {
+          "closeButton": true,
+          "debug": false,
+          "newestOnTop": true,
+          "progressBar": false,
+          "positionClass": "toast-top-full-width",
+          "preventDuplicates": false,
+          "showDuration": "300",
+          "hideDuration": "1000",
+          "timeOut": "5000",
+          "extendedTimeOut": "1000",
+          "showEasing": "swing",
+          "hideEasing": "linear",
+          "showMethod": "fadeIn",
+          "hideMethod": "fadeOut",
+          "tapToDismiss": false
+        }
+        TOASTR = toastr;
+        
+        var clipboard = new Clipboard('.clipboard-btn');
+    		clipboard.on('success', function(e) {
+    		    e.clearSelection();
+    		});
+
+        var params = HttpInput.getParams();
+
+        var room_hash = params['room'];
+        if(room_hash){
+            existRoom(room_hash);
+        }
     });
+
+    /**
+     * 部屋の存在チェック
+     */
+    function existRoom(room_hash) {
+      var ajaxRequest = AJAX_REQUEST_MODEL;
+      ajaxRequest['url'] = 'admin/rooms/' + room_hash;
+      ajaxRequest['data'] = {};
+    
+      $.ajax(ajaxRequest
+      ).done(function(response, textStatus, jqXHR) {
+        if(response["errors"]){
+            console.log(response["errors"]);
+            TOASTR["warning"]("指定されたルームは存在しません。", "入力エラー"); return;
+        }
+
+        $('#room-name').prop("disabled", true);
+        $('#room-description').prop("disabled", true);
+        $('#room-create-btn').prop("disabled", true);
+
+        $('#room-name').val(response.name);
+        $('#room-description').val(response.description);
+
+        var domainUrl = window.location.href.split('?')[0];
+
+        $('#relogin').val(domainUrl + '?room=' + response.room_admin_hash);
+
+        // FIXME この値を動的に変えらる必要がある。
+        var roomUrl = window.location.protocol + '//' + window.location.host + '/chat-api/room.html';
+        $('#room-admin-hash').val(roomUrl + '?room=' + response.room_admin_hash);
+        $('#room-specificuser-hash').val(roomUrl + '?room=' + response.room_specificuser_hash);
+        $('#room-anonymous-hash').val(roomUrl + '?room=' + response.room_anonymous_hash);
+
+        // ユーザが指定されている場合は、ユーザ情報を取得する。
+        findUsers(room_hash);
+      }).fail(AJAX_FAIL);
+    }
+    
+    /**
+     * ユーザを検索する
+     */
+    function findUsers(room_hash){
+        var ajaxRequest = AJAX_REQUEST_MODEL;
+        ajaxRequest['url'] = 'admin/rooms/' + room_hash + '/members/all';
+        ajaxRequest['data'] = {};
+
+        $.ajax(ajaxRequest
+        ).done(function(response, textStatus, jqXHR) {
+            if(response["errors"]){
+            console.log(response["errors"]);
+            TOASTR["warning"]("指定されたルームは存在しません。", "入力エラー"); return;
+            }
+
+            jQuery.each(response, function(value) {
+                // FIXME 画面に表示する
+                console.log(value.name);
+                console.log(value.room_hash);
+            });
+
+        }).fail(AJAX_FAIL);
+
+    }
+
+    /**
+     * 部屋を作成する
+     */
+    function createRoom(){
+      var roomName = $('#room-name').val();
+      if(!roomName) { 
+            TOASTR["warning"]('部屋名を入力して下さい。', "入力エラー"); return;
+      }
+
+      $('#room-name').prop("disabled", true);
+      $('#room-description').prop("disabled", true);
+      $('#room-create-btn').prop("disabled", true);
+
+      var roomDescriptoin = $('#room-description').val();
+
+      var ajaxRequest = AJAX_REQUEST_MODEL;
+      ajaxRequest['type'] = 'POST';
+      ajaxRequest['url'] = 'admin/rooms/';
+      ajaxRequest['data'] = {
+            name : roomName,
+            description : roomDescriptoin,
+      };
+
+      $.ajax(ajaxRequest
+      ).done(function(response, textStatus, jqXHR) {
+        if(response["errors"]){
+            console.log(response["errors"]);
+            TOASTR["warning"](response["errors"], "入力エラー"); return;
+
+            $('#room-name').prop("disabled", false);
+            $('#room-description').prop("disabled", false);
+            $('#room-create-btn').prop("disabled", false);
+        }
+
+        window.location.href = window.location.href.split('?')[0] + "?room=" + response.room_admin_hash;
+      }).fail(AJAX_FAIL);
+    }
+
+    /**
+     * ユーザでログインする。
+     */
+    function login(targetId){
+        // 新規タブで開く
+        window.open($('#' + targetId).val());
+    }
 </script>
 </head>
 <body>
-<ul id="menu_navi" class="clearfix">
-      <li><h2 id="description"></h2></li>
-</ul>
-<input type="hidden" id="user_name">
-<div id="message_stream">
-</div>
-<div id="message_input_area" class="input-group">
-    <input type="text" id="message_body" class="form-control input-xs" placeholder="メッセージ">
-    <span class="input-group-btn">
-      <button type="button" class="btn btn-primary" id="message_submit" onclick="sendMessage();">送信</button>
-    </span>
-</div>
-<input type="hidden" id="room_hash">
-<input type="hidden" id="self_icon">
-<input type="hidden" id="last_send_date" value="">
+<div>
+	<h2>部屋を作成する</h2><br>
+	<input type="text" id="room-name" placeholder="部屋名" class="form-control">
+	<input type="text" id="room-description" placeholder="説明" class="form-control">
+    <button type="button" id="room-create-btn"  class="btn btn-primary" onclick="createRoom();">作成</button>
+	<input type="hidden" id="room-id">
+	<h3>再ログイン用</h3><br>
+	<div id="message_input_area" class="input-group">
+		<input type="text" id="relogin" class="form-control">
+	    <span class="input-group-btn">
+	      <button type="button" class="btn btn-primary clipboard-btn" data-clipboard-target="#relogin">URLをコピー</button>
+	    </span>
+	</div>
+	<br>
+	<h2>部屋情報</h2><br>
+	管理人用ユーザでログイン
+	<div class="input-group">
+		<input type="text" id="room-admin-hash" class="form-control">
+	    <span class="input-group-btn">
+	      <button type="button" class="btn btn-default clipboard-btn" data-clipboard-target="#room-admin-hash">URLをコピー</button>
+	      <button type="button" class="btn btn-primary" onclick="login('room-admin-hash');">ログイン</button>
+	    </span>
+	</div>
+
+	一般ユーザでログイン
+  <div class="input-group">
+		<input type="text" id="room-specificuser-hash" class="form-control">
+	    <span class="input-group-btn">
+	      <button type="button" class="btn btn-default clipboard-btn" data-clipboard-target="#room-specificuser-hash">URLをコピー</button>
+	      <button type="button" class="btn btn-primary" onclick="login('room-specificuser-hash');">ログイン</button>
+	    </span>
+	</div>
+
+	アノニマスユーザでログイン
+  <div class="input-group">
+		<input type="text" id="room-anonymous-hash" class="form-control">
+	    <span class="input-group-btn">
+	      <button type="button" class="btn btn-default clipboard-btn" data-clipboard-target="#room-anonymous-hash">URLをコピー</button>
+	      <button type="button" class="btn btn-primary" onclick="login('room-anonymous-hash');">ログイン</button>
+	    </span>
+	</div>
+<div>
 </body>
 </html>

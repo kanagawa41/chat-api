@@ -14,35 +14,6 @@ class Rooms_controller extends MY_Controller {
     }	
 
 	/**
-	 * ルーム一覧を返却する
-	 * GET
-	 */
-	public function select_rooms() {
-		if(!$this->_exist_token()){ return; }
-
-		$this->load->database();
-
-		$select_results = $this->db->select('r.room_id, r.name, r.description, r.updated_at, u.user_id')->from('rooms as r')->join('users as u', 'u.room_id = r.room_id and u.user_role = 1', 'inner')->get()->result();
-
-		$data = array ();
-		foreach ($select_results as $row) {
-			$temp_row = array ();
-			$temp_row['room_id'] = $row->room_id;
-			$temp_row['room_admin_hash'] = room_hash_encode($row->room_id, new UserRole(UserRole::ADMIN), $row->user_id); // 管理者ユーザで入室するためのハッシュ
-			$temp_row['room_specificuser_hash'] = room_hash_encode($row->room_id, new UserRole(UserRole::SPECIFIC_USER), 0); // 特定ユーザで入室するための周知用のハッシュ
-			$temp_row['room_anonymous_hash'] = room_hash_encode($row->room_id, new UserRole(UserRole::ANONYMOUS_USER), 0); // 匿名入室するための周知用のハッシュ
-			$temp_row['name'] = $row->name;
-			$temp_row['message_num'] = $this->db->from('stream_messages')->where('room_id', $row->room_id)->count_all_results();
-			$temp_row['last_update_time'] = $row->updated_at;
-
-			$data[] = $temp_row;
-		}
-
-		$this->output->set_json_output($data);
-		return;
-	}
-
-	/**
 	 * チャットの名前を取得
 	 * GET
 	 */
@@ -53,11 +24,11 @@ class Rooms_controller extends MY_Controller {
 		
 		$this->load->database();
 
-		$row = $this->db->from('rooms')->where('room_id', $room_id)->get()->row();
-
-		if (empty($row)) {
+		if (!$this->room->exit_room($room_id)) {
 			$this->output->set_json_error_output(array('room_hash' => $this->lang->line('exist_room'))); return;
 		}
+
+		$row = $this->room->select_room($room_id);
 
 		$data = array ();
 		$data['name'] = $row->name;
@@ -68,95 +39,10 @@ class Rooms_controller extends MY_Controller {
 	}
 
 	/**
-	 * FIXME: 一旦保留にしている機能
-	 * チャットの名前をアップデート
-	 * PUT
-	 */
-	public function update_room($room_id) {
-		if(!$this->_exist_token()){ return; }
-
-		$description = $this->input->input_stream('description');
-
-		if (!$this->form_validation->run('update_room')) {
-			$this->output->set_json_error_output($this->form_validation->error_array()); return;
-		}
-
-		$this->load->database();
-
-		$this->db->where('room_id', $room_id)->update('rooms', array( 
-			'name'=>  $this->input->input_stream('name'), 
-			'description'	=>  $description
-		));
-
-		if ($res = $this->db->affected_rows() === 0) {
-			$this->output->set_json_error_output(array('room_hash' => $this->lang->line('exist_room'))); return;
-		}
-
-		$data = array (
-			'room_id' => $room_id
-		);
-
-		//$dataをJSONにして返す
-		$this->output->set_json_output($data);
-	}
-
-	/**
-	 * FIXME: 一旦保留にしている機能
-	 * チャットを削除
-	 * DELETE
-	 */
-	public function delete_room($room_id) {
-		if(!$this->_exist_token()){ return; }
-
-		$this->db->where('room_id', $room_id)->delete('rooms');
-
-		if ($res = $this->db->affected_rows() === 0) {
-			$this->output->set_json_error_output(array('room_hash' => $this->lang->line('exist_room'))); return;
-		}
-	}
-
-	/**
-	 * ルームを作成する
-	 * POST
-	 */
-	public function create_room() {
-		if(!$this->_exist_token()){ return; }
-		
-		if (!$this->form_validation->run('create_room')) {
-			$this->output->set_json_error_output($this->form_validation->error_array()); return;
-		}		
-
-		$description = $this->input->post('description');
-		$name = $this->input->post('name');
-
-		$room_id = $this->room->insert(array (
-			'name' => $name,
-			'description' => $description,
-		));
-
-		$admin_name = $this->config->item('admin_name');
-
-		// 部屋作成メッセージ
-		$this->stream_message->insert_info_message($room_id, $name, new MessageType(MessageType::MAKE_ROOM));
-		
-		// 管理者ユーザを生成する。
-		$user_id = $this->user->insert_user($admin_name, $room_id, new UserRole(UserRole::ADMIN), null, new Sex(Sex::NONE), 0);
-
-		$response_data = array (
-			'room_id' => $room_id
-		);
-
-		//$dataをJSONにして返す
-		$this->output->set_json_output($response_data);
-	}
-
-	/**
 	 * チャットのメンバー一覧を取得(トークンがあるなしで返却値が変わります)
 	 * GET
 	 */
 	public function select_users($room_hash) {
-		$token_flag = $this->_exist_token();
-
 		// ルームＩＤをデコードする
 		$room_data = room_hash_decode($room_hash);
 		$room_id = $room_data['room_id'];
@@ -171,10 +57,6 @@ class Rooms_controller extends MY_Controller {
 		foreach ($sql_result as $row) {
 			$temp_row = array ();
 			$temp_row['name'] = $row->name;
-			// 管理人が操作した場合
-			if($token_flag){
-				$temp_row['room_hash'] = room_hash_encode($room_id, new UserRole((string)$row->user_role), $row->user_id);
-			}
 
 			$data[] = $temp_row;
 		}
@@ -514,6 +396,17 @@ class Rooms_controller extends MY_Controller {
 		} else { // アノニマスユーザ
 			$this->output->set_json_output($this->create_anonymous_user($room_id, $this->input->post('name'))); return;
 		}
+	}
+
+	/**
+	 * 性別のバリデーション
+	 */
+	public function _validate_sex($value){
+		if($value === SEX::MAN || $value === SEX::WOMAN || $value === SEX::NONE){
+			return TRUE;
+		}
+        $this->form_validation->set_message('_validate_sex', $this->lang->line('_validate_sex'));
+		return FALSE;
 	}
 
 	/**

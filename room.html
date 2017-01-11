@@ -27,7 +27,8 @@
     // メッセージ最後の座標
     var MESSAGE_Y_POSITION = null;
     // フィンガープリント
-    var FINGERPRINT = null;
+    var fp = new Fingerprint();
+    const FINGERPRINT = fp.get();
     // ラストメッセージID
     var LAST_MESSAGE_ID = null;
     // AJAXのリクエストパラメータのひな形
@@ -38,8 +39,9 @@
         cache: false,
         data: {},
         dataType: 'json',
-        beforeSend: function(jqXHR) {
+        beforeSend: function(jqXHR, settings) {
           jqXHR.setRequestHeader("If-Modified-Since", "Thu, 01 Jun 1970 00:00:00 GMT");
+　　　　　    jqXHR.requestURL = settings.url;
           return true;
         }
     };
@@ -47,6 +49,7 @@
     var AJAX_FAIL = function(XMLHttpRequest, textStatus, errorThrown ) {
         TOASTR["error"]("接続が正しく行われませんでした。", "システムエラー");
 
+        console.log("URL : " + XMLHttpRequest.requestURL);
         console.log("XMLHttpRequest : " + XMLHttpRequest.responseText);
         console.log("textStatus : " + textStatus);
         console.log("errorThrown : " + errorThrown);
@@ -54,10 +57,7 @@
 
 
     $(document).ready(function(){
-        /* FIXME 画面を開いたときから制御不能状態のマスクをかけたい */
-
-        var fp = new Fingerprint();
-        FINGERPRINT = fp.get();
+       $("#overlay").fadeIn();
 
         // トースター
         toastr.options.timeOut = 3000;
@@ -83,9 +83,25 @@
         var params = HttpInput.getParams();
 
         var room_hash = params['room'];
-        existRoom(room_hash);
+        if(room_hash){
+            existRoom(room_hash);
+        } else {
+            $("#overlay").fadeOut();
+            TOASTR["warning"]("ユーザハッシュが指定されていません。", "入力エラー"); return;
+        }
     });
     
+    /**
+     * エラーメッセージを表示する
+     */
+    function errorMessage(errors){
+        var messages = "";
+        jQuery.each(errors, function(key, val){
+            messages += val + '<br>';
+        });
+        TOASTR["warning"](messages, "入力エラー"); return;
+    }
+
     function validUserInfo(){
         var userName = $('#name').val();
         if(userName == ''){
@@ -117,6 +133,7 @@
       $.ajax(ajaxRequest
       ).done(function(response, textStatus, jqXHR) {
         if(response["errors"]){
+            $("#overlay").fadeOut();
             console.log(response["errors"]);
             TOASTR["warning"]("指定されたルームは存在しません。", "入力エラー"); return;
         }
@@ -161,6 +178,9 @@
       $.ajax(ajaxRequest
       ).done(function(response, textStatus, jqXHR) {
         if(response["errors"]){
+            console.log(response["errors"]);
+
+            $("#overlay").fadeOut();
             //ユーザ情報入力モーダルを表示
             $('#input-modal').modal('show'); 
             $('#icon').val(Math.floor( Math.random() * 12) + 1); // ランダムに初期設定を変える
@@ -201,6 +221,7 @@
       $.ajax(ajaxRequest
       ).done(function(response, textStatus, jqXHR) {
         if(response["errors"]){
+            $("#overlay").fadeOut();
             console.log(response["errors"]);
             TOASTR["warning"]("指定されたルームは存在しません。", "入力エラー"); return;
         }
@@ -239,6 +260,7 @@
             }
         });
 
+        $("#overlay").fadeOut();
       }).fail(AJAX_FAIL);
     }
 
@@ -260,11 +282,8 @@
       ).done(function(response, textStatus, jqXHR) {
         if(response["errors"]){
             console.log(response["errors"]);
-            if(response["errors"][0] == 'User already exist.'){
-              TOASTR["warning"]("既にユーザは作成されています。", "重複登録エラー"); return;
-            } else {
-              TOASTR["warning"]("指定されたルームは存在しません。", "入力エラー"); return;
-            }
+            errorMessage(response["errors"]);
+            return;
         }
         window.location.href = window.location.href.split('?')[0] + "?room=" + response.room_hash;
 
@@ -534,6 +553,7 @@
           <br>
           <label class="radio-inline"><input type="radio" name="sex" class="sex" value="1" checked="checked">男</label>
           <label class="radio-inline"><input type="radio" name="sex" class="sex" value="2">女</label>
+          <label class="radio-inline"><input type="radio" name="sex" class="sex" value="0"">選択しない</label>
           <br>
           <br>
           <label>アイコン</label>
@@ -559,6 +579,9 @@
       </div>
     </div>
   </div>
+</div>
+<div id="overlay" style="display: none;">
+     <p id="text">LLCHAT</p>
 </div>
 </body>
 </html>

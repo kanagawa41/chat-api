@@ -353,11 +353,12 @@ http://chat/rooms/FJOIngow2489u53345lFEklEC
 
 # TODO
 
+### ●ローカルストレージを実装する
+* インストールはできる状態にした。
+
 ### ●コントローラーのbefore、afterを実装する
 
 * [codeigniter hook](http://d.hatena.ne.jp/ninoseki/20110611/1307778923)
-
-### ●画面を開いた際のＡＰＩを作成する。（既読をチェックしている）
 
 ### ●画面とＡＰＩのフォルダを切り分ける
 

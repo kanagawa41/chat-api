@@ -6,12 +6,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ルーム作成</title>
 <link rel="stylesheet" type="text/css" href="assets/css/admin/admin.css">
+<link rel="stylesheet" type="text/css" href="assets/css/slicknav/slicknav.css">
 <link rel="stylesheet" type="text/css" href="assets/css/common/reset.css">
 <link rel="stylesheet" type="text/css" href="assets/css/common/setting.css">
 <link rel="stylesheet" type="text/css" href="assets/css/bootstrap-v3-3-7/bootstrap.min.css">
 <link rel="stylesheet" type="text/css" href="assets/css/toastr/toastr.min.css"/>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
 <script type="text/javascript" src="assets/js/common/http-input.js"></script>
+<script type="text/javascript" src="assets/js/slicknav/jquery.slicknav.min.js"></script>
 <script type="text/javascript" src="assets/js/bootstrap-v3-3-7/bootstrap.min.js"></script>
 <script type="text/javascript" src="assets/js/toastr/toastr.min.js"></script>
 <script type="text/javascript" src="assets/js/fingerprint/fingerprint.js"></script>
@@ -50,10 +52,10 @@
 
 
     $(document).ready(function(){
-        $("#overlay").fadeIn();
+        $("#overlay").fadeIn(1);
 
         // トースター
-        toastr.options.timeOut = 3000;
+        toastr.options.timeOut = 3000;
         toastr.options = {
           "closeButton": true,
           "debug": false,
@@ -72,6 +74,15 @@
           "tapToDismiss": false
         }
         TOASTR = toastr;
+
+        // スリックバー作動
+        $('#menu_navi').slicknav();
+        var menuHeight = parseInt($('.slicknav_menu').outerHeight());
+
+        $('.slicknav_btn').after('<div style="font-size: 0.9em; text-align: center; line-height: ' + parseInt($('.slicknav_menu').height()) + 'px;">' + 'グループ作成' + '</div>');
+        // 機能によりスタイルが上書きされるのでプログラムで設定している。
+        $('.slicknav_btn').css('display', 'none');
+        $('body').css('background-color', '#dedee7');
         
         var clipboard = new Clipboard('.clipboard-btn');
     		clipboard.on('success', function(e) {
@@ -83,8 +94,9 @@
         var room_hash = params['room'];
         if(room_hash){
             existRoom(room_hash);
+        } else {
+          $("#overlay").fadeOut();
         }
-        $("#overlay").fadeOut();
     });
 
     /**
@@ -102,8 +114,8 @@
             TOASTR["warning"]("指定されたルームは存在しません。", "入力エラー"); return;
         }
 
-        $('#room-name').prop("disabled", true);
-        $('#room-description').prop("disabled", true);
+        $('#room-name').prop("readonly", true);
+        $('#room-description').prop("readonly", true);
         $('#room-create-btn').prop("disabled", true);
 
         $('#room-name').val(response.name);
@@ -144,6 +156,8 @@
                     '<li class="user-info list-group-item">' + '<div class="usre-name label label-info">' + value.name + '</div>' + '&nbsp;&nbsp;' + '<div class="usre-hash label label-info">' + value.user_hash + '</div>' + '</li>'
                 );
             });
+
+            $('#room-info').css('display', 'block');
 
             $("#overlay").fadeOut();
         }).fail(AJAX_FAIL);
@@ -199,51 +213,61 @@
 </head>
 <body>
 <div>
-	<h2>部屋を作成する</h2><br>
-	<input type="text" id="room-name" placeholder="部屋名" class="form-control">
+  <ul id="menu_navi" class="clearfix">
+  </ul>
+	<div class="little-title">グループ名</div>
+	<input type="text" id="room-name" placeholder="グループ名" class="form-control">
 	<input type="text" id="room-description" placeholder="説明" class="form-control">
-    <button type="button" id="room-create-btn"  class="btn btn-primary" onclick="createRoom();">作成</button>
+
+  <br>
+
+  <button type="button" id="room-create-btn"  class="btn btn-primary btn-block" onclick="createRoom();">作成</button>
 	<input type="hidden" id="room-id">
-	<h3>再ログイン用</h3><br>
-	<div id="message_input_area" class="input-group">
-		<input type="text" id="relogin" class="form-control">
+
+  <br>
+  <br>
+
+  <div id="room-info">
+    <div class="little-title">グループ管理</div>
+  	<div id="message_input_area" class="input-group">
+  		<input type="text" id="relogin" class="form-control">
+  	    <span class="input-group-btn">
+  	      <button type="button" class="btn btn-default clipboard-btn" data-clipboard-target="#relogin"><span class="glyphicon glyphicon-paperclip" aria-hidden="true"></button>
+  	    </span>
+  	</div>
+
+  	<br>
+
+    <div class="little-title">管理ユーザ</div>
+  	<div class="input-group">
+  		<input type="text" id="room-admin-hash" class="form-control">
 	    <span class="input-group-btn">
-	      <button type="button" class="btn btn-primary clipboard-btn" data-clipboard-target="#relogin">URLをコピー</button>
-	    </span>
-	</div>
-	<br>
-	<h2>部屋情報</h2><br>
-	管理人用ユーザでログイン
-	<div class="input-group">
-		<input type="text" id="room-admin-hash" class="form-control">
-	    <span class="input-group-btn">
-	      <button type="button" class="btn btn-default clipboard-btn" data-clipboard-target="#room-admin-hash">URLをコピー</button>
+	      <button type="button" class="btn btn-default clipboard-btn" data-clipboard-target="#room-admin-hash"><span class="glyphicon glyphicon-paperclip" aria-hidden="true"></span></button>
 	      <button type="button" class="btn btn-primary" onclick="login('room-admin-hash');">ログイン</button>
 	    </span>
-	</div>
-
-	一般ユーザでログイン
+  	</div>
+    <div class="little-title">一般ユーザ</div>
     <div class="input-group">
-		<input type="text" id="room-specificuser-hash" class="form-control">
+  		<input type="text" id="room-specificuser-hash" class="form-control">
 	    <span class="input-group-btn">
-	      <button type="button" class="btn btn-default clipboard-btn" data-clipboard-target="#room-specificuser-hash">URLをコピー</button>
+	      <button type="button" class="btn btn-default clipboard-btn" data-clipboard-target="#room-specificuser-hash"><span class="glyphicon glyphicon-paperclip" aria-hidden="true"></button>
 	      <button type="button" class="btn btn-primary" onclick="login('room-specificuser-hash');">ログイン</button>
 	    </span>
-	</div>
-
-	アノニマスユーザでログイン
+  	</div>
+    <div class="little-title">アノニマスユーザ</div>
     <div class="input-group">
-		<input type="text" id="room-anonymous-hash" class="form-control">
-	    <span class="input-group-btn">
-	      <button type="button" class="btn btn-default clipboard-btn" data-clipboard-target="#room-anonymous-hash">URLをコピー</button>
-	      <button type="button" class="btn btn-primary" onclick="login('room-anonymous-hash');">ログイン</button>
-	    </span>
-	</div>
-    
+  		<input type="text" id="room-anonymous-hash" class="form-control">
+      <span class="input-group-btn">
+        <button type="button" class="btn btn-default clipboard-btn" data-clipboard-target="#room-anonymous-hash"><span class="glyphicon glyphicon-paperclip" aria-hidden="true"></button>
+        <button type="button" class="btn btn-primary" onclick="login('room-anonymous-hash');">ログイン</button>
+      </span>
+  	</div>
+      
     <br>
-    <h2>ユーザ情報</h2><br>
-    <ul id="users-info" class="list-group"></ul>
 
+    <div class="little-title">ルーム状況</div>
+    <ul id="users-info" class="list-group"></ul>
+  </div>      
 <div>
 <div id="overlay" style="display: none;">
     <div class="content">LLCHAT</p>

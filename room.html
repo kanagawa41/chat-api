@@ -13,11 +13,13 @@
 <link rel="stylesheet" type="text/css" href="assets/css/toastr/toastr.min.css"/>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
 <script type="text/javascript" src="assets/js/common/http-input.js"></script>
+<script type="text/javascript" src="assets/js/common/message-history.js"></script>
 <script type="text/javascript" src="assets/js/slicknav/jquery.slicknav.min.js"></script>
 <script type="text/javascript" src="assets/js/bootstrap-v3-3-7/bootstrap.min.js"></script>
 <script type="text/javascript" src="assets/js/toastr/toastr.min.js"></script>
 <script type="text/javascript" src="assets/js/inview/jquery.inview.min.js"></script>
 <script type="text/javascript" src="assets/js/fingerprint/fingerprint.js"></script>
+<script type="text/javascript" src="assets/js/store/store.min.js"></script>
 
 <script type="text/javascript">
     // メッセージ取得インターバル
@@ -56,7 +58,7 @@
     };
 
     $(document).ready(function(){
-       $("#overlay").fadeIn();
+        $("#overlay").fadeIn(1);
 
         // トースター
         toastr.options.timeOut = 3000;
@@ -212,6 +214,10 @@
      * 過去のメッセージを取得する
      */
     function getPastMessages(lastMessageID){
+
+
+/* FIXME 理想はローカルに存在しない場合はサーバに確認を行うのが好ましい。いつか実装。 */
+/*
       var ajaxRequest = AJAX_REQUEST_MODEL;
       ajaxRequest['url'] = 'rooms/' + $('#room_hash').val() + '/messages/past/' + lastMessageID;
       ajaxRequest['data'] = {};
@@ -260,6 +266,7 @@
 
         $("#overlay").fadeOut();
       }).fail(AJAX_FAIL);
+*/
     }
 
     /**
@@ -300,7 +307,7 @@
           // console.log(JSON.stringify(JSON.parse(event.data)));
           JSON.parse(event.data).forEach(function(value) {
               addCommendFlag = value.body;
-              $('#message_stream').append(create_message(value));
+              messageAppend(value);
           });
 
           if(addCommendFlag){
@@ -459,7 +466,7 @@
             TOASTR["warning"]("指定されたルームは存在しません。", "入力エラー"); return;
         }
 
-        $('#message_stream').append(create_message(response));
+        messageAppend(response);
         messageScrollButtom();
       }).fail(AJAX_FAIL);
     }
@@ -479,7 +486,7 @@
             TOASTR["warning"]("指定されたルームは存在しません。", "入力エラー"); return;
         }
 
-        $('#message_stream').append(create_message(response));
+        messageAppend(response);
         messageScrollButtom();
       }).fail(AJAX_FAIL);
     }
@@ -550,6 +557,14 @@
     }
 
     /**
+     * メッセージ追加処理
+     */
+    function messageAppend(message){
+        MessageHistory.append(message);
+        $('#message_stream').append(create_message(message));
+    }
+
+    /**
      * 日付メッセージの表示共通処理
      */
     function createDateMessage(id, dateValue){
@@ -563,8 +578,6 @@
         // 一番下までスクロールする
         $('#message_stream').animate({scrollTop: $('#message_stream')[0].scrollHeight}, 'fast');
         MESSAGE_Y_POSITION = $('#message_stream div:last-child').offset().top;
-// FIXME この値を使用してメッセージしたの位置を求める。
-//console.log("●outerHeight:" + $('#message_stream').outerHeight() + ' ●scrollTop:' + $('#message_stream').scrollTop() + '●scrollHeight:' + $('#message_stream').get(0).scrollHeight);
     }
 
 </script>
@@ -582,7 +595,8 @@
     <!-- font-size:16pxはiphoneの入力時の拡大を避けるため -->
     <textarea id="message_body" class="form-control input-xs" style="font-size:16px" placeholder="メッセージ"></textarea>
     <span class="input-group-btn">
-      <button type="button" class="btn btn-primary" id="message_submit" onclick="sendMessage();">送信</button>
+      <!-- アイコンの大きさはボタンの文字サイズに依存している -->
+      <button type="button" class="btn btn-primary" id="message_submit" onclick="sendMessage();" style="font-size: 25px;"><span class="glyphicon glyphicon-comment" aria-hidden="true"></span></button>
     </span>
 </div>
 <input type="hidden" id="room_hash">

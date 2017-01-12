@@ -379,7 +379,7 @@ class Rooms_controller extends MY_Controller {
 			$this->output->set_json_error_output(array('room_hash' => $this->lang->line('exist_room'))); return;
 		}
 
-		$role = (String)$room_data['role'];
+		$role = (string)$room_data['role'];
 
 		if($role === UserRole::ADMIN) { // 管理人ハッシュで生成しようとした場合
 			$this->output->set_json_error_output(array('room_hash' => $this->lang->line('is_admin'))); return;
@@ -439,7 +439,7 @@ class Rooms_controller extends MY_Controller {
 	 * チャットにユーザを追加。
 	 * POST
 	 */
-	private function create_anonymous_user($room_id, $name) {
+	private function anonymous_user($room_id, $name) {
 		// ユーザのアイコンＩＤを設定します。（アノニマスアイコン）
 		$icon_id = 999;
 

@@ -176,10 +176,11 @@ class Stream_message extends MY_Model {
      }
 
     /**
+     * FIXME user_message.phpに移動する。
      * ユーザメッセージを追加する。
+     * 日付が変わっていた場合は日付のメッセージを追加する。
      */
     public function insert_user_message($room_id, $user_id, $body) {
-        $this->stream_message->insert_date_message($room_id);
 
         $message_id = $this->stream_message->insert(array (
             'room_id' => $room_id,
@@ -190,16 +191,13 @@ class Stream_message extends MY_Model {
             'user_id' => $user_id,
             'body' => $body,
         ));
-
-        return null;
     }
 
     /**
+     * FIXME info_message.phpに移動する。
      * インフォメッセージを追加する。
      */
     public function insert_info_message($room_id, $body, DefineImpl $type) {
-        $this->stream_message->insert_date_message($room_id);
-            
         $message_id = $this->stream_message->insert(array (
             'room_id' => $room_id,
         ));
@@ -209,33 +207,6 @@ class Stream_message extends MY_Model {
             'body' => $body,
             'type' => $type,
         ));
-
-        return null;
-    }
-
-    /**
-     * 最終メッセージと日付が変わっていた場合、日付メッセージを追加する。
-     * 追加した場合はmessage_idを返却する。でない場合はnull。
-     */
-    public function insert_date_message($room_id) {
-        $this->load->helper('date');
-        $now_date = get_now_date();
-        
-        // 最終メッセージと日付が変わっていた場合
-        if($this->stream_message->changed_date($room_id)){
-            $message_id = $this->stream_message->insert(array (
-                'room_id' => $room_id,
-            ));
-
-            $body = $now_date + get_days($now_date);
-            return $this->info_message->insert(array (
-                'message_id' => $message_id,
-                'body' => $body,
-                'type' => MessageType::DATE,
-            ));
-        }
-
-        return null;
     }
 
 }

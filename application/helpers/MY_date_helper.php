@@ -26,5 +26,7 @@ function get_days($date){
  */
 function get_now_date(){
     $CI = &get_instance();
-	return $CI->db->select('datetime(CURRENT_TIMESTAMP) as now_date')->get()->row()->now_date;
+	$now_date = $CI->db->select('datetime(CURRENT_TIMESTAMP) as now_date')->get()->row()->now_date;
+	$temp_date = new DateTime($now_date);
+	return $temp_date->format('Y-m-d');
 }

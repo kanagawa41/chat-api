@@ -353,6 +353,10 @@ http://chat/rooms/FJOIngow2489u53345lFEklEC
 
 # TODO
 
+### ●コントローラーのbefore、afterを実装する
+
+* [codeigniter hook](http://d.hatena.ne.jp/ninoseki/20110611/1307778923)
+
 ### ●画面を開いた際のＡＰＩを作成する。（既読をチェックしている）
 
 ### ●画面とＡＰＩのフォルダを切り分ける
@@ -366,7 +370,7 @@ http://chat/rooms/FJOIngow2489u53345lFEklEC
 ### ●利用フローを書き直す。
 
 
-# TASK
+# FIX
 
 ### SSE処理？でエラーが発生する。
 * Blink deferred a task in order to make scrolling smoother. Your timer and network tasks should take less than 50ms to run to avoid this. Please see https://developers.google.com/web/tools/chrome-devtools/profile/evaluate-performance/rail and https://crbug.com/574343#c40 for more information.

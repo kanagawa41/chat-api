@@ -1,13 +1,12 @@
 html {
-	overflow-y: scroll;
-	font-size: 62.5%;
+    overflow-y: scroll;
+    font-size: 62.5%;
 }
 
 body {
-	font-size: 10px;
-	font-size: 1.0rem;
-	font-family: "times new roman";
-	-webkit-text-size-adjust: 100%;
+    overflow: hidden;
+    font-size: 1.4rem;
+    font-family: "times new roman";
 }
 
 a {
@@ -15,75 +14,37 @@ a {
 	text-decoration: none;
 }
 
-#mobile-menu {
-    display: block;
-    position: fixed;
+#overlay{
+    display: none;
     width: 100%;
-    z-index: 1000;
+    height:100%;
+    text-align: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    background: rgba(90, 230, 40, 1);
 }
 
-/* header - begin */
-
-header {
-	width: 100%;
+/* オーバーレイの実装 */
+/* [参考](http://coliss.com/articles/build-websites/operation/css/css-centering-in-the-unknown-by-css-tricks.html) */
+#overlay:before {
+    content: '';
+    display: inline-block;
+    height: 100%;
+    vertical-align: middle;
+    margin-right: -0.25em;
+} #overlay .content{
+        font-size: 40px;
+        color: #fff;
+        font-weight: bold;
+        margin: auto;
+        display: inline-block;
+        vertical-align: middle;
 }
 
-#wrap-header {
-	width: 100%;
-	height: 56px;
+
+/* トースターのスタイルをオーバーライド */
+#toast-container.toast-top-full-width{
+    margin-top:50px;
 }
-
-#wrap-header #title {
-	padding-left: 40px;
-}
-
-#wrap-header #title a {
-	color: #000;
-	text-decoration: none;
-}
-/* header - end */
-
-/* content - begin */
-
-#content {
-	width: 100%;
-	margin:auto;
-}
-
-#wrap-content #inframe {
-	display: inline-block;
-	width: 100%;
-}
-
-#wrap-content #inframe-right {
-	display: inline-block;
-	vertical-align: top;
-}
-
-#wrap-content #inframe-left {
-	display: inline-block;
-}
-
-#content-footer {
-}
-
-/* content - end */
-
-/* footer - begin */
-
-footer {
-	width: 100%;
-}
-
-#wrap-footer {
-	width: 100%;
-	padding-top: 100px;
-	margin:auto;
-	text-align: center;
-}
-
-#wrap-footer #c-mark {
-	font-size: 1.5em;
-}
-
-/* footer - end */

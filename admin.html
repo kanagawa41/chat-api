@@ -5,6 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ルーム作成</title>
+<link rel="stylesheet" type="text/css" href="assets/css/admin/admin.css">
 <link rel="stylesheet" type="text/css" href="assets/css/common/reset.css">
 <link rel="stylesheet" type="text/css" href="assets/css/common/setting.css">
 <link rel="stylesheet" type="text/css" href="assets/css/bootstrap-v3-3-7/bootstrap.min.css">
@@ -49,7 +50,7 @@
 
 
     $(document).ready(function(){
-        /* FIXME 画面を開いたときから制御不能状態のマスクをかけたい */
+        $("#overlay").fadeIn();
 
         // トースター
         toastr.options.timeOut = 3000;
@@ -83,6 +84,7 @@
         if(room_hash){
             existRoom(room_hash);
         }
+        $("#overlay").fadeOut();
     });
 
     /**
@@ -133,16 +135,17 @@
         $.ajax(ajaxRequest
         ).done(function(response, textStatus, jqXHR) {
             if(response["errors"]){
-            console.log(response["errors"]);
-            TOASTR["warning"]("指定されたルームは存在しません。", "入力エラー"); return;
+                console.log(response["errors"]);
+                TOASTR["warning"]("指定されたルームは存在しません。", "入力エラー"); return;
             }
 
-            jQuery.each(response, function(value) {
-                // FIXME 画面に表示する
-                console.log(value.name);
-                console.log(value.room_hash);
+            jQuery.each(response, function(key, value) {
+                $('#users-info').append(
+                    '<li class="user-info list-group-item">' + '<div class="usre-name label label-info">' + value.name + '</div>' + '&nbsp;&nbsp;' + '<div class="usre-hash label label-info">' + value.user_hash + '</div>' + '</li>'
+                );
             });
 
+            $("#overlay").fadeOut();
         }).fail(AJAX_FAIL);
 
     }
@@ -220,7 +223,7 @@
 	</div>
 
 	一般ユーザでログイン
-  <div class="input-group">
+    <div class="input-group">
 		<input type="text" id="room-specificuser-hash" class="form-control">
 	    <span class="input-group-btn">
 	      <button type="button" class="btn btn-default clipboard-btn" data-clipboard-target="#room-specificuser-hash">URLをコピー</button>
@@ -229,13 +232,21 @@
 	</div>
 
 	アノニマスユーザでログイン
-  <div class="input-group">
+    <div class="input-group">
 		<input type="text" id="room-anonymous-hash" class="form-control">
 	    <span class="input-group-btn">
 	      <button type="button" class="btn btn-default clipboard-btn" data-clipboard-target="#room-anonymous-hash">URLをコピー</button>
 	      <button type="button" class="btn btn-primary" onclick="login('room-anonymous-hash');">ログイン</button>
 	    </span>
 	</div>
+    
+    <br>
+    <h2>ユーザ情報</h2><br>
+    <ul id="users-info" class="list-group"></ul>
+
 <div>
+<div id="overlay" style="display: none;">
+    <div class="content">LLCHAT</p>
+</div>
 </body>
 </html>

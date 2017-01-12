@@ -55,7 +55,6 @@
         console.log("errorThrown : " + errorThrown);
     };
 
-
     $(document).ready(function(){
        $("#overlay").fadeIn();
 
@@ -86,7 +85,6 @@
         if(room_hash){
             existRoom(room_hash);
         } else {
-            $("#overlay").fadeOut();
             TOASTR["warning"]("ユーザハッシュが指定されていません。", "入力エラー"); return;
         }
     });
@@ -323,8 +321,13 @@
           es.close();
       });
 
+      var openCount = 0;
       es.onopen = function() {
           console.log('EventSource open');
+          // FIXME　これだと一定時間開いていても閉じてしまうため対処を考える。
+          if(openCount++ > 10){
+            es.close();
+          }
       };
 
       es.onclose = function(code, reason) {
@@ -345,19 +348,29 @@
     }
 
     /**
+     * 文字列からDateオブジェクトに変換する。
+     * ・日付の区切り文字の置換
+     * ・時間補正を行っている
+     */
+    function parseSaftyDate(dateStr){
+        // 置換をしているのはChromeとsafari対策
+        var time = Date.parse(dateStr.replace(/-/g,"/"));
+        
+        var date = new Date();
+        //ミリ秒から日付を求める
+        date.setTime(time);
+        //UTC基準のため
+        date.setHours(date.getHours() + 9);
+        
+        return date;
+    }
+
+    /**
      * 日付を指定のフォーマットに変換する。
      * 2016/01/01 (月)
      * ※曜日はフラグで出力変更可能
      */
-    function formatDate(dateStr, daysFLag){
-      // 置換をしているのはChromeとsafari対策
-      var time = Date.parse(dateStr.replace(/-/g,"/"));
-
-      //ミリ秒から日付を求める
-      var date = new Date();
-      date.setTime(time);
-      date.setHours(date.getHours() + 9); //UTC基準のため
-
+    function formatDate(date, daysFLag){
       var y = date.getFullYear();
       var m = date.getMonth() + 1;
       var d = date.getDate();
@@ -365,15 +378,7 @@
 
       var wNames = ['日', '月', '火', '水', '木', '金', '土'];
 
-      // 「月」と「日」で1桁だったときに頭に 0 をつける
-      if (m < 10) {
-        m = '0' + m;
-      }
-      if (d < 10) {
-        d = '0' + d;
-      }
-
-      var result = y + '/' + m + '/' + d;
+      var result = y + '/' + zerofill(m) + '/' + zerofill(d);
 
       if(daysFLag){
         result += ' (' + wNames[date.getDay()] + ')';
@@ -386,29 +391,52 @@
      * 時間を指定のフォーマットに変換する。
      * 01:01
      */
-    function formatTime(dateStr){
-      // 置換をしているのはChromeとsafari対策
-      var time = Date.parse(dateStr.replace(/-/g,"/"));
-
-      //ミリ秒から日付を求める
-      var date = new Date();
-      date.setTime(time);
-      date.setHours(date.getHours() + 9); //UTC基準のため
-
+    function formatTime(date){
       var h = date.getHours();
       var m = date.getMinutes();
 
-      // 「月」と「日」で1桁だったときに頭に 0 をつける
-      if (h < 10) {
-        h = '0' + h;
-      }
-      if (m < 10) {
-        m = '0' + m;
-      }
-
-      return h + ':' + m;
+      return zerofill(h) + ':' + zerofill(m);
     }
+    
+    /**
+     * FIXME ツイッターの時間を確認し、もっとバリエーションを増やす。
+     * Twitter風な時間表示を行う。
+     */
+    function parseTwitterDate(dispDate) {
+        var today = new Date();
 
+        if(dispDate.getYear() != today.getYear()){ // 年が違った場合
+            return zerofill(dispDate.getMonth()) + '/' + zerofill(dispDate.getDate());
+        }
+
+        //年内
+
+        if(dispDate.getDay() == today.getDay()){ // 本日の場合
+            return formatTime(dispDate);
+        }
+
+        var yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+        if(dispDate.getDay() == yesterday.getDay()){ // 昨日の場合
+            return '昨日';
+        }
+        
+        if(dispDate.getDate() != today.getDate()) { // 日付が違った場合
+            return zerofill(dispDate.getMonth()) + '/' + zerofill(dispDate.getDate());
+        }
+        
+        return null;
+    }
+    
+    /**
+     * 時間が一桁の場合は先頭にゼロを付与する。
+     */
+    function zerofill(value) {
+        if(value < 10) {
+            value = "0" + value;
+        }
+        return value;
+    }
+ 
     /**
      * メッセージを送信する
      */
@@ -478,26 +506,44 @@
         var icon = value.user.icon;
         var hash = value.user.hash;
         var type = value.type;
-        var sendTime = formatTime(value.send_time);
-        var sendDate = formatDate(value.send_time, false);
+        var sendTime = parseTwitterDate(parseSaftyDate(value.send_time));
+        var sendDate = formatDate(parseSaftyDate(value.send_time));
 
-        var result = '';
+        var result = null;
 
-        if(type == 3){ // 日付の場合
-            result = '<div class="information_box">' + body + '<input type="hidden" class="send_date" value="' + sendDate + '">' + '</div>';
-        } else if(type == 2){ // 入室の場合
+        if(type == 2){ // 入室の場合
             result = '<div class="information_box">' + body + ' さんが入室しました。' + '<input type="hidden" class="send_date" value="' + sendDate + '">' + '</div>';
         } else if(type == 1){ // ルーム作成の場合
             //bodyに部屋名が入力されているが、部屋名を表示すると途中で部屋名を変更したときの齟齬の調整が面倒なので表示しない。
             result = '<div class="information_box">ルームが作成されました。<input type="hidden" class="send_date" value="' + sendDate + '">' + '</div>';
-        }　else if(type == null){ // メッセージの場合
+        } else if(type == null){ // メッセージの場合
             if(who == 'self'){
-                result = '<div class="question_box"><div class="answer_image"><div class="' + sexClass + '"><img src="assets/image/user_icon/' + icon + '.png' + '" alt="' + user_name + '"/></div>' + '<div class="send_time">' + sendTime + '</div>' + '</div><p class="answer_name">' + user_name + '　' + hash + '</p><div class="arrow_answer">' + body + '</div><input type="hidden" class="message_id" value="' + message_id + '">' + '<input type="hidden" class="send_date" value="' + sendDate + '">' + '</div>';
+                result = '<div class="question_box">'
+                       + ' <div class="answer_image">'
+                       + '  <div class="' + sexClass + '">'
+                       + '   <img src="assets/image/user_icon/' + icon + '.png' + '" alt="' + user_name + '"/>'
+                       + '  </div>'
+                       + '  <div class="send_time">' + sendTime + '</div>'
+                       + ' </div>'
+                       + ' <p class="answer_name">' + user_name + '　' + hash + '</p>'
+                       + ' <div class="arrow_answer">' + body + '</div>'
+                       + ' <input type="hidden" class="message_id" value="' + message_id + '">'
+                       + ' <input type="hidden" class="send_date" value="' + sendDate + '">'
+                       + '</div>';
             } else if(who == 'other') {
-                result = '<div class="question_box"><div class="question_image"><div class="' + sexClass + '"><img src="assets/image/user_icon/' + icon + '.png' + '" alt="' + user_name + '"/></div>' + '<div class="send_time">' + sendTime + '</div>' + '</div><p class="question_name">' + user_name + '　' + hash + '</p><div class="arrow_question">' + body + '</div><input type="hidden" class="message_id" value="' + message_id + '">' + '<input type="hidden" class="send_date" value="' + sendDate + '">' + '</div>';
+                result = '<div class="question_box">'
+                       + ' <div class="question_image">'
+                       + '  <div class="' + sexClass + '">'
+                       + '   <img src="assets/image/user_icon/' + icon + '.png' + '" alt="' + user_name + '"/>'
+                       + '  </div>'
+                       + '  <div class="send_time">' + sendTime + '</div>'
+                       + ' </div>'
+                       + ' <p class="question_name">' + user_name + '　' + hash + '</p>'
+                       + ' <div class="arrow_answer">' + body + '</div>'
+                       + ' <input type="hidden" class="message_id" value="' + message_id + '">'
+                       + ' <input type="hidden" class="send_date" value="' + sendDate + '">'
+                       + '</div>';
             }
-        } else {
-            return null;
         }
 
         return result;
@@ -581,7 +627,7 @@
   </div>
 </div>
 <div id="overlay" style="display: none;">
-     <p id="text">LLCHAT</p>
+    <div class="content">LLCHAT</p>
 </div>
 </body>
 </html>

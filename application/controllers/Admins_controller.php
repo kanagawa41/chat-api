@@ -53,8 +53,6 @@ class Admins_controller extends MY_Controller {
         $room_data = room_hash_decode($room_hash);
         $room_id = $room_data['room_id'];
         
-        $this->load->database();
-
         if (!$this->room->exit_room($room_id)) {
             $this->output->set_json_error_output(array('room_hash' => $this->lang->line('exist_room'))); return;
         }
@@ -77,7 +75,7 @@ class Admins_controller extends MY_Controller {
      * チャットの名前をアップデート
      * PUT
      */
-    public function update_room($room_id) {
+    public function update_room($room_hash) {
         if(!$this->_is_admin($room_hash)){ return; }
 
         $description = $this->input->input_stream('description');
@@ -86,7 +84,9 @@ class Admins_controller extends MY_Controller {
             $this->output->set_json_error_output($this->form_validation->error_array()); return;
         }
 
-        $this->load->database();
+        // ルームＩＤをデコードする
+        $room_data = room_hash_decode($room_hash);
+        $room_id = $room_data['room_id'];
 
         $this->db->where('room_id', $room_id)->update('rooms', array( 
             'name'=>  $this->input->input_stream('name'), 
@@ -110,8 +110,12 @@ class Admins_controller extends MY_Controller {
      * チャットを削除
      * DELETE
      */
-    public function delete_room($room_id) {
+    public function delete_room($room_hash) {
         if(!$this->_is_admin($room_hash)){ return; }
+
+        // ルームＩＤをデコードする
+        $room_data = room_hash_decode($room_hash);
+        $room_id = $room_data['room_id'];
 
         $this->db->where('room_id', $room_id)->delete('rooms');
 
@@ -178,7 +182,8 @@ class Admins_controller extends MY_Controller {
         foreach ($col as $row) {
             $temp_row = array ();
             $temp_row['name'] = $row->name;
-            $temp_row['room_hash'] = room_hash_encode($room_id, new UserRole((string)$row->user_role), $row->user_id);
+            $temp_row['user_hash'] = $row->user_hash;
+            $temp_row['sex'] = $row->sex;
 
             $data[] = $temp_row;
         }

@@ -1,14 +1,3 @@
-html {
-	overflow-y: scroll;
-	font-size: 62.5%;
-}
-
-body {
-    overflow: hidden;
-	font-size: 1.4rem;
-	font-family: "times new roman";
-}
-
 #menu_navi {
     display: none;
     position: fixed;
@@ -16,19 +5,10 @@ body {
     z-index: 1000;
 }
 
-#menu_navi {
-    display: none;
-}
-
 .slicknav_menu {
     position: fixed;
     width: 100%;
     top: 0;
-}
-
-#room_name {
-    position: fixed;
-    left: 0;
 }
 
 #now_date {
@@ -57,14 +37,10 @@ body {
     border-radius: 10px;
     width:83%;
     padding:3%;
-}
-
-.arrow_question {
+} .arrow_question {
     float: right;
     margin-right: 1%;
-}
-
-.arrow_answer {
+} .arrow_answer {
     background: #85e249;
     margin-left: 1%;
 }
@@ -80,34 +56,27 @@ body {
      width:15%;
 }
 
-.sex_man,
-.sex_woman,
-.sex_none{
-     border-radius: 50px;
-}
-
-.sex_man{
-    background: #225fe7;    
-}
-
-.sex_woman{
-    background: #f19ec2;    
-}
-
-.sex_none{
-    background: #fff;    
-}
-
 .answer_image img,
 .question_image img{
      border-radius: 50px;
      width: 100%
 }
 
-
 .question_image{
      float: left;
      width:15%;
+}
+
+.sex_man,
+.sex_woman,
+.sex_none{
+    border-radius: 50px;
+} .sex_man{
+    background: #225fe7;    
+} .sex_woman{
+    background: #f19ec2;    
+} .sex_none{
+    background: #fff;    
 }
 
 
@@ -146,30 +115,4 @@ p.answer_name{text-align: right;}
 
 #message_input_area{
      background: #6f92c0;　　/* メッセージ欄の背景色と同一にする必要がある */
-}
-
-#overlay{
-    display: none;
-    width: 100%;
-    height:100%;
-    text-align: center;
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 100;
-    background: rgba(90, 230, 40, 1);
-}
-
-#overlay #text{
-    font-size: 40px;
-    color: #fff;
-    /* FIXME 中央になるように計算して配置する*/
-    padding-top: 200px;
-    vertical-align: middle;
-    font-weight: bold;
-}
-
-/* トースターのスタイルをオーバーライド */
-#toast-container.toast-top-full-width{
-    margin-top:50px;
 }

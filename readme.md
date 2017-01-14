@@ -98,7 +98,7 @@ CREATE TABLE info_messages (
     /** メッセージ情報 **/
     message_id INTEGER, --メッセージＩＤ
     body STRING NOT NULL, --メッセージ内容
-    type INTEGER, --メッセージの種類(1…ルーム作成、2…入室、3…日付)
+    type INTEGER, --メッセージの種類(1…ルーム作成、2…入室)
     PRIMARY KEY(message_id)
 );
 ```
@@ -353,16 +353,34 @@ http://chat/rooms/FJOIngow2489u53345lFEklEC
 
 # TODO
 
-### ●ローカルストレージを実装する
-* インストールはできる状態にした。
+### ●取得したメッセージはローカルストレージを使用するようにする。
 
-### ●コントローラーのbefore、afterを実装する
-
-* [codeigniter hook](http://d.hatena.ne.jp/ninoseki/20110611/1307778923)
+### ●ＭＹＳＱＬの導入
 
 ### ●画面とＡＰＩのフォルダを切り分ける
 
+### ●フロントのメッセージを一括管理する。
+
 ### ●例外処理の仕組みを作る
+
+
+# TASK
+
+### ●SSE処理？でエラーが発生する。
+* Blink deferred a task in order to make scrolling smoother. Your timer and network tasks should take less than 50ms to run to avoid this. Please see https://developers.google.com/web/tools/chrome-devtools/profile/evaluate-performance/rail and https://crbug.com/574343#c40 for more information.
+
+### ●過去のメッセージを参照しようとした場合にたまにエラーが発生する。しかし改めてＵＲＬを送信してもエラーは発現しない。
+
+
+# WANT
+
+### ●画像アップロード機能を実装[参考](http://ja.stackoverflow.com/questions/11378/%E3%82%AB%E3%83%A1%E3%83%A9%E3%81%A7%E6%92%AE%E5%BD%B1%E3%81%97%E3%81%9F%E7%94%BB%E5%83%8F%E3%82%92%E3%83%AA%E3%82%B5%E3%82%A4%E3%82%BA%E3%81%97%E3%81%A6%E3%82%A2%E3%83%83%E3%83%97%E3%83%AD%E3%83%BC%E3%83%89%E3%81%97%E3%81%9F%E3%81%84)
+* [FileAPI](http://cartman0.hatenablog.com/entry/2015/06/20/021402)
+
+### ●デバイス（ブラウザ）を変えても、メッセージが取得できる仕組みを作成する。
+* 現在は取得したメッセージをローカルに保持しているため、デバイスを変更したらメッセージを引き継げない。
+
+### ●部屋のロック（パスワード）機能を実装。
 
 ### ●ルームをリードオンリー（送信できない）モードをつける。
 
@@ -371,15 +389,17 @@ http://chat/rooms/FJOIngow2489u53345lFEklEC
 ### ●利用フローを書き直す。
 
 
-# FIX
-
-### SSE処理？でエラーが発生する。
-* Blink deferred a task in order to make scrolling smoother. Your timer and network tasks should take less than 50ms to run to avoid this. Please see https://developers.google.com/web/tools/chrome-devtools/profile/evaluate-performance/rail and https://crbug.com/574343#c40 for more information.
-
-### ●過去のメッセージを参照しようとした場合にたまにエラーが発生する。しかし改めてＵＲＬを送信してもエラーは発現しない。
-
-
 # DONE
+
+### ●画面を開いた際のＡＰＩを作成する。（既読をチェックしている）
+→なんのことかわからない。
+
+### ×日付の保持の仕方を考える。
+* ×現在の方法だとユーザが入室した際に別のユーザの所にまで日付が表示されてしまう。
+* ×入室の際は日付はいれず、画面側で自分のメッセージの場合は入れる。自分のユーザ以外だと入れないようにする。
+
+### ×日付が正しく登録されていない。
+→日付を登録するのは取りやめ
 
 ### ×メッセージをユーザ用テーブルとお知らせ用テーブルで分離させる。
 

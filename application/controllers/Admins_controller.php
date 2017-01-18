@@ -1,60 +1,65 @@
 <?php
 defined('BASEPATH') OR exit ('No direct script access allowed');
+require APPPATH . '/libraries/REST_Controller.php';
 
-class Admins_controller extends MY_Controller {
+class Admins_controller extends REST_Controller {
 
     public function __construct()
     {
         parent::__construct();
-        
+
+        // 各メソッドで適せん読み込むようにする
+        $this->config->load('my_config');
         $this->lang->load('form_validation');
         $this->load->library(array('form_validation', 'encrypt', 'classLoad'));
-        $this->load->helper('hash');
+        $this->load->helper(['common', 'hash']);
         $this->load->model(array('user', 'stream_message', 'user_message', 'info_message', 'room', 'read'));
     }   
 
-    /**
-     * この機能は使う予定がない
-     * ルーム一覧を返却する
-     * GET
-     */
-    public function select_rooms() {
-        if(!$this->_exist_token()){ return; }
+    // /**
+    //  * この機能は使う予定がない
+    //  * ルーム一覧を返却する
+    //  * GET
+    //  */
+    // public function select_rooms() {
+    //     // if(!$this->_exist_token()){ return; }
 
-        $this->load->database();
+    //     $this->load->database();
 
-        $select_results = $this->room->select_rooms();
+    //     $select_results = $this->room->select_rooms();
 
-        $data = array ();
-        foreach ($select_results as $row) {
-            $temp_row = array ();
-            $temp_row['room_id'] = $row->room_id;
-            $temp_row['room_admin_hash'] = room_hash_encode($row->room_id, new UserRole(UserRole::ADMIN), $row->user_id); // 管理者ユーザで入室するためのハッシュ
-            $temp_row['room_specificuser_hash'] = room_hash_encode($row->room_id, new UserRole(UserRole::SPECIFIC_USER), 0); // 特定ユーザで入室するための周知用のハッシュ
-            $temp_row['room_anonymous_hash'] = room_hash_encode($row->room_id, new UserRole(UserRole::ANONYMOUS_USER), 0); // 匿名入室するための周知用のハッシュ
-            $temp_row['name'] = $row->name;
-            $temp_row['message_num'] = $this->db->from('stream_messages')->where('room_id', $row->room_id)->count_all_results();
-            $temp_row['last_update_time'] = $row->updated_at;
+    //     $data = array ();
+    //     foreach ($select_results as $row) {
+    //         $temp_row = array ();
+    //         $temp_row['room_id'] = $row->room_id;
+    //         $temp_row['room_admin_hash'] = room_hash_encode($row->room_id, new UserRole(UserRole::ADMIN), $row->user_id); // 管理者ユーザで入室するためのハッシュ
+    //         $temp_row['room_specificuser_hash'] = room_hash_encode($row->room_id, new UserRole(UserRole::SPECIFIC_USER), 0); // 特定ユーザで入室するための周知用のハッシュ
+    //         $temp_row['room_anonymous_hash'] = room_hash_encode($row->room_id, new UserRole(UserRole::ANONYMOUS_USER), 0); // 匿名入室するための周知用のハッシュ
+    //         $temp_row['name'] = $row->name;
+    //         $temp_row['message_num'] = $this->db->from('stream_messages')->where('room_id', $row->room_id)->count_all_results();
+    //         $temp_row['last_update_time'] = $row->updated_at;
 
-            $data[] = $temp_row;
-        }
+    //         $data[] = $temp_row;
+    //     }
 
-        $this->output->set_json_output($data);
-    }
+    //     $this->output->set_json_output($data);
+    // }
 
     /**
      * チャットの名前を取得
      * GET
      */
-    public function select_room($room_hash) {
-        if(!$this->_is_admin($room_hash)){ return; }
+    public function select_room_get($room_hash) {
+        if(!is_admin($room_hash)){
+            $this->set_response(error_message_format(['room_hash' => $this->lang->line('no_admin')]), REST_Controller::HTTP_OK); return;
+        }
 
         // ルームＩＤをデコードする
         $room_data = room_hash_decode($room_hash);
         $room_id = $room_data['room_id'];
         
         if (!$this->room->exit_room($room_id)) {
-            $this->output->set_json_error_output(array('room_hash' => $this->lang->line('exist_room'))); return;
+            $this->set_response(error_message_format(['room_hash' => $this->lang->line('exist_room')]), REST_Controller::HTTP_OK); return;
         }
 
         $row = $this->room->select_room($room_id);
@@ -67,7 +72,7 @@ class Admins_controller extends MY_Controller {
         $data['description'] = $row->description;
         $data['message_num'] = $this->db->from('stream_messages')->where('room_id', $row->room_id)->count_all_results();
 
-        $this->output->set_json_output($data);
+        $this->set_response($data, REST_Controller::HTTP_OK); return;
     }
 
     /**
@@ -75,8 +80,10 @@ class Admins_controller extends MY_Controller {
      * チャットの名前をアップデート
      * PUT
      */
-    public function update_room($room_hash) {
-        if(!$this->_is_admin($room_hash)){ return; }
+    public function update_room_put($room_hash) {
+        if(!is_admin($room_hash)){
+            $this->set_response(error_message_format(['room_hash' => $this->lang->line('no_admin')]), REST_Controller::HTTP_OK); return;
+        }
 
         $description = $this->input->input_stream('description');
 
@@ -93,25 +100,26 @@ class Admins_controller extends MY_Controller {
             'description'   =>  $description
         ));
 
-        if ($res = $this->db->affected_rows() === 0) {
-            $this->output->set_json_error_output(array('room_hash' => $this->lang->line('exist_room'))); return;
+        if ($res = $this->db->affected_rows() == 0) {
+            $this->set_response(error_message_format(['room_hash' => $this->lang->line('exist_room')]), REST_Controller::HTTP_OK); return;
         }
 
         $data = array (
             'room_id' => $room_id
         );
 
-        //$dataをJSONにして返す
-        $this->output->set_json_output($data);
+        $this->set_response($data, REST_Controller::HTTP_OK); return;
     }
 
     /**
-     * FIXME: 一旦保留にしている機能
+     * FIXME: 一旦保留にしている機能。あと名前を変える
      * チャットを削除
      * DELETE
      */
-    public function delete_room($room_hash) {
-        if(!$this->_is_admin($room_hash)){ return; }
+    public function delete_room_delete($room_hash) {
+        if(!is_admin($room_hash)){
+            $this->set_response(error_message_format(['room_hash' => $this->lang->line('no_admin')]), REST_Controller::HTTP_OK); return;
+        }
 
         // ルームＩＤをデコードする
         $room_data = room_hash_decode($room_hash);
@@ -119,8 +127,8 @@ class Admins_controller extends MY_Controller {
 
         $this->db->where('room_id', $room_id)->delete('rooms');
 
-        if ($res = $this->db->affected_rows() === 0) {
-            $this->output->set_json_error_output(array('room_hash' => $this->lang->line('exist_room'))); return;
+        if ($res = $this->db->affected_rows() == 0) {
+            $this->set_response(error_message_format(['room_hash' => $this->lang->line('exist_room')]), REST_Controller::HTTP_OK); return;
         }
     }
 
@@ -128,7 +136,7 @@ class Admins_controller extends MY_Controller {
      * ルームを作成する
      * POST
      */
-    public function create_room() {
+    public function create_room_post() {
         // FIXME 不用意に生成されないような仕組みを考える
         //if(!$this->_exist_token()){ return; }
         
@@ -157,23 +165,24 @@ class Admins_controller extends MY_Controller {
         $data = array ();
         $data['room_admin_hash'] = room_hash_encode($row->room_id, new UserRole(UserRole::ADMIN), $user_id); // 管理者ユーザで入室するためのハッシュ
 
-        $this->output->set_json_output($data);
-        return;
+        $this->set_response($data, REST_Controller::HTTP_OK); return;
     }
 
     /**
      * チャットのメンバー一覧を取得(トークンがあるなしで返却値が変わります)
      * GET
      */
-    public function select_users($room_hash) {
-        if(!$this->_is_admin($room_hash)){ return; }
+    public function select_users_get($room_hash) {
+        if(!is_admin($room_hash)){
+            $this->set_response(error_message_format(['room_hash' => $this->lang->line('no_admin')]), REST_Controller::HTTP_OK); return;
+        }
 
         // ルームＩＤをデコードする
         $room_data = room_hash_decode($room_hash);
         $room_id = $room_data['room_id'];
 
         if (!$this->room->exit_room($room_id)) {
-            $this->output->set_json_error_output(array('room_hash' => $this->lang->line('exist_room'))); return;
+            $this->set_response(error_message_format(['room_hash' => $this->lang->line('exist_room')]), REST_Controller::HTTP_OK); return;
         }
 
         $col = $this->db->from('users')->where(array ('room_id' => $room_id))->get()->result();
@@ -188,7 +197,6 @@ class Admins_controller extends MY_Controller {
             $data[] = $temp_row;
         }
 
-        //$dataをJSONにして返す
-        $this->output->set_json_output($data);
+        $this->set_response($data, REST_Controller::HTTP_OK); return;
     }
 }

@@ -97,88 +97,6 @@ class Rooms_controller extends REST_Controller {
     }
 
     /**
-     * FIXME APIの処理ではないので画面系の別ファイルに切り出す。
-     *
-     * チャットのメッセージ一覧を取得。前回取得分からの差分を返します。(SSE対応)
-     * 送信は直打ちとしている。Codeigniterの方法だと連続で送信できなかったりするため。
-     * GET
-     */
-    public function select_messages_sse_get($room_hash) {
-        ini_set("max_execution_time", $this->config->item('sse_succession_time'));
-
-        header("Content-Type: text/event-stream; charset=UTF-8");
-        header('Cache-Control: no-cache');
-        header("Connection: keep-alive");
-
-        // 接続状態にするため、ダミー値を返却する。
-        ob_flush();
-        flush();
-
-        // ルームＩＤをデコードする
-        $room_data = room_hash_decode($room_hash);
-        $room_id = $room_data['room_id'];
-        $user_id = $room_data['user_id'];
-
-        if(!$this->user->exist_user($room_id, $user_id)){
-            $this->output->set_json_error_output(array('room_hash' => $this->lang->line('exist_user'))); return;
-        }
-
-        // 処理を終えないように待機させる。
-        while(true){
-            $col = $this->stream_message->unread_messages($room_id, $user_id);
-
-            if (count ($col) == 0) {
-                sleep($this->config->item('sse_sleep_time'));
-                continue;
-            }
-
-            // デバッグ用
-            //$this->output->set_json_error_output(array($this->db->last_query())); return;
-
-            $data = array ();
-            $last_message_id = null;
-            foreach ($col as $row) {
-                $temp_row = array ();
-                $temp_row['message_id'] = $row->message_id;
-                $temp_user_info = array ();
-                $temp_user_info['name'] = $row->name;
-                $temp_user_info['who'] = $row->user_id == $user_id ? UserWho::SELF_USER : UserWho::OTHER_USER;
-                $temp_user_info['icon'] = $row->icon_id;
-                $temp_user_info['sex'] = $row->sex;
-                $temp_user_info['hash'] = $row->user_hash;
-                $temp_row['user'] = $temp_user_info;
-                $temp_row['body'] = (string)$row->body;
-                $temp_row['type'] = $row->type;
-                $temp_row['send_time'] = $row->created_at;
-
-                $data[] = $temp_row;
-                $last_message_id = $row->message_id;
-            }
-
-            if (empty ($last_message_id)) {
-                $this->output->set_json_output(array ()); return;
-            }
-
-            // 取得した最後のメッセージを既読済にする
-            $this->db->trans_start();
-
-            $this->read->insert(array (
-                'message_id' => $last_message_id,
-                'user_id' => $user_id,
-                'room_id' => $room_id
-            ));
-
-            $this->db->trans_complete();
-
-            $this->output->set_sse_output('messages', $data);
-
-            ob_flush();
-            flush();
-            sleep($this->config->item('sse_sleep_time'));
-        }
-    }
-
-    /**
      * チャットのメッセージ一覧を取得。前回取得分からの差分を返します。
      * GET
      */
@@ -397,9 +315,9 @@ class Rooms_controller extends REST_Controller {
         }
 
         if($role === '2'){ // 特定ユーザ
-            $this->set_response($this->create_specific_user($room_id, $this->input->post('name')), REST_Controller::HTTP_OK); return;
+            $this->set_response($this->_create_specific_user($room_id, $this->input->post('name')), REST_Controller::HTTP_OK); return;
         } else { // アノニマスユーザ
-            $this->set_response($this->create_anonymous_user($room_id, $this->input->post('name')), REST_Controller::HTTP_OK); return;
+            $this->set_response($this->_create_anonymous_user($room_id, $this->input->post('name')), REST_Controller::HTTP_OK); return;
         }
     }
 
@@ -417,7 +335,7 @@ class Rooms_controller extends REST_Controller {
     /**
      * チャットに特定ユーザを追加。
      */
-    private function create_specific_user($room_id, $name) {
+    private function _create_specific_user($room_id, $name) {
         $icon_id = $this->input->post('icon');
         if(empty($icon_id)){
             // ユーザのアイコンＩＤを設定します。（アイコンＩＤを増やしたらコンフィグの値を変更する。）
@@ -442,7 +360,7 @@ class Rooms_controller extends REST_Controller {
     /**
      * チャットにユーザを追加。
      */
-    private function create_anonymous_user($room_id, $name) {
+    private function _create_anonymous_user($room_id, $name) {
         // ユーザのアイコンＩＤを設定します。（アノニマスアイコン）
         $icon_id = 999;
 

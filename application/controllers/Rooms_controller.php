@@ -113,7 +113,7 @@ class Rooms_controller extends REST_Controller {
         $col = $this->stream_message->unread_messages($room_id, $user_id);
 
         // デバッグ用
-        // $this->output->set_json_error_output(array($this->db->last_query())); return;
+        //$this->set_response([$this->db->last_query()], REST_Controller::HTTP_OK); return;
 
         $data = array ();
         $last_message_id = null;

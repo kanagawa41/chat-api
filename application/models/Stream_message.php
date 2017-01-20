@@ -92,8 +92,11 @@ class Stream_message extends MY_Model {
         ->where(array (
             'sm.room_id' => $room_id,
             'sm.message_id >' => $last_read_message_id,
-            'u.user_id <>' => $user_id,
-        ))->get()->result();
+        ))->group_start()
+        ->where('u.user_id <>', $user_id)
+        ->or_where('u.user_id IS NULL')
+        ->group_end()
+        ->get()->result();
     }
 
     

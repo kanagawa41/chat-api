@@ -16,35 +16,6 @@ class Admins_controller extends REST_Controller {
         $this->load->model(array('user', 'stream_message', 'user_message', 'info_message', 'room', 'read'));
     }   
 
-    // /**
-    //  * この機能は使う予定がない
-    //  * ルーム一覧を返却する
-    //  * GET
-    //  */
-    // public function select_rooms() {
-    //     // if(!$this->_exist_token()){ return; }
-
-    //     $this->load->database();
-
-    //     $select_results = $this->room->select_rooms();
-
-    //     $data = array ();
-    //     foreach ($select_results as $row) {
-    //         $temp_row = array ();
-    //         $temp_row['room_id'] = $row->room_id;
-    //         $temp_row['room_admin_hash'] = room_hash_encode($row->room_id, new UserRole(UserRole::ADMIN), $row->user_id); // 管理者ユーザで入室するためのハッシュ
-    //         $temp_row['room_specificuser_hash'] = room_hash_encode($row->room_id, new UserRole(UserRole::SPECIFIC_USER), 0); // 特定ユーザで入室するための周知用のハッシュ
-    //         $temp_row['room_anonymous_hash'] = room_hash_encode($row->room_id, new UserRole(UserRole::ANONYMOUS_USER), 0); // 匿名入室するための周知用のハッシュ
-    //         $temp_row['name'] = $row->name;
-    //         $temp_row['message_num'] = $this->db->from('stream_messages')->where('room_id', $row->room_id)->count_all_results();
-    //         $temp_row['last_update_time'] = $row->updated_at;
-
-    //         $data[] = $temp_row;
-    //     }
-
-    //     $this->output->set_json_output($data);
-    // }
-
     /**
      * チャットの名前を取得
      * GET

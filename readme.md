@@ -26,10 +26,6 @@
 ###技術参考
 [phpLiteAdmin](http://www.hiskip.com/pg-notes/dbtools/phpLiteAdmin.html)
 
-[CSSで作った対談（会話）式吹き出しをLINE風にしてスマホにも対応させる](http://webkcampus.com/201411/829/)
-
-[ローカルストレージ](http://qiita.com/mima_ita/items/363fd434f9c655944e3f)
-
 [Redis](http://d.hatena.ne.jp/yk5656/touch/20140923/1411889810)
 
 ## DDL

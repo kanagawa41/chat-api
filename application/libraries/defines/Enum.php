@@ -1,5 +1,5 @@
 <?php
-abstract class Enum
+abstract class Enum implements DefineImpl
 {
     private $scalar;
 

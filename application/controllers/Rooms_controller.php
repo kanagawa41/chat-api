@@ -1,19 +1,11 @@
 <?php
 defined('BASEPATH') OR exit ('No direct script access allowed');
-require APPPATH . '/libraries/REST_Controller.php';
 
-class Rooms_controller extends REST_Controller {
+class Rooms_controller extends MY_Controller {
 
     public function __construct()
     {
         parent::__construct();
-        
-        // 各メソッドで適せん読み込むようにする
-        $this->config->load('my_config');
-        $this->lang->load('form_validation');
-        $this->load->library(array('form_validation', 'encrypt', 'classLoad'));
-        $this->load->helper(['common', 'hash']);
-        $this->load->model(array('user', 'stream_message', 'user_message', 'info_message', 'room', 'read_message'));
     }   
 
     /**

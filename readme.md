@@ -32,8 +32,7 @@
 
 ### DB
 ```
-CREATE DATABASE chat-api
-DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+CREATE DATABASE `chat-api` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
 ```
 
 #### ルーム

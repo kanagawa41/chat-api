@@ -7,6 +7,18 @@
 これはチャットのＡＰＩの思想を記したものである。
 ＡＪＡＸとの通信を想定している。
 
+# 設定ファイル
+## application/config/config.php
+* base_url
+* index_page
+* encryption_key
+
+## application/config/database.php
+書かかないといけない。
+
+## application/config/my_config.php
+* room_encryption_key
+
 # 構想
 
 ## 実装する機能
@@ -28,7 +40,9 @@
 
 [Redis](http://d.hatena.ne.jp/yk5656/touch/20140923/1411889810)
 
-## DDL
+[marianDB](http://server.etutsplus.com/centos-7-mariadb-install-and-mysql-secure-installation/)
+
+## DDL(MySQL)
 
 ### DB
 ```

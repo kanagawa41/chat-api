@@ -51,7 +51,7 @@ class Admins_controller extends MY_Controller {
         $description = $this->input->input_stream('description');
 
         if (!$this->form_validation->run('update_room')) {
-            $this->output->set_json_error_output($this->form_validation->error_array()); return;
+            $this->set_response(error_message_format($this->form_validation->error_array()), REST_Controller::HTTP_OK); return;
         }
 
         // ルームＩＤをデコードする
@@ -104,7 +104,7 @@ class Admins_controller extends MY_Controller {
         //if(!$this->_exist_token()){ return; }
         
         if (!$this->form_validation->run('create_room')) {
-            $this->output->set_json_error_output($this->form_validation->error_array()); return;
+            $this->set_response(error_message_format($this->form_validation->error_array()), REST_Controller::HTTP_OK); return;
         }
 
         $description = $this->input->post('description');

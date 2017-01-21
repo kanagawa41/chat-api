@@ -39,7 +39,7 @@ class Stream_message extends MY_Model {
             sm.message_id
             , u.name
             , u.user_id
-            , u.icon_id
+            , u.icon_name
             , u.sex
             , u.user_hash
             , CASE 
@@ -66,14 +66,14 @@ class Stream_message extends MY_Model {
      */
     public function unread_messages($room_id, $user_id) {
         // 既読済のメッセージID
-        $last_read_message_id = $this->read->read_message($user_id);
+        $last_read_message_id = $this->read_message->read_message($user_id);
 
         return $this->db->select(
             '
             sm.message_id
             , u.name
             , u.user_id
-            , u.icon_id
+            , u.icon_name
             , u.sex
             , u.user_hash
             , CASE 
@@ -131,7 +131,7 @@ class Stream_message extends MY_Model {
             sm.message_id
             , u.name
             , u.user_id
-            , u.icon_id
+            , u.icon_name
             , u.sex
             , u.user_hash
             , CASE 

@@ -13,7 +13,7 @@ class Rooms_controller extends REST_Controller {
         $this->lang->load('form_validation');
         $this->load->library(array('form_validation', 'encrypt', 'classLoad'));
         $this->load->helper(['common', 'hash']);
-        $this->load->model(array('user', 'stream_message', 'user_message', 'info_message', 'room', 'read'));
+        $this->load->model(array('user', 'stream_message', 'user_message', 'info_message', 'room', 'read_message'));
     }   
 
     /**
@@ -87,7 +87,7 @@ class Rooms_controller extends REST_Controller {
         $data = array ();
         $data['name'] = $row->name;
         $data['sex'] = $row->sex;
-        $data['icon'] = $row->icon_id;
+        $data['icon'] = $row->icon_name;
         $data['user_hash'] = $row->user_hash;
         $data['message_count'] = $this->stream_message->message_count($room_id, $user_id);
         $data['begin_message_id'] = $row->begin_message_id;
@@ -123,7 +123,7 @@ class Rooms_controller extends REST_Controller {
             $temp_user_info = array ();
             $temp_user_info['name'] = $row->name;
             $temp_user_info['who'] = $row->user_id == $user_id ? UserWho::SELF_USER : UserWho::OTHER_USER;
-            $temp_user_info['icon'] = $row->icon_id;
+            $temp_user_info['icon'] = $row->icon_name;
             $temp_user_info['sex'] = $row->sex;
             $temp_user_info['hash'] = $row->user_hash;
             $temp_row['user'] = $temp_user_info;
@@ -142,7 +142,7 @@ class Rooms_controller extends REST_Controller {
         // 取得した最後のメッセージを既読済にする
         $this->db->trans_start();
 
-        $this->read->insert(array (
+        $this->read_message->insert(array (
             'message_id' => $last_message_id,
             'user_id' => $user_id,
             'room_id' => $room_id
@@ -178,7 +178,7 @@ class Rooms_controller extends REST_Controller {
             $temp_user_info = array ();
             $temp_user_info['name'] = $row->name;
             $temp_user_info['who'] = $row->user_id == $user_id ? UserWho::SELF_USER : UserWho::OTHER_USER;
-            $temp_user_info['icon'] = $row->icon_id;
+            $temp_user_info['icon'] = $row->icon_name;
             $temp_user_info['sex'] = $row->sex;
             $temp_user_info['hash'] = $row->user_hash;
             $data['user'] = $temp_user_info;
@@ -220,7 +220,7 @@ class Rooms_controller extends REST_Controller {
             $temp_user_info = array ();
             $temp_user_info['name'] = $row->name;
             $temp_user_info['who'] = $row->user_id == $user_id ? UserWho::SELF_USER : UserWho::OTHER_USER;
-            $temp_user_info['icon'] = $row->icon_id;
+            $temp_user_info['icon'] = $row->icon_name;
             $temp_user_info['sex'] = $row->sex;
             $temp_user_info['hash'] = $row->user_hash;
             $temp_row['user'] = $temp_user_info;
@@ -264,7 +264,7 @@ class Rooms_controller extends REST_Controller {
         $row = $this->stream_message->specific_message($room_id, $message_id);
 
         // デバッグ用
-        //$this->output->set_json_error_output(array($this->db->last_query())); return;
+        // $this->set_response([$message_id, $this->db->last_query()], REST_Controller::HTTP_OK); return;
 
         $data = array ();
         if (!empty($row)) {
@@ -272,7 +272,7 @@ class Rooms_controller extends REST_Controller {
             $temp_user_info = array ();
             $temp_user_info['name'] = $row->name;
             $temp_user_info['who'] = $row->user_id == $user_id ? UserWho::SELF_USER : UserWho::OTHER_USER;
-            $temp_user_info['icon'] = $row->icon_id;
+            $temp_user_info['icon'] = $row->icon_name;
             $temp_user_info['sex'] = $row->sex;
             $temp_user_info['hash'] = $row->user_hash;
             $data['user'] = $temp_user_info;

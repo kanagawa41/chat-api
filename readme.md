@@ -30,85 +30,87 @@
 
 ## DDL
 
+### DB
+```
+CREATE DATABASE chat-api
+DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+```
+
 #### ルーム
 ```
 CREATE TABLE rooms (
     /** ルーム情報 **/
-    room_id INTEGER, --ルームＩＤ
-    name STRING NOT NULL, --作成したいグループチャットのチャット名
-    description STRING NOT NULL, --グループチャットの概要説明テキスト
-    created_at default CURRENT_TIMESTAMP NOT NULL, --作成日
-    updated_at default CURRENT_TIMESTAMP NOT NULL, --更新日
-    PRIMARY KEY(room_id AUTOINCREMENT)
-);
+    room_id MEDIUMINT NOT NULL AUTO_INCREMENT PRIMARY KEY, /* ルームＩＤ */
+    name VARCHAR(255) NOT NULL, /* 作成したいグループチャットのチャット名 */
+    description VARCHAR(255) NOT NULL, /* グループチャットの概要説明テキスト */
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, /* 作成日 */
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP  /* 更新日 */
+) COLLATE=utf8_general_ci;
 ```
 
 
 #### ユーザ
 ```
+/** ユーザ情報 **/
 CREATE TABLE users (
-    /** ユーザ情報 **/
-    user_id INTEGER, --ユーザＩＤ
-    user_hash STRING NOT NULL, --ユーザハッシュ
-    user_role INTEGER DEFAULT 3, --ユーザロール(1…admin, 2…specific-user, 3…anonymous)
-    name STRING NOT NULL, --ユーザ名
-    sex STRING, --性別(0…性別なし, 1…男, 2…女)
-    room_id INTEGER, --ルームＩＤ
-    begin_message_id INTEGER, --入室した際の開始メッセージＩＤ
-    icon_id INTEGER, --アイコンＩＤ
-    fingerprint INTEGER, --フィンガープリント
-    user_agent STRING, --ユーザエージェント
-    ip_address STRING, --ユーザのアドレス
-    port INTEGER, --ユーザのポート
-    created_at default CURRENT_TIMESTAMP NOT NULL, --作成日
-    PRIMARY KEY(user_id AUTOINCREMENT)
-);
+    user_id MEDIUMINT NOT NULL AUTO_INCREMENT PRIMARY KEY, /* ユーザＩＤ */
+    user_hash VARCHAR(255) NOT NULL, /* ユーザハッシュ */
+    user_role TINYINT DEFAULT 3, /* ユーザロール(1…admin, 2…specific-user, 3…anonymous) */
+    name VARCHAR(255) NOT NULL, /* ユーザ名 */
+    sex TINYINT, /* 性別(0…性別なし, 1…男, 2…女) */
+    room_id INTEGER, /* ルームＩＤ */
+    begin_message_id INTEGER, /* 入室した際の開始メッセージＩＤ */
+    icon_name VARCHAR(255), /* アイコンＩＤ */
+    fingerprint INTEGER, /* フィンガープリント */
+    user_agent VARCHAR(255), /* ユーザエージェント */
+    ip_address VARCHAR(255), /* ユーザのアドレス */
+    port MEDIUMINT, /* ユーザのポート MAX:65535 */
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, /* 作成日 */
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP  /* 更新日 */
+) COLLATE=utf8_general_ci;
 ```
 
 
 #### メッセージストリーム
 ```
+/** メッセージ情報 **/
 CREATE TABLE stream_messages (
-    /** メッセージ情報 **/
-    message_id INTEGER, --メッセージＩＤ
-    room_id INTEGER, --ルームＩＤ
-    created_at default CURRENT_TIMESTAMP NOT NULL, --作成日
-    PRIMARY KEY(message_id AUTOINCREMENT)
-);
+    message_id INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY, /* メッセージＩＤ */
+    room_id MEDIUMINT, /* ルームＩＤ */
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP /* 作成日 */
+) COLLATE=utf8_general_ci;
 ```
 
 #### ユーザメッセージ
 ```
+/** メッセージ情報 **/
 CREATE TABLE user_messages (
-    /** メッセージ情報 **/
-    message_id INTEGER, --メッセージＩＤ
-    user_id INTEGER, --ユーザＩＤ
-    body STRING NOT NULL, --メッセージ内容
-    PRIMARY KEY(message_id)
-);
+    message_id INTEGER NOT NULL PRIMARY KEY, /* メッセージＩＤ */
+    user_id INTEGER NOT NULL, /* ユーザＩＤ */
+    body VARCHAR(255) NOT NULL /* メッセージ内容 */
+) COLLATE=utf8_general_ci;
 ```
 
 #### お知らせメッセージ
 ```
+/** メッセージ情報 **/
 CREATE TABLE info_messages (
-    /** メッセージ情報 **/
-    message_id INTEGER, --メッセージＩＤ
-    body STRING NOT NULL, --メッセージ内容
-    type INTEGER, --メッセージの種類(1…ルーム作成、2…入室)
-    PRIMARY KEY(message_id)
-);
+    message_id INTEGER NOT NULL PRIMARY KEY, /* メッセージＩＤ */
+    body VARCHAR(255) NOT NULL, /* メッセージ内容 */
+    type TINYINT /* メッセージの種類(1…ルーム作成、2…入室) */
+) COLLATE=utf8_general_ci;
 ```
 
 
 #### 既読
 ```
-CREATE TABLE reads (
-    /** 既読情報 **/
-    message_id INTEGER, --メッセージＩＤ
-    user_id INTEGER, --ユーザＩＤ
-    room_id INTEGER, --ルームＩＤ
-    created_at default CURRENT_TIMESTAMP NOT NULL --作成日
-);
+/** 既読情報 **/
+CREATE TABLE read_messages (
+    message_id INTEGER NOT NULL, /* メッセージＩＤ */
+    user_id INTEGER NOT NULL, /* ユーザＩＤ */
+    room_id MEDIUMINT, /* ルームＩＤ */
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP /* 作成日 */
+) COLLATE=utf8_general_ci;
 ```
 
 

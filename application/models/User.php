@@ -38,7 +38,7 @@ class User extends MY_Model {
      * ユーザを追加する。
      * 追加したユーザIDを返却する。
      */
-    public function insert_user($name, $room_id, DefineImpl $user_role, $fingerprint, DefineImpl $sex, $icon_id) {
+    public function insert_user($name, $room_id, DefineImpl $user_role, $fingerprint, DefineImpl $sex, $icon_name) {
         $raw_max_message_id = $this->stream_message->max_message_id($room_id);
         $max_message_id = empty($raw_max_message_id) ? 0: $raw_max_message_id;
 
@@ -54,7 +54,7 @@ class User extends MY_Model {
            'sex' => $sex ,
            'room_id' => $room_id ,
            'begin_message_id' => $max_message_id ,
-           'icon_id' => $icon_id ,
+           'icon_name' => $icon_name ,
            'fingerprint' => $fingerprint ,
            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ,
            'ip_address' => $_SERVER['REMOTE_ADDR'] ,

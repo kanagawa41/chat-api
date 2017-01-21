@@ -13,7 +13,7 @@ class Admins_controller extends REST_Controller {
         $this->lang->load('form_validation');
         $this->load->library(array('form_validation', 'encrypt', 'classLoad'));
         $this->load->helper(['common', 'hash']);
-        $this->load->model(array('user', 'stream_message', 'user_message', 'info_message', 'room', 'read'));
+        $this->load->model(array('user', 'stream_message', 'user_message', 'info_message', 'room', 'read_message'));
     }   
 
     /**

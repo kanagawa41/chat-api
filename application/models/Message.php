@@ -49,7 +49,7 @@ class Message extends MY_Model {
 		$begin_message_id = $this->user->find($user_id)->begin_message_id;
 
 		// 既読済のメッセージID
-		$raw_last_read_message_id = $this->read->read_message($user_id);
+		$raw_last_read_message_id = $this->read_message->read_message($user_id);
 		$last_read_message_id = $raw_last_read_message_id < $begin_message_id ? $begin_message_id : $raw_last_read_message_id;
 
 		return $this->db->select('m.message_id, u.name, u.user_id, u.icon_id, u.sex, u.user_hash, m.body, m.type, m.created_at')

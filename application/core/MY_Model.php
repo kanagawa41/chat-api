@@ -37,12 +37,24 @@ class MY_Model extends CI_Model {
      * @return integer 
      */
     public function insert(array $values) {
-        $now = $this->now();
         $ret = $this->db->insert($this->_table, $values);
         if ($ret === FALSE) {
             return FALSE;
         }
-        return $this->db->insert_id();
+
+        return $this->mysql_last_insert_id();
+        // return $this->db->insert_id();
+    }
+
+    /**
+     * MYSQLで使用するラストインサートＩＤ取得方法
+     * $this->db->insert_id(); では取得できないため実装している。
+     *
+     * @return integer 
+     */
+    public function mysql_last_insert_id() {
+        $ret = $this->db->select('LAST_INSERT_ID() AS last_insert_id')->get($this->_table)->row();
+        return $ret->last_insert_id;
     }
 
     /**

@@ -162,7 +162,7 @@ class Rooms_controller extends MY_Controller {
         $row = $this->stream_message->specific_message($room_id, $message_id);
 
         // デバッグ用
-        //$this->set_response(error_message_format([$this->db->last_query()]); return;
+        // $this->set_response(error_message_format([$this->db->last_query()]), REST_Controller::HTTP_OK); return;
 
         $data = array ();
         if (!empty($row)) {
@@ -202,7 +202,7 @@ class Rooms_controller extends MY_Controller {
         $col = $this->stream_message->past_messages($room_id, $user_id, $message_id);
 
         // デバッグ用
-        // $this->set_response(error_message_format([($this->db->last_query()]); return;
+        // $this->set_response(error_message_format([$this->db->last_query()]), REST_Controller::HTTP_OK); return;
 
         $data = array ();
         $last_message_id = null;
@@ -297,9 +297,9 @@ class Rooms_controller extends MY_Controller {
         $role = (string)$room_data['role'];
 
         if($role === UserRole::ADMIN) { // 管理人ハッシュで生成しようとした場合
-            $this->set_response(error_message_format(['room_hash' => $this->lang->line('is_admin')]); return;
+            $this->set_response(error_message_format(['room_hash' => $this->lang->line('is_admin')]), REST_Controller::HTTP_OK); return;
         } else if(!in_array($role, array(UserRole::SPECIFIC_USER, UserRole::ANONYMOUS_USER)) || $room_data['user_id'] !== '0') { // 特定ユーザ、アノニマスユーザ以外が指定、ユーザＩＤが既に指定されている
-            $this->set_response(error_message_format(['room_hash' => $this->lang->line('wrong_hash')]); return;
+            $this->set_response(error_message_format(['room_hash' => $this->lang->line('wrong_hash')]), REST_Controller::HTTP_OK); return;
         }
 
         if($this->user->duplicate_user($room_id, $this->input->post('fingerprint'))){

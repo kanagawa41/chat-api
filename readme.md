@@ -14,7 +14,6 @@
 * encryption_key
 
 ## application/config/database.php
-書かかないといけない。
 
 ## application/config/my_config.php
 * room_encryption_key
@@ -364,23 +363,10 @@ http://chat/rooms/FJOIngow2489u53345lFEklEC
 
 # TODO
 
-### ●取得したメッセージはローカルストレージを使用するようにする。
-
-### ●ＭＹＳＱＬの導入
-
-### ●画面とＡＰＩのフォルダを切り分ける
-
-### ●フロントのメッセージを一括管理する。
-
 ### ●例外処理の仕組みを作る
 
 
 # TASK
-
-### ●SSE処理？でエラーが発生する。
-* Blink deferred a task in order to make scrolling smoother. Your timer and network tasks should take less than 50ms to run to avoid this. Please see https://developers.google.com/web/tools/chrome-devtools/profile/evaluate-performance/rail and https://crbug.com/574343#c40 for more information.
-
-### ●過去のメッセージを参照しようとした場合にたまにエラーが発生する。しかし改めてＵＲＬを送信してもエラーは発現しない。
 
 
 # WANT
@@ -401,6 +387,17 @@ http://chat/rooms/FJOIngow2489u53345lFEklEC
 
 
 # DONE
+
+### ●過去のメッセージを参照しようとした場合にたまにエラーが発生する。しかし改めてＵＲＬを送信してもエラーは発現しない。
+
+### ●SSE処理？でエラーが発生する。
+* Blink deferred a task in order to make scrolling smoother. Your timer and network tasks should take less than 50ms to run to avoid this. Please see https://developers.google.com/web/tools/chrome-devtools/profile/evaluate-performance/rail and https://crbug.com/574343#c40 for more information.
+
+### ●取得したメッセージはローカルストレージを使用するようにする。
+
+### ●ＭＹＳＱＬの導入
+
+### ●画面とＡＰＩのフォルダを切り分ける
 
 ### ●画面を開いた際のＡＰＩを作成する。（既読をチェックしている）
 →なんのことかわからない。

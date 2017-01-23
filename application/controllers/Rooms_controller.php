@@ -287,6 +287,8 @@ class Rooms_controller extends MY_Controller {
      * POST
      */
     public function create_user_post($room_hash) {
+        if($this->post('method') == 'PUT'){ $this->update_user_put($room_hash); return; }
+
         if (!$this->form_validation->run('create_user')) {
             $this->set_response(error_message_format($this->form_validation->error_array()), REST_Controller::HTTP_OK); return;
         }
@@ -378,10 +380,11 @@ class Rooms_controller extends MY_Controller {
 
     /**
      * ユーザ情報を更新する。
+     * POSTからの分岐もあり得るので注意する。
      * PUT
      */
     public function update_user_put($room_hash) {
-        $this->form_validation->set_data($this->put());
+        $this->form_validation->set_data($this->post());
 
         $valid_config = array(
                 array(
@@ -422,9 +425,9 @@ class Rooms_controller extends MY_Controller {
         $user_id = $room_data['user_id'];
 
         $this->user->update($user_id, [
-            'name'=>  $this->put('name'),
-            'sex'   =>  $this->put('sex'),
-            'icon_name' => $this->put('icon'),
+            'name'=>  $this->post('name'),
+            'sex'   =>  $this->post('sex'),
+            'icon_name' => $this->post('icon'),
         ]);
 
         $this->set_response(['room_hash' => $room_hash], REST_Controller::HTTP_OK); return;

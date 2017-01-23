@@ -113,6 +113,17 @@ CREATE TABLE info_messages (
 ) COLLATE=utf8_general_ci;
 ```
 
+# FIXME ユーザ操作を記録するテーブルの作成
+#### ユーザ操作
+```
+/** メッセージ操作 **/
+CREATE TABLE user_acts (
+    message_id INTEGER NOT NULL PRIMARY KEY, /* メッセージＩＤ */
+    user_id INTEGER NOT NULL, /* ユーザＩＤ */
+    body VARCHAR(255) NOT NULL /* メッセージ内容 */
+    method TINYINT NOT NULL /* 動作(1…UPDATE, 2…DELETE) */
+) COLLATE=utf8_general_ci;
+```
 
 #### 既読
 ```
@@ -362,6 +373,8 @@ http://chat/rooms/FJOIngow2489u53345lFEklEC
 ---
 
 # TODO
+
+# FIXME ユーザ操作を記録するテーブルの作成
 
 ### ●例外処理の仕組みを作る
 

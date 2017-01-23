@@ -66,6 +66,7 @@ $route['rooms/(:any)']['get'] = 'rooms_controller/select_room/$1';
 $route['rooms/(:any)/members/all']['get'] = 'rooms_controller/select_users/$1';
 $route['rooms/(:any)/members']['get'] = 'rooms_controller/select_user/$1';
 $route['rooms/(:any)/members']['post'] = 'rooms_controller/create_user/$1';
+$route['rooms/(:any)/members']['put'] = 'rooms_controller/update_user/$1';
 $route['rooms/(:any)/messages/past/(:num)']['get'] = 'rooms_controller/select_messages_past/$1/$2';
 $route['rooms/(:any)/messages']['get'] = 'rooms_controller/select_messages/$1';
 $route['rooms/(:any)/messages/(:num)']['get'] = 'rooms_controller/select_message/$1/$2';

@@ -2,14 +2,14 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 $config = array(
-		'create_message' => array(
+	'create_message' => array(
                 array(
                         'field' => 'body',
                         'label' => 'メッセージ',
                         'rules' => 'required|max_length[100]'
                 ),
         )
-		,'create_user' => array(
+        ,'create_user' => array(
                 array(
                         'field' => 'name',
                         'label' => '名前',
@@ -25,8 +25,9 @@ $config = array(
                         'label' => '性別',
                         'rules' => 'required|callback__validate_sex'
                 ),
+                /* icon のvalidを追加*/
         )
-		,'create_room' => array(
+	,'create_room' => array(
                 array(
                         'field' => 'name',
                         'label' => 'ルーム名',
@@ -38,7 +39,7 @@ $config = array(
                         'rules' => 'max_length[50]'
                 ),
         )
-		,'update_room' => array(
+	,'update_room' => array(
                 array(
                         'field' => 'name',
                         'label' => 'ルーム名',

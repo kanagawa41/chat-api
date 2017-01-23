@@ -66,10 +66,11 @@ class MY_Model extends CI_Model {
         if ($data === null) {
             $data = $this;
         }
-        $ret = $this->db->update($this->_table, $data, array($_primary_key => $id));
+        $ret = $this->db->update($this->_table, $data, array($this->_primary_key => $id));
         if ($ret === FALSE) {
             return FALSE;
         }
+        return $this->db->affected_rows();
     }
 
     /**
@@ -78,7 +79,7 @@ class MY_Model extends CI_Model {
      * @param integer|strng $id 
      */
     public function delete($id) {
-        $this->db->delete($this->_table, array($_primary_key => $id));
+        $this->db->delete($this->_table, array($this->_primary_key => $id));
     }
 
     /**
@@ -97,7 +98,7 @@ class MY_Model extends CI_Model {
      * @return array
      */
     public function find_list($limit = 10) {
-        return $this->db->limit($limit)->order_by($_primary_key)->get($this->_table)->result();
+        return $this->db->limit($limit)->order_by($this->_primary_key)->get($this->_table)->result();
     }
 
     /**

@@ -39,7 +39,7 @@ class Admins_controller extends MY_Controller {
     }
 
     /**
-     * FIXME: 一旦保留にしている機能
+     * FIXME: 返却地はＩＤ以外にする。
      * チャットの名前をアップデート
      * PUT
      */

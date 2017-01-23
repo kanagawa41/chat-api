@@ -283,7 +283,6 @@ class Rooms_controller extends MY_Controller {
     }
 
     /**
-     * FIXME モデル系のリファクタリングを行う。
      * チャットにユーザを追加。
      * POST
      */
@@ -304,7 +303,7 @@ class Rooms_controller extends MY_Controller {
 
         if($role === UserRole::ADMIN) { // 管理人ハッシュで生成しようとした場合
             $this->set_response(error_message_format(['room_hash' => $this->lang->line('is_admin')]), REST_Controller::HTTP_OK); return;
-        } else if(!in_array($role, array(UserRole::SPECIFIC_USER, UserRole::ANONYMOUS_USER)) || $room_data['user_id'] !== '0') { // 特定ユーザ、アノニマスユーザ以外が指定、ユーザＩＤが既に指定されている
+        } else if(!in_array($role, [UserRole::SPECIFIC_USER, UserRole::ANONYMOUS_USER]) || $room_data['user_id'] !== '0') { // 特定ユーザ、アノニマスユーザ以外が指定、ユーザＩＤが既に指定されている
             $this->set_response(error_message_format(['room_hash' => $this->lang->line('wrong_hash')]), REST_Controller::HTTP_OK); return;
         }
 
@@ -375,5 +374,59 @@ class Rooms_controller extends MY_Controller {
         );
 
         return $data;
+    }
+
+    /**
+     * ユーザ情報を更新する。
+     * PUT
+     */
+    public function update_user_put($room_hash) {
+        $this->form_validation->set_data($this->put());
+
+        $valid_config = array(
+                array(
+                        'field' => 'name',
+                        'label' => '名前',
+                        'rules' => 'required|max_length[10]'
+                ),
+                array(
+                        'field' => 'sex',
+                        'label' => '性別',
+                        'rules' => 'required|callback__validate_sex'
+                ),
+        );
+
+        $this->form_validation->set_rules($valid_config);
+
+        // form_validationを呼ぶ方法だと、検証が正しく行われない。
+        if (!$this->form_validation->run()) {
+            $this->set_response(error_message_format($this->form_validation->error_array()), REST_Controller::HTTP_OK); return;
+        }
+
+        // ルームＩＤをデコードする
+        $room_data = room_hash_decode($room_hash);
+        $room_id = $room_data['room_id'];
+
+        if (empty($room_id)) {
+            $this->set_response(error_message_format(['room_hash' => $this->lang->line('exist_room')]), REST_Controller::HTTP_OK); return;
+        }
+
+        $role = (string)$room_data['role'];
+
+        if($role === UserRole::ADMIN) { // 管理人ハッシュで生成しようとした場合
+            $this->set_response(error_message_format(['room_hash' => $this->lang->line('is_admin')]), REST_Controller::HTTP_OK); return;
+        } else if(!in_array($role, [UserRole::SPECIFIC_USER, UserRole::ANONYMOUS_USER]) || $room_data['user_id'] === '0') { // 特定ユーザ、アノニマスユーザ以外が指定、登録されていないユーザ
+            $this->set_response(error_message_format(['room_hash' => $this->lang->line('wrong_hash')]), REST_Controller::HTTP_OK); return;
+        }
+
+        $user_id = $room_data['user_id'];
+
+        $this->user->update($user_id, [
+            'name'=>  $this->put('name'),
+            'sex'   =>  $this->put('sex'),
+            'icon_name' => $this->put('icon'),
+        ]);
+
+        $this->set_response(['room_hash' => $room_hash], REST_Controller::HTTP_OK); return;
     }
 }

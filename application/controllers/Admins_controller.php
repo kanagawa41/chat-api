@@ -157,6 +157,15 @@ class Admins_controller extends MY_Controller {
             $temp_row['user_hash'] = $row->user_hash;
             $temp_row['sex'] = $row->sex;
 
+            if($row->user_role == UserRole::ADMIN){
+                $role = 'admin';
+            }else if($row->user_role == UserRole::SPECIFIC_USER){
+                $role = 'specific-user';
+            }else if($row->user_role == UserRole::ANONYMOUS_USER){
+                $role = 'anonymous';
+            }
+            $temp_row['role'] = $role;
+
             $data[] = $temp_row;
         }
 

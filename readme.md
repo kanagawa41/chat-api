@@ -368,6 +368,7 @@ http://chat/rooms/FJOIngow2489u53345lFEklEC
 
 # TASK
 
+### ●たまにチャットの受信タイミングがおかしい時がある。
 
 # WANT
 

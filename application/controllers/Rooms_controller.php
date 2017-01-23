@@ -246,9 +246,15 @@ class Rooms_controller extends MY_Controller {
         $room_data = room_hash_decode($room_hash);
         $room_id = $room_data['room_id'];
         $user_id = $room_data['user_id'];
+        $role = $room_data['role'];
 
         if(!$this->user->exist_user($room_id, $user_id)){
             $this->set_response(error_message_format(['room_hash' => $this->lang->line('exist_user')]), REST_Controller::HTTP_OK); return;
+        }
+        // 20170123追加
+        // 匿名ユーザの場合
+        if($role == UserRole::ANONYMOUS_USER){
+            $this->set_response(error_message_format(['room_hash' => $this->lang->line('anonymous_user_not_say')]), REST_Controller::HTTP_OK); return;
         }
 
         $message_id = $this->stream_message->insert_user_message($room_id, $user_id, $body);

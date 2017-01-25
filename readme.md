@@ -375,6 +375,7 @@ http://chat/rooms/FJOIngow2489u53345lFEklEC
 # TODO
 
 # ユーザ操作を記録するテーブルの作成
+* 画像のパス保存も行えるようにする。
 
 ### ●ルームＩＤの暗号化を短くする。
 * $this->encrypt->set_cipher() で設定を変えれる。

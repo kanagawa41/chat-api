@@ -52,7 +52,7 @@ CREATE DATABASE `chat-api` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
 ```
 CREATE TABLE rooms (
     /** ルーム情報 **/
-    room_id MEDIUMINT NOT NULL AUTO_INCREMENT PRIMARY KEY, /* ルームＩＤ */
+    room_id MEDIUMINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, /* ルームＩＤ */
     name VARCHAR(255) NOT NULL, /* 作成したいグループチャットのチャット名 */
     room_key VARCHAR(255) NOT NULL, /* ルームキー */
     description VARCHAR(255) NOT NULL, /* グループチャットの概要説明テキスト */
@@ -68,15 +68,15 @@ CREATE TABLE rooms (
 ```
 /** ユーザ情報 **/
 CREATE TABLE users (
-    user_id MEDIUMINT NOT NULL AUTO_INCREMENT PRIMARY KEY, /* ユーザＩＤ */
+    user_id MEDIUMINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, /* ユーザＩＤ */
     user_hash VARCHAR(255) NOT NULL, /* ユーザハッシュ */
-    user_role TINYINT DEFAULT 3, /* ユーザロール(1…admin, 2…specific-user, 3…anonymous) */
+    user_role TINYINT UNSIGNED DEFAULT 3, /* ユーザロール(10…admin, 20…specific-user, 30…anonymous) */
     name VARCHAR(255) NOT NULL, /* ユーザ名 */
-    sex TINYINT, /* 性別(0…性別なし, 1…男, 2…女) */
-    room_id INTEGER, /* ルームＩＤ */
-    begin_message_id INTEGER, /* 入室した際の開始メッセージＩＤ */
+    sex TINYINT UNSIGNED DEFAULT 0, /* 性別(1…男, 2…女, 3…性別なし) */
+    room_id INTEGER UNSIGNED, /* ルームＩＤ */
+    begin_message_id INTEGER UNSIGNED, /* 入室した際の開始メッセージＩＤ */
     icon_name VARCHAR(255), /* アイコンＩＤ */
-    fingerprint INTEGER, /* フィンガープリント */
+    fingerprint INTEGER UNSIGNED, /* フィンガープリント */
     user_agent VARCHAR(255), /* ユーザエージェント */
     ip_address VARCHAR(255), /* ユーザのアドレス */
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, /* 作成日 */
@@ -87,42 +87,42 @@ CREATE TABLE users (
 
 #### メッセージストリーム
 ```
-/** メッセージ情報 **/
+/** メッセージストリーム **/
 CREATE TABLE stream_messages (
-    message_id INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY, /* メッセージＩＤ */
-    room_id MEDIUMINT, /* ルームＩＤ */
+    message_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, /* メッセージＩＤ */
+    room_id MEDIUMINT UNSIGNED, /* ルームＩＤ */
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP /* 作成日 */
 ) COLLATE=utf8_general_ci;
 ```
 
 #### ユーザメッセージ
 ```
-/** メッセージ情報 **/
+/** ユーザメッセージ **/
 CREATE TABLE user_messages (
-    message_id INTEGER NOT NULL PRIMARY KEY, /* メッセージＩＤ */
-    user_id INTEGER NOT NULL, /* ユーザＩＤ */
+    message_id INTEGER UNSIGNED NOT NULL PRIMARY KEY, /* メッセージＩＤ */
+    user_id INTEGER UNSIGNED NOT NULL, /* ユーザＩＤ */
     body VARCHAR(255) NOT NULL /* メッセージ内容 */
 ) COLLATE=utf8_general_ci;
 ```
 
-#### お知らせメッセージ
+#### お知らせメッセージ(削除)
 ```
 /** メッセージ情報 **/
 CREATE TABLE info_messages (
-    message_id INTEGER NOT NULL PRIMARY KEY, /* メッセージＩＤ */
+    message_id INTEGER UNSIGNED NOT NULL PRIMARY KEY, /* メッセージＩＤ */
     body VARCHAR(255) NOT NULL, /* メッセージ内容 */
-    type TINYINT /* メッセージの種類(1…ルーム作成、2…入室) */
+    type TINYINT UNSIGNED /* メッセージの種類(1…ルーム作成、2…入室) */
 ) COLLATE=utf8_general_ci;
 ```
 
-#### ユーザ操作
+#### ユーザ行動履歴
 ```
-/** メッセージ操作 **/
+/** ユーザ行動履歴 **/
 CREATE TABLE user_acts (
-    message_id INTEGER NOT NULL PRIMARY KEY, /* メッセージＩＤ */
-    user_id INTEGER NOT NULL, /* ユーザＩＤ */
-    content VARCHAR(255) NOT NULL /* メッセージ内容 */
-    type TINYINT UNSIGNED /* メッセージの種類(100…ルーム作成、200…入室(ユーザ追加)、210…ユーザ情報更新、220…ユーザ削除) */
+    message_id INTEGER UNSIGNED NOT NULL PRIMARY KEY, /* メッセージＩＤ */
+    user_id INTEGER UNSIGNED NOT NULL, /* ユーザＩＤ */
+    content VARCHAR(255) NOT NULL, /* メッセージ内容 */
+    type SMALLINT UNSIGNED /* メッセージの種類(100…ルーム作成、200…入室(ユーザ追加)、210…ユーザ情報更新、220…ユーザ削除) */
 ) COLLATE=utf8_general_ci;
 ```
 
@@ -130,10 +130,9 @@ CREATE TABLE user_acts (
 ```
 /** 画像投稿メッセージ **/
 CREATE TABLE image_posts (
-    message_id INTEGER NOT NULL PRIMARY KEY, /* メッセージＩＤ */
-    user_id INTEGER NOT NULL, /* ユーザＩＤ */
+    message_id INTEGER UNSIGNED NOT NULL PRIMARY KEY, /* メッセージＩＤ */
+    user_id INTEGER UNSIGNED NOT NULL, /* ユーザＩＤ */
     path VARCHAR(255) NOT NULL /* 画像パス */
-    SMALLINT TINYINT UNSIGNED /* メッセージの種類(100…ルーム作成、200…入室(ユーザ追加)、210…ユーザ情報更新、220…ユーザ削除) */
 ) COLLATE=utf8_general_ci;
 ```
 
@@ -141,9 +140,9 @@ CREATE TABLE image_posts (
 ```
 /** 既読情報 **/
 CREATE TABLE read_messages (
-    message_id INTEGER NOT NULL, /* メッセージＩＤ */
-    user_id INTEGER NOT NULL, /* ユーザＩＤ */
-    room_id MEDIUMINT, /* ルームＩＤ */
+    message_id INTEGER UNSIGNED NOT NULL, /* メッセージＩＤ */
+    user_id INTEGER UNSIGNED NOT NULL, /* ユーザＩＤ */
+    room_id MEDIUMINT UNSIGNED, /* ルームＩＤ */
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP /* 作成日 */
 ) COLLATE=utf8_general_ci;
 ```

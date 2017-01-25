@@ -54,6 +54,7 @@ CREATE TABLE rooms (
     /** ルーム情報 **/
     room_id MEDIUMINT NOT NULL AUTO_INCREMENT PRIMARY KEY, /* ルームＩＤ */
     name VARCHAR(255) NOT NULL, /* 作成したいグループチャットのチャット名 */
+    room_key VARCHAR(255) NOT NULL, /* ルームキー */
     description VARCHAR(255) NOT NULL, /* グループチャットの概要説明テキスト */
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, /* 作成日 */
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP  /* 更新日 */
@@ -76,7 +77,6 @@ CREATE TABLE users (
     fingerprint INTEGER, /* フィンガープリント */
     user_agent VARCHAR(255), /* ユーザエージェント */
     ip_address VARCHAR(255), /* ユーザのアドレス */
-    port MEDIUMINT, /* ユーザのポート MAX:65535 */
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, /* 作成日 */
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP  /* 更新日 */
 ) COLLATE=utf8_general_ci;
@@ -113,7 +113,6 @@ CREATE TABLE info_messages (
 ) COLLATE=utf8_general_ci;
 ```
 
-# FIXME ユーザ操作を記録するテーブルの作成
 #### ユーザ操作
 ```
 /** メッセージ操作 **/
@@ -121,7 +120,8 @@ CREATE TABLE user_acts (
     message_id INTEGER NOT NULL PRIMARY KEY, /* メッセージＩＤ */
     user_id INTEGER NOT NULL, /* ユーザＩＤ */
     body VARCHAR(255) NOT NULL /* メッセージ内容 */
-    method TINYINT NOT NULL /* 動作(1…UPDATE, 2…DELETE) */
+    type TINYINT /* メッセージの種類(1…ルーム作成、2…入室、3…ユーザ情報) */
+    method TINYINT NOT NULL /* 動作(1…INSERT, 2…UPDATE, 3…DELETE) */
 ) COLLATE=utf8_general_ci;
 ```
 
@@ -374,12 +374,18 @@ http://chat/rooms/FJOIngow2489u53345lFEklEC
 
 # TODO
 
-# FIXME ユーザ操作を記録するテーブルの作成
+# ユーザ操作を記録するテーブルの作成
+
+### ●ルームＩＤの暗号化を短くする。
+* $this->encrypt->set_cipher() で設定を変えれる。
+* 「MCRYPT_RIJNDAEL_128」がいいかな？
 
 ### ●例外処理の仕組みを作る
 
 
 # TASK
+
+### ●テーブル作成時に、rooms、usersは正常に作成できるか確認する。
 
 ### ●たまにチャットの受信タイミングがおかしい時がある。
 

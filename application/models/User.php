@@ -45,7 +45,7 @@ class User extends MY_Model {
         $this->load->helper('string');
 
         // ユーザ固有のハッシュ値を取得する（低確率でダブル可能性はある）
-        $user_hash = random_string($type = 'alnum', $len = 10);
+        $user_hash = random_string('alnum', 10);
 
         $data = array(
            'user_hash' => $user_hash ,
@@ -58,7 +58,6 @@ class User extends MY_Model {
            'fingerprint' => $fingerprint ,
            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ,
            'ip_address' => $_SERVER['REMOTE_ADDR'] ,
-           'port' => $_SERVER['REMOTE_PORT'] ,
         );
 
         $user_id = $this->user->insert($data);

@@ -110,9 +110,14 @@ class Admins_controller extends MY_Controller {
         $description = $this->input->post('description');
         $name = $this->input->post('name');
 
+        $this->load->helper('string');
+        // ランダムにキーを生成する。
+        $room_key = random_string('alnum', 15);
+
         $room_id = $this->room->insert(array (
             'name' => $name,
             'description' => $description,
+            'room_key' => $room_key,
         ));
 
         $admin_name = $this->config->item('admin_name');
@@ -121,7 +126,7 @@ class Admins_controller extends MY_Controller {
         $this->stream_message->insert_info_message($room_id, $name, new MessageType(MessageType::MAKE_ROOM));
         
         // 管理者ユーザを生成する。
-        $user_id = $this->user->insert_user($admin_name, $room_id, new UserRole(UserRole::ADMIN), null, new Sex(Sex::NONE), 0);
+        $user_id = $this->user->insert_user($admin_name, $room_id, new UserRole(UserRole::ADMIN), null, new Sex(Sex::NONE), $this->input->post('icon'));
 
         $row = $this->room->select_room($room_id);
 
@@ -132,7 +137,7 @@ class Admins_controller extends MY_Controller {
     }
 
     /**
-     * チャットのメンバー一覧を取得(トークンがあるなしで返却値が変わります)
+     * チャットのメンバー一覧を取得
      * GET
      */
     public function select_users_get($room_hash) {

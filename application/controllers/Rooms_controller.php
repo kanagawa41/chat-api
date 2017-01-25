@@ -28,33 +28,8 @@ class Rooms_controller extends MY_Controller {
         $data = array ();
         $data['name'] = $row->name;
         $data['description'] = $row->description;
+        $data['key'] = $row->room_key;
         $data['last_message_id'] = $this->stream_message->max_message_id($room_id);
-
-        $this->set_response($data, REST_Controller::HTTP_OK); return;
-    }
-
-    /**
-     * チャットのメンバー一覧を取得(トークンがあるなしで返却値が変わります)
-     * GET
-     */
-    public function select_users_get($room_hash) {
-        // ルームＩＤをデコードする
-        $room_data = room_hash_decode($room_hash);
-        $room_id = $room_data['room_id'];
-
-        if (!$this->room->exit_room($room_id)) {
-            $this->set_response(error_message_format(['room_hash' => $this->lang->line('exist_room')]), REST_Controller::HTTP_OK); return;
-        }
-
-        $sql_result = $this->db->from('users')->where(array ('room_id' => $room_id))->get()->result();
-
-        $data = array ();
-        foreach ($sql_result as $row) {
-            $temp_row = array ();
-            $temp_row['name'] = $row->name;
-
-            $data[] = $temp_row;
-        }
 
         $this->set_response($data, REST_Controller::HTTP_OK); return;
     }
@@ -80,6 +55,14 @@ class Rooms_controller extends MY_Controller {
         $data['name'] = $row->name;
         $data['sex'] = $row->sex;
         $data['icon'] = $row->icon_name;
+        if($row->user_role == UserRole::ADMIN){
+            $role = 'admin';
+        }else if($row->user_role == UserRole::SPECIFIC_USER){
+            $role = 'specific-user';
+        }else if($row->user_role == UserRole::ANONYMOUS_USER){
+            $role = 'anonymous';
+        }
+        $data['role'] = $role;
         $data['user_hash'] = $row->user_hash;
         $data['message_count'] = $this->stream_message->message_count($room_id, $user_id);
         $data['begin_message_id'] = $row->begin_message_id;
@@ -431,5 +414,43 @@ class Rooms_controller extends MY_Controller {
         ]);
 
         $this->set_response(['room_hash' => $room_hash], REST_Controller::HTTP_OK); return;
+    }
+
+    /**
+     * チャットのメンバー一覧を取得
+     * 今の所返却値はAdminと変わらない。
+     * GET
+     */
+    public function select_users_get($room_hash) {
+        // ルームＩＤをデコードする
+        $room_data = room_hash_decode($room_hash);
+        $room_id = $room_data['room_id'];
+
+        if (!$this->room->exit_room($room_id)) {
+            $this->set_response(error_message_format(['room_hash' => $this->lang->line('exist_room')]), REST_Controller::HTTP_OK); return;
+        }
+
+        $col = $this->db->from('users')->where(array ('room_id' => $room_id))->get()->result();
+
+        $data = array ();
+        foreach ($col as $row) {
+            $temp_row = array ();
+            $temp_row['name'] = $row->name;
+            $temp_row['user_hash'] = $row->user_hash;
+            $temp_row['sex'] = $row->sex;
+
+            if($row->user_role == UserRole::ADMIN){
+                $role = 'admin';
+            }else if($row->user_role == UserRole::SPECIFIC_USER){
+                $role = 'specific-user';
+            }else if($row->user_role == UserRole::ANONYMOUS_USER){
+                $role = 'anonymous';
+            }
+            $temp_row['role'] = $role;
+
+            $data[] = $temp_row;
+        }
+
+        $this->set_response($data, REST_Controller::HTTP_OK); return;
     }
 }

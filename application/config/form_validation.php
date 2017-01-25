@@ -25,7 +25,11 @@ $config = array(
                         'label' => '性別',
                         'rules' => 'required|callback__validate_sex'
                 ),
-                /* icon のvalidを追加*/
+                array(
+                        'field' => 'icon',
+                        'label' => 'アイコン',
+                        'rules' => 'max_length[200]'
+                ),
         )
 	,'create_room' => array(
                 array(
@@ -37,6 +41,11 @@ $config = array(
                         'field' => 'description',
                         'label' => '説明',
                         'rules' => 'max_length[50]'
+                ),
+                array(
+                        'field' => 'icon',
+                        'label' => 'アイコン',
+                        'rules' => 'max_length[200]'
                 ),
         )
 	,'update_room' => array(

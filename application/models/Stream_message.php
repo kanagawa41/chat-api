@@ -9,7 +9,6 @@ class Stream_message extends MY_Model {
         parent :: __construct();
     }
 
-
     /**
      * 最大メッセージＩＤを取得する。
      */
@@ -99,7 +98,6 @@ class Stream_message extends MY_Model {
         ->get()->result();
     }
 
-    
     /**
      * 過去のメッセージを取得する。
      */

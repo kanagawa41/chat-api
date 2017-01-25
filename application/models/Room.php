@@ -32,7 +32,7 @@ class Room extends MY_Model {
      * 指定の部屋の情報を取得する。
      */
     public function select_room($room_id){
-        return $this->db->select('r.room_id, r.name, r.description, r.updated_at, u.user_id')
+        return $this->db->select('r.room_id, r.name, r.description, r.room_key, r.updated_at, u.user_id')
         ->from('rooms as r')
         ->join('users as u', 'u.room_id = r.room_id', 'inner')
         ->where(array (

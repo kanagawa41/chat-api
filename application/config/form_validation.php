@@ -13,7 +13,7 @@ $config = array(
                 array(
                         'field' => 'name',
                         'label' => '名前',
-                        'rules' => 'required|max_length[10]'
+                        'rules' => 'required|max_length[15]'
                 ),
                 array(
                         'field' => 'fingerprint',
@@ -31,11 +31,28 @@ $config = array(
                         'rules' => 'max_length[200]'
                 ),
         )
+        ,'update_user' => array(
+                array(
+                        'field' => 'name',
+                        'label' => '名前',
+                        'rules' => 'required|max_length[15]'
+                ),
+                array(
+                        'field' => 'sex',
+                        'label' => '性別',
+                        'rules' => 'required|callback__validate_sex'
+                ),
+                array(
+                        'field' => 'icon',
+                        'label' => 'アイコン',
+                        'rules' => 'max_length[200]'
+                ),
+        )
 	,'create_room' => array(
                 array(
                         'field' => 'name',
                         'label' => 'ルーム名',
-                        'rules' => 'required|max_length[10]'
+                        'rules' => 'required|max_length[20]'
                 ),
                 array(
                         'field' => 'description',
@@ -52,7 +69,7 @@ $config = array(
                 array(
                         'field' => 'name',
                         'label' => 'ルーム名',
-                        'rules' => 'required|max_length[10]'
+                        'rules' => 'required|max_length[20]'
                 ),
                 array(
                         'field' => 'description',

@@ -319,10 +319,6 @@ class Rooms_controller extends MY_Controller {
      */
     private function _create_specific_user($room_id, $name) {
         $icon_id = $this->input->post('icon');
-        if(empty($icon_id)){
-            // ユーザのアイコンＩＤを設定します。（アイコンＩＤを増やしたらコンフィグの値を変更する。）
-            $icon_id = rand(1, $this->config->item('icon_num'));
-        }
 
         $this->db->trans_start();
 
@@ -369,20 +365,8 @@ class Rooms_controller extends MY_Controller {
     public function update_user_put($room_hash) {
         $this->form_validation->set_data($this->post());
 
-        $valid_config = array(
-                array(
-                        'field' => 'name',
-                        'label' => '名前',
-                        'rules' => 'required|max_length[10]'
-                ),
-                array(
-                        'field' => 'sex',
-                        'label' => '性別',
-                        'rules' => 'required|callback__validate_sex'
-                ),
-        );
-
-        $this->form_validation->set_rules($valid_config);
+        $this->config->load("form_validation");
+        $this->form_validation->set_rules($this->config->item('update_user'));
 
         // form_validationを呼ぶ方法だと、検証が正しく行われない。
         if (!$this->form_validation->run()) {

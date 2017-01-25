@@ -56,6 +56,8 @@ CREATE TABLE rooms (
     name VARCHAR(255) NOT NULL, /* 作成したいグループチャットのチャット名 */
     room_key VARCHAR(255) NOT NULL, /* ルームキー */
     description VARCHAR(255) NOT NULL, /* グループチャットの概要説明テキスト */
+    readonly_flag TINYINT UNSIGNED NOT NULL, /* リードオンリーフラグ　0…OFF, 1…ON  */
+    del_flag TINYINT UNSIGNED NOT NULL, /* 削除フラグ　0…OFF, 1…ON */
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, /* 作成日 */
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP  /* 更新日 */
 ) COLLATE=utf8_general_ci;
@@ -119,9 +121,19 @@ CREATE TABLE info_messages (
 CREATE TABLE user_acts (
     message_id INTEGER NOT NULL PRIMARY KEY, /* メッセージＩＤ */
     user_id INTEGER NOT NULL, /* ユーザＩＤ */
-    body VARCHAR(255) NOT NULL /* メッセージ内容 */
-    type TINYINT /* メッセージの種類(1…ルーム作成、2…入室、3…ユーザ情報) */
-    method TINYINT NOT NULL /* 動作(1…INSERT, 2…UPDATE, 3…DELETE) */
+    content VARCHAR(255) NOT NULL /* メッセージ内容 */
+    type TINYINT UNSIGNED /* メッセージの種類(100…ルーム作成、200…入室(ユーザ追加)、210…ユーザ情報更新、220…ユーザ削除) */
+) COLLATE=utf8_general_ci;
+```
+
+#### 画像投稿メッセージ
+```
+/** 画像投稿メッセージ **/
+CREATE TABLE image_posts (
+    message_id INTEGER NOT NULL PRIMARY KEY, /* メッセージＩＤ */
+    user_id INTEGER NOT NULL, /* ユーザＩＤ */
+    path VARCHAR(255) NOT NULL /* 画像パス */
+    SMALLINT TINYINT UNSIGNED /* メッセージの種類(100…ルーム作成、200…入室(ユーザ追加)、210…ユーザ情報更新、220…ユーザ削除) */
 ) COLLATE=utf8_general_ci;
 ```
 

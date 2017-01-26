@@ -223,7 +223,57 @@ class Rooms_controller extends MY_Controller {
             $this->set_response(error_message_format($this->form_validation->error_array()), REST_Controller::HTTP_OK); return;
         }
 
+        // ルームＩＤをデコードする
+        $room_data = room_hash_decode($room_hash);
+        $room_id = $room_data['room_id'];
+        $user_id = $room_data['user_id'];
+        $role = $room_data['role'];
+
+        if(!$this->user->exist_user($room_id, $user_id)){
+            $this->set_response(error_message_format(['room_hash' => $this->lang->line('exist_user')]), REST_Controller::HTTP_OK); return;
+        }
+
+        // 匿名ユーザは除外
+        if($role == UserRole::ANONYMOUS_USER){
+            $this->set_response(error_message_format(['room_hash' => $this->lang->line('anonymous_user_not_say')]), REST_Controller::HTTP_OK); return;
+        }
+
         $body = $this->input->post('body');
+
+        $message_id = $this->user_message->insert_user_message($room_id, $user_id, $body);
+
+        $row = $this->stream_message->specific_message($room_id, $message_id);
+
+        // デバッグ用
+        // $this->set_response([$message_id, $this->db->last_query()], REST_Controller::HTTP_OK); return;
+
+        $data = array ();
+        if (!empty($row)) {
+            $data['message_id'] = $row->message_id;
+            $temp_user_info = array ();
+            $temp_user_info['name'] = $row->name;
+            $temp_user_info['who'] = $row->user_id == $user_id ? UserWho::SELF_USER : UserWho::OTHER_USER;
+            $temp_user_info['icon'] = $row->icon_name;
+            $temp_user_info['sex'] = $row->sex;
+            $temp_user_info['hash'] = $row->user_hash;
+            $data['user'] = $temp_user_info;
+            $data['body'] = (string)$row->body;
+            $data['type'] = $row->type;
+            $data['send_time'] = $row->created_at;
+        }
+
+        $this->set_response($data, REST_Controller::HTTP_OK); return;
+    }
+
+
+    /**
+     * チャットに新しいイメージを追加。
+     * POST
+     */
+    public function create_image_post($room_hash) {
+        if (!$this->form_validation->run('create_image')) {
+            $this->set_response(error_message_format($this->form_validation->error_array()), REST_Controller::HTTP_OK); return;
+        }
 
         // ルームＩＤをデコードする
         $room_data = room_hash_decode($room_hash);
@@ -234,13 +284,14 @@ class Rooms_controller extends MY_Controller {
         if(!$this->user->exist_user($room_id, $user_id)){
             $this->set_response(error_message_format(['room_hash' => $this->lang->line('exist_user')]), REST_Controller::HTTP_OK); return;
         }
-        // 20170123追加
-        // 匿名ユーザの場合
+
+        // 匿名ユーザは除外
         if($role == UserRole::ANONYMOUS_USER){
             $this->set_response(error_message_format(['room_hash' => $this->lang->line('anonymous_user_not_say')]), REST_Controller::HTTP_OK); return;
         }
 
-        $message_id = $this->stream_message->insert_user_message($room_id, $user_id, $body);
+        //　imageを取得
+        $message_id = $this->post_image->insert_post_image($room_id, $user_id, $this->input->post('path'));
 
         $row = $this->stream_message->specific_message($room_id, $message_id);
 
@@ -414,7 +465,7 @@ class Rooms_controller extends MY_Controller {
             $this->set_response(error_message_format(['room_hash' => $this->lang->line('exist_room')]), REST_Controller::HTTP_OK); return;
         }
 
-        $col = $this->db->from('users')->where(array ('room_id' => $room_id))->get()->result();
+        $col = $this->user->select_user_belong_room($room_id);
 
         $data = array ();
         foreach ($col as $row) {

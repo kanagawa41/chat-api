@@ -33,7 +33,7 @@ class Admins_controller extends MY_Controller {
         $data['room_anonymous_hash'] = room_hash_encode($row->room_id, new UserRole(UserRole::ANONYMOUS_USER), 0); // 匿名入室するための周知用のハッシュ
         $data['name'] = $row->name;
         $data['description'] = $row->description;
-        $data['message_num'] = $this->db->from('stream_messages')->where('room_id', $row->room_id)->count_all_results();
+        $data['message_num'] = $this->stream_message->count_all($row->room_id);
 
         $this->set_response($data, REST_Controller::HTTP_OK); return;
     }
@@ -122,8 +122,9 @@ class Admins_controller extends MY_Controller {
 
         $admin_name = $this->config->item('admin_name');
 
+        // ユーザIDを挿入しないのは、admin権限で突き止められるから
         // 部屋作成メッセージ
-        $this->stream_message->insert_info_message($room_id, $name, new MessageType(MessageType::MAKE_ROOM));
+        $this->stream_message->insert_stream_message($room_id, null, new MessageType(MessageType::MAKE_ROOM));
         
         // 管理者ユーザを生成する。
         $user_id = $this->user->insert_user($admin_name, $room_id, new UserRole(UserRole::ADMIN), null, new Sex(Sex::NONE), $this->input->post('icon'));
@@ -153,7 +154,7 @@ class Admins_controller extends MY_Controller {
             $this->set_response(error_message_format(['room_hash' => $this->lang->line('exist_room')]), REST_Controller::HTTP_OK); return;
         }
 
-        $col = $this->db->from('users')->where(array ('room_id' => $room_id))->get()->result();
+        $col = $this->user->select_user_belong_room($room_id);
 
         $data = array ();
         foreach ($col as $row) {
@@ -162,6 +163,7 @@ class Admins_controller extends MY_Controller {
             $temp_row['user_hash'] = $row->user_hash;
             $temp_row['sex'] = $row->sex;
 
+            // FIXME 文字列情報をenumにもたせる
             if($row->user_role == UserRole::ADMIN){
                 $role = 'admin';
             }else if($row->user_role == UserRole::SPECIFIC_USER){

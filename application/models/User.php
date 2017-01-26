@@ -10,16 +10,28 @@ class User extends MY_Model {
     }
 
     /**
+     * ルームに所属しているユーザを返却する。
+     * ユーザ情報を返却する
+     */
+    public function select_user_belong_room($room_id) {
+        return $this->db
+        ->from('users')
+        ->where(['room_id' => $room_id])
+        ->get()->result();
+    }
+
+    /**
      * ユーザの存在チェックを厳密に行う。
      * trueの場合はユーザが存在する。でない場合はfalse。
      */
     public function exist_user($room_id, $user_id) {
-        return $this->db->from('rooms r')
+        return $this->db
+        ->from('rooms r')
         ->join('users as u', 'u.room_id = r.room_id', 'inner')
-        ->where(array (
+        ->where([
             'r.room_id' => $room_id,
             'u.user_id' => $user_id
-        ))->count_all_results() > 0;
+        ])->count_all_results() > 0;
     }
 
     /**
@@ -27,11 +39,12 @@ class User extends MY_Model {
      * 登録されていた場合はtrue、でない場合はfalseを返却する。
      */
     public function duplicate_user($room_id, $fingerprint) {
-        return $this->db->from('users')
-        ->where(array (
+        return $this->db
+        ->from('users')
+        ->where([
             'room_id' => $room_id,
             'fingerprint' => $fingerprint,
-        ))->count_all_results() > 0;
+        ])->count_all_results() > 0;
     }
 
     /**
@@ -47,23 +60,25 @@ class User extends MY_Model {
         // ユーザ固有のハッシュ値を取得する（低確率でダブル可能性はある）
         $user_hash = random_string('alnum', 10);
 
-        $data = array(
-           'user_hash' => $user_hash ,
-           'user_role' => $user_role->valueOf() ,
-           'name' => $name ,
-           'sex' => $sex ,
-           'room_id' => $room_id ,
-           'begin_message_id' => $max_message_id ,
-           'icon_name' => $icon_name ,
-           'fingerprint' => $fingerprint ,
-           'user_agent' => $_SERVER['HTTP_USER_AGENT'] ,
-           'ip_address' => $_SERVER['REMOTE_ADDR'] ,
-        );
+        $data = [
+           'user_hash' => $user_hash,
+           'user_role' => $user_role,
+           'name' => $name,
+           'sex' => $sex,
+           'room_id' => $room_id,
+           'begin_message_id' => $max_message_id,
+           'icon_name' => $icon_name,
+           'fingerprint' => $fingerprint,
+        ];
 
         $user_id = $this->user->insert($data);
 
         // 入室メッセージ作成
-        $this->stream_message->insert_info_message($room_id, $name, new MessageType(MessageType::INTO_ROOM));
+        $this->stream_message->insert_stream_message(
+            $room_id, 
+            $user_id, 
+            new MessageType(MessageType::MAKE_USER)
+        );
 
         return $user_id;
     }

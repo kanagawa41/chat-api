@@ -2,11 +2,18 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 $config = array(
-	'create_message' => array(
+        'create_message' => array(
                 array(
                         'field' => 'body',
                         'label' => 'メッセージ',
                         'rules' => 'required|max_length[100]'
+                ),
+        )
+        ,'create_image' => array(
+                array(
+                        'field' => 'path',
+                        'label' => '画像パス',
+                        'rules' => 'required|max_length[200]'
                 ),
         )
         ,'create_user' => array(

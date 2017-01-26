@@ -113,6 +113,17 @@ class MY_Model extends CI_Model {
     }
 
     /**
+     * count
+     * 
+     * @param  integer|string $id
+     * @return stdClass
+     */
+    public function count_all($id) {
+        $ret = $this->db->select('count(*) as count')->from($this->_table)->where(array($this->_primary_key => $id))->get()->row();
+        return $ret->count;
+    }
+
+    /**
      * now
      * 
      * @return string

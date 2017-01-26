@@ -56,8 +56,8 @@ CREATE TABLE rooms (
     name VARCHAR(255) NOT NULL, /* 作成したいグループチャットのチャット名 */
     room_key VARCHAR(255) NOT NULL, /* ルームキー */
     description VARCHAR(255) NOT NULL, /* グループチャットの概要説明テキスト */
-    readonly_flag TINYINT UNSIGNED NOT NULL, /* リードオンリーフラグ　0…OFF, 1…ON  */
-    del_flag TINYINT UNSIGNED NOT NULL, /* 削除フラグ　0…OFF, 1…ON */
+    readonly_flag TINYINT UNSIGNED NOT NULL, /* (未使用) リードオンリーフラグ　0…OFF, 1…ON */
+    del_flag TINYINT UNSIGNED NOT NULL DEFAULT 0, /* 削除フラグ　0…OFF, 1…ON */
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, /* 作成日 */
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP  /* 更新日 */
 ) COLLATE=utf8_general_ci;
@@ -75,10 +75,9 @@ CREATE TABLE users (
     sex TINYINT UNSIGNED DEFAULT 0, /* 性別(1…男, 2…女, 3…性別なし) */
     room_id INTEGER UNSIGNED, /* ルームＩＤ */
     begin_message_id INTEGER UNSIGNED, /* 入室した際の開始メッセージＩＤ */
-    icon_name VARCHAR(255), /* アイコンＩＤ */
+    icon_name VARCHAR(255), /* アイコンパス */
     fingerprint INTEGER UNSIGNED, /* フィンガープリント */
-    user_agent VARCHAR(255), /* ユーザエージェント */
-    ip_address VARCHAR(255), /* ユーザのアドレス */
+    del_flag TINYINT UNSIGNED NOT NULL DEFAULT 0, /* 削除フラグ　0…OFF, 1…ON */
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, /* 作成日 */
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP  /* 更新日 */
 ) COLLATE=utf8_general_ci;
@@ -91,6 +90,9 @@ CREATE TABLE users (
 CREATE TABLE stream_messages (
     message_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, /* メッセージＩＤ */
     room_id MEDIUMINT UNSIGNED, /* ルームＩＤ */
+    user_id INTEGER UNSIGNED, /* ユーザＩＤ */
+    type SMALLINT UNSIGNED, /* メッセージの種類(100…ルーム作成、110…ルーム更新、120…ルーム削除、130…ルームリードオンリー、200…入室(ユーザ追加)、210…ユーザ情報更新、220…ユーザ削除、300…メッセージ送信、400…画像投稿) */
+    del_flag TINYINT UNSIGNED NOT NULL DEFAULT 0, /* 削除フラグ　0…OFF, 1…ON */
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP /* 作成日 */
 ) COLLATE=utf8_general_ci;
 ```
@@ -105,31 +107,10 @@ CREATE TABLE user_messages (
 ) COLLATE=utf8_general_ci;
 ```
 
-#### お知らせメッセージ(削除)
-```
-/** メッセージ情報 **/
-CREATE TABLE info_messages (
-    message_id INTEGER UNSIGNED NOT NULL PRIMARY KEY, /* メッセージＩＤ */
-    body VARCHAR(255) NOT NULL, /* メッセージ内容 */
-    type TINYINT UNSIGNED /* メッセージの種類(1…ルーム作成、2…入室) */
-) COLLATE=utf8_general_ci;
-```
-
-#### ユーザ行動履歴
-```
-/** ユーザ行動履歴 **/
-CREATE TABLE user_acts (
-    message_id INTEGER UNSIGNED NOT NULL PRIMARY KEY, /* メッセージＩＤ */
-    user_id INTEGER UNSIGNED NOT NULL, /* ユーザＩＤ */
-    content VARCHAR(255) NOT NULL, /* メッセージ内容 */
-    type SMALLINT UNSIGNED /* メッセージの種類(100…ルーム作成、200…入室(ユーザ追加)、210…ユーザ情報更新、220…ユーザ削除) */
-) COLLATE=utf8_general_ci;
-```
-
 #### 画像投稿メッセージ
 ```
 /** 画像投稿メッセージ **/
-CREATE TABLE image_posts (
+CREATE TABLE post_images (
     message_id INTEGER UNSIGNED NOT NULL PRIMARY KEY, /* メッセージＩＤ */
     user_id INTEGER UNSIGNED NOT NULL, /* ユーザＩＤ */
     path VARCHAR(255) NOT NULL /* 画像パス */
@@ -144,6 +125,26 @@ CREATE TABLE read_messages (
     user_id INTEGER UNSIGNED NOT NULL, /* ユーザＩＤ */
     room_id MEDIUMINT UNSIGNED, /* ルームＩＤ */
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP /* 作成日 */
+) COLLATE=utf8_general_ci;
+```
+
+#### お知らせメッセージ(削除)
+```
+/** メッセージ情報 **/
+CREATE TABLE info_messages (
+    message_id INTEGER UNSIGNED NOT NULL PRIMARY KEY, /* メッセージＩＤ */
+    body VARCHAR(255) NOT NULL, /* メッセージ内容 */
+    type TINYINT UNSIGNED /* メッセージの種類(1…ルーム作成、2…入室) */
+) COLLATE=utf8_general_ci;
+```
+
+#### ユーザ行動履歴(削除)
+```
+/** ユーザ行動履歴 **/
+CREATE TABLE user_acts (
+    message_id INTEGER UNSIGNED NOT NULL PRIMARY KEY, /* メッセージＩＤ */
+    user_id INTEGER UNSIGNED, /* ユーザＩＤ */
+    content VARCHAR(255) NOT NULL, /* メッセージ内容 */
 ) COLLATE=utf8_general_ci;
 ```
 
@@ -385,8 +386,10 @@ http://chat/rooms/FJOIngow2489u53345lFEklEC
 
 # TODO
 
-# ユーザ操作を記録するテーブルの作成
-* 画像のパス保存も行えるようにする。
+### メッセージのテーブル構造を変更する。
+* メッセージテーブル、操作アクションテーブル、画像テーブルに分ける。
+* user_id、typeはstreamが保持する。
+* streamでメッセージ、操作、画像を判別できる作りにする。
 
 ### ●ルームＩＤの暗号化を短くする。
 * $this->encrypt->set_cipher() で設定を変えれる。
@@ -397,7 +400,7 @@ http://chat/rooms/FJOIngow2489u53345lFEklEC
 
 # TASK
 
-### ●テーブル作成時に、rooms、usersは正常に作成できるか確認する。
+### ●画像を送信し描画されるが、連続して画面に表示される。
 
 ### ●たまにチャットの受信タイミングがおかしい時がある。
 
@@ -419,6 +422,12 @@ http://chat/rooms/FJOIngow2489u53345lFEklEC
 
 
 # DONE
+
+# ×ユーザ操作を記録するテーブルの作成
+* ×メッセージ返却ＳＱＬにuser_actsからuser_idを返却するようにする。
+* ×画像のパス保存も行えるようにする。
+
+### ●ユーザのルームインフォがまた取得できなくなっている。
 
 ### ●過去のメッセージを参照しようとした場合にたまにエラーが発生する。しかし改めてＵＲＬを送信してもエラーは発現しない。
 

@@ -13,8 +13,8 @@ class MY_Controller extends REST_Controller {
         // 各メソッドで適せん読み込むようにする
         $this->config->load('my_config');
         $this->lang->load('form_validation');
-        $this->load->library(array('form_validation', 'encrypt', 'classLoad'));
+        $this->load->library(['form_validation', 'encrypt', 'classLoad']);
         $this->load->helper(['common', 'hash']);
-        $this->load->model(array('user', 'stream_message', 'user_message', 'info_message', 'room', 'read_message'));
+        $this->load->model(['user', 'stream_message', 'user_message', 'post_image', 'room', 'read_message']);
 	}
 }

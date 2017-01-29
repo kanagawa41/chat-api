@@ -210,7 +210,7 @@ $config['auth_library_function'] = '';
 | Array of usernames and passwords for login, if ldap is configured this is ignored
 |
 */
-$config['rest_valid_logins'] = ['admin' => '1234'];
+$config['rest_valid_logins'] = ['adminXXXXXXXXXXXXXXXXXXX' => '1234'];
 
 /*
 |--------------------------------------------------------------------------
@@ -227,7 +227,7 @@ $config['rest_valid_logins'] = ['admin' => '1234'];
 |    restrict certain methods to IPs in your white-list
 |
 */
-$config['rest_ip_whitelist_enabled'] = FALSE;
+$config['rest_ip_whitelist_enabled'] = TRUE;
 
 /*
 |--------------------------------------------------------------------------

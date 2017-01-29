@@ -128,26 +128,6 @@ CREATE TABLE read_messages (
 ) COLLATE=utf8_general_ci;
 ```
 
-#### お知らせメッセージ(削除)
-```
-/** メッセージ情報 **/
-CREATE TABLE info_messages (
-    message_id INTEGER UNSIGNED NOT NULL PRIMARY KEY, /* メッセージＩＤ */
-    body VARCHAR(255) NOT NULL, /* メッセージ内容 */
-    type TINYINT UNSIGNED /* メッセージの種類(1…ルーム作成、2…入室) */
-) COLLATE=utf8_general_ci;
-```
-
-#### ユーザ行動履歴(削除)
-```
-/** ユーザ行動履歴 **/
-CREATE TABLE user_acts (
-    message_id INTEGER UNSIGNED NOT NULL PRIMARY KEY, /* メッセージＩＤ */
-    user_id INTEGER UNSIGNED, /* ユーザＩＤ */
-    content VARCHAR(255) NOT NULL, /* メッセージ内容 */
-) COLLATE=utf8_general_ci;
-```
-
 
 ## APIの種類
 
@@ -386,10 +366,13 @@ http://chat/rooms/FJOIngow2489u53345lFEklEC
 
 # TODO
 
-### メッセージのテーブル構造を変更する。
-* メッセージテーブル、操作アクションテーブル、画像テーブルに分ける。
-* user_id、typeはstreamが保持する。
-* streamでメッセージ、操作、画像を判別できる作りにする。
+### 絵文字に対応できるようにする。
+
+### 画像の投稿数に制限を設ける。
+* roomテーブルに投稿数を持たせる
+* 制限を超えたら画面に通知する。
+
+### 一部屋１０００を超えると自動的に次の部屋を作成し、データを移行する。
 
 ### ●ルームＩＤの暗号化を短くする。
 * $this->encrypt->set_cipher() で設定を変えれる。
@@ -400,14 +383,27 @@ http://chat/rooms/FJOIngow2489u53345lFEklEC
 
 # TASK
 
-### ●画像を送信し描画されるが、連続して画面に表示される。
+### ●「localhost/chat-api/」のようなリクエストだとエラーが発生する。
+```
+<b>Fatal error</b>:  Cannot redeclare class REST_Controller in <b>C:\xampp\htdocs\chat-api\application\libraries\REST_Controller.php</b> on line <b>2261</b><br >
 
-### ●たまにチャットの受信タイミングがおかしい時がある。
+<div style="border:1px solid #dd4814;padding-left:20px;margin:10px 0;">
+
+  <h4>A PHP Error was encountered</h4>
+
+  <p>Severity: Compile Error</p>
+  <p>Message:  Cannot redeclare class REST_Controller</p>
+  <p>Filename: libraries/REST_Controller.php</p>
+  <p>Line Number: 2261</p>
+
+  
+    <p>Backtrace:</p>
+```
+
 
 # WANT
 
-### ●画像アップロード機能を実装[参考](http://ja.stackoverflow.com/questions/11378/%E3%82%AB%E3%83%A1%E3%83%A9%E3%81%A7%E6%92%AE%E5%BD%B1%E3%81%97%E3%81%9F%E7%94%BB%E5%83%8F%E3%82%92%E3%83%AA%E3%82%B5%E3%82%A4%E3%82%BA%E3%81%97%E3%81%A6%E3%82%A2%E3%83%83%E3%83%97%E3%83%AD%E3%83%BC%E3%83%89%E3%81%97%E3%81%9F%E3%81%84)
-* [FileAPI](http://cartman0.hatenablog.com/entry/2015/06/20/021402)
+### メモ機能の実装。
 
 ### ●デバイス（ブラウザ）を変えても、メッセージが取得できる仕組みを作成する。
 * 現在は取得したメッセージをローカルに保持しているため、デバイスを変更したらメッセージを引き継げない。
@@ -422,6 +418,18 @@ http://chat/rooms/FJOIngow2489u53345lFEklEC
 
 
 # DONE
+
+### ●画像アップロード機能を実装[参考](http://ja.stackoverflow.com/questions/11378/%E3%82%AB%E3%83%A1%E3%83%A9%E3%81%A7%E6%92%AE%E5%BD%B1%E3%81%97%E3%81%9F%E7%94%BB%E5%83%8F%E3%82%92%E3%83%AA%E3%82%B5%E3%82%A4%E3%82%BA%E3%81%97%E3%81%A6%E3%82%A2%E3%83%83%E3%83%97%E3%83%AD%E3%83%BC%E3%83%89%E3%81%97%E3%81%9F%E3%81%84)
+* [FileAPI](http://cartman0.hatenablog.com/entry/2015/06/20/021402)
+
+### ●画像を送信し描画されるが、連続して画面に表示される。
+
+### ●たまにチャットの受信タイミングがおかしい時がある。
+
+### メッセージのテーブル構造を変更する。
+* メッセージテーブル、操作アクションテーブル、画像テーブルに分ける。
+* user_id、typeはstreamが保持する。
+* streamでメッセージ、操作、画像を判別できる作りにする。
 
 # ×ユーザ操作を記録するテーブルの作成
 * ×メッセージ返却ＳＱＬにuser_actsからuser_idを返却するようにする。

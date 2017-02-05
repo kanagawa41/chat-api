@@ -28,4 +28,26 @@ class Post_image extends MY_Model {
         return $message_id;
     }
 
+    /**
+     * 登校された画像一覧を取得し返却する。
+     */
+    public function select_post_images($room_id, $user_id){
+        $begin_message_id = $this->user->find($user_id)->begin_message_id;
+
+        return $this->db->select(
+            '
+            sm.message_id,
+            pi.path
+            '
+        )
+        ->from('stream_messages as sm')
+        ->join('post_images as pi', 'pi.message_id = sm.message_id', 'left')
+        ->where([
+            'sm.room_id' => $room_id,
+            'pi.message_id IS NOT NULL' => null,
+            'sm.message_id >' => $begin_message_id,
+        ])
+        ->get()->result();
+    }
+
 }

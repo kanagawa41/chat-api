@@ -265,7 +265,6 @@ class Rooms_controller extends MY_Controller {
         $this->set_response($data, REST_Controller::HTTP_OK); return;
     }
 
-
     /**
      * チャットに新しいイメージを追加。
      * POST
@@ -482,6 +481,37 @@ class Rooms_controller extends MY_Controller {
                 $role = 'anonymous';
             }
             $temp_row['role'] = $role;
+
+            $data[] = $temp_row;
+        }
+
+        $this->set_response($data, REST_Controller::HTTP_OK); return;
+    }
+
+    /**
+     * チャットに新しいイメージを追加。
+     * POST
+     */
+    public function select_images_get($room_hash) {
+        // ルームＩＤをデコードする
+        $room_data = room_hash_decode($room_hash);
+        $room_id = $room_data['room_id'];
+        $user_id = $room_data['user_id'];
+
+        if(!$this->user->exist_user($room_id, $user_id)){
+            $this->set_response(error_message_format(['room_hash' => $this->lang->line('exist_user')]), REST_Controller::HTTP_OK); return;
+        }
+
+        $col = $this->post_image->select_post_images($room_id, $user_id);
+
+        // デバッグ用
+        // $this->set_response([$message_id, $this->db->last_query()], REST_Controller::HTTP_OK); return;
+
+        $data = array ();
+        foreach ($col as $row) {
+            $temp_row = array ();
+            $temp_row['message_id'] = $row->message_id;
+            $temp_row['content'] = $row->path;
 
             $data[] = $temp_row;
         }

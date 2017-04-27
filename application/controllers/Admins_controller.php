@@ -102,7 +102,6 @@ class Admins_controller extends MY_Controller {
     public function create_room_post() {
         // FIXME 不用意に生成されないような仕組みを考える
         //if(!$this->_exist_token()){ return; }
-        
         if (!$this->form_validation->run('create_room')) {
             $this->set_response(error_message_format($this->form_validation->error_array()), REST_Controller::HTTP_OK); return;
         }
@@ -120,21 +119,32 @@ class Admins_controller extends MY_Controller {
             'room_key' => $room_key,
         ));
 
-        $admin_name = $this->config->item('admin_name');
-
         // ユーザIDを挿入しないのは、admin権限で突き止められるから
         // 部屋作成メッセージ
         $this->stream_message->insert_stream_message($room_id, null, new MessageType(MessageType::MAKE_ROOM));
         
         // 管理者ユーザを生成する。
-        $user_id = $this->user->insert_user($admin_name, $room_id, new UserRole(UserRole::ADMIN), null, new Sex(Sex::NONE), $this->input->post('icon'));
+        $user_id = $this->user->insert_user($this->input->post('user_name'), $room_id, new UserRole(UserRole::ADMIN), $this->input->post('fingerprint'), new SEX("1"), $this->input->post('icon'));
 
         $row = $this->room->select_room($room_id);
 
         $data = array ();
         $data['room_admin_hash'] = room_hash_encode($row->room_id, new UserRole(UserRole::ADMIN), $user_id); // 管理者ユーザで入室するためのハッシュ
+        $data['room_specificuser_hash'] = room_hash_encode($row->room_id, new UserRole(UserRole::SPECIFIC_USER), 0); // 特定ユーザで入室するための周知用のハッシュ
+        $data['room_anonymous_hash'] = room_hash_encode($row->room_id, new UserRole(UserRole::ANONYMOUS_USER), 0); // 匿名入室するための周知用のハッシュ
 
         $this->set_response($data, REST_Controller::HTTP_OK); return;
+    }
+
+    /**
+     * 性別のバリデーション
+     */
+    public function _validate_sex($value){
+        if($value === SEX::MAN || $value === SEX::WOMAN || $value === SEX::NONE){
+            return TRUE;
+        }
+        $this->form_validation->set_message('_validate_sex', $this->lang->line('_validate_sex'));
+        return FALSE;
     }
 
     /**

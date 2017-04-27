@@ -67,6 +67,21 @@ $config = array(
                         'rules' => 'max_length[50]'
                 ),
                 array(
+                        'field' => 'name',
+                        'label' => '名前',
+                        'rules' => 'required|max_length[15]'
+                ),
+                array(
+                        'field' => 'fingerprint',
+                        'label' => 'フィンガープリント',
+                        'rules' => 'required|numeric|max_length[20]'
+                ),
+                array(
+                        'field' => 'sex',
+                        'label' => '性別',
+                        'rules' => 'required|callback__validate_sex'
+                ),
+                array(
                         'field' => 'icon',
                         'label' => 'アイコン',
                         'rules' => 'max_length[200]'

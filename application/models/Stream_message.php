@@ -132,7 +132,7 @@ class Stream_message extends MY_Model {
         ->join('users as u', 'u.user_id = um.user_id', 'left')
         ->where(array (
             'sm.room_id' => $room_id,
-            'sm.message_id >' => $begin_message_id,
+            'sm.message_id >' => (int)$begin_message_id,
             'sm.message_id <' => (int)$message_id,
         ))->get()->row()->message_count;
 
@@ -171,7 +171,7 @@ class Stream_message extends MY_Model {
         ->join('users as u', 'u.user_id = um.user_id', 'left')
         ->where([
             'sm.room_id' => $room_id,
-            'sm.message_id >' => $begin_message_id,
+            'sm.message_id >' => (int)$begin_message_id,
             'sm.message_id <' => (int)$message_id,
         ])
         ->limit($past_message_max_count)

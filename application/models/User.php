@@ -74,11 +74,17 @@ class User extends MY_Model {
         $user_id = $this->user->insert($data);
 
         // 入室メッセージ作成
-        $this->stream_message->insert_stream_message(
+        $last_message_id = $this->stream_message->insert_stream_message(
             $room_id, 
             $user_id, 
             new MessageType(MessageType::MAKE_USER)
         );
+
+        $this->read_message->insert(array (
+            'message_id' => $last_message_id,
+            'user_id' => $user_id,
+            'room_id' => $room_id
+        ));
 
         return $user_id;
     }

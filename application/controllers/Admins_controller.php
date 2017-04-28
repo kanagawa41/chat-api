@@ -33,7 +33,7 @@ class Admins_controller extends MY_Controller {
         $data['room_anonymous_hash'] = room_hash_encode($row->room_id, new UserRole(UserRole::ANONYMOUS_USER), 0); // 匿名入室するための周知用のハッシュ
         $data['name'] = $row->name;
         $data['description'] = $row->description;
-        $data['message_num'] = $this->stream_message->count_all($row->room_id);
+        // $data['message_num'] = $this->stream_message->count_all($row->room_id);
 
         $this->set_response($data, REST_Controller::HTTP_OK); return;
     }
@@ -48,9 +48,13 @@ class Admins_controller extends MY_Controller {
             $this->set_response(error_message_format(['room_hash' => $this->lang->line('no_admin')]), REST_Controller::HTTP_OK); return;
         }
 
-        $description = $this->input->input_stream('description');
+        $this->form_validation->set_data($this->put());
 
-        if (!$this->form_validation->run('update_room')) {
+        $this->config->load("form_validation");
+        $this->form_validation->set_rules($this->config->item('update_room'));
+
+        // form_validationを呼ぶ方法だと、検証が正しく行われない。
+        if (!$this->form_validation->run()) {
             $this->set_response(error_message_format($this->form_validation->error_array()), REST_Controller::HTTP_OK); return;
         }
 
@@ -59,16 +63,16 @@ class Admins_controller extends MY_Controller {
         $room_id = $room_data['room_id'];
 
         $this->db->where('room_id', $room_id)->update('rooms', array( 
-            'name'=>  $this->input->input_stream('name'), 
-            'description'   =>  $description
+            'name'=>  $this->put('name'), 
+            'description'   =>  $this->put('description'),
         ));
 
-        if ($res = $this->db->affected_rows() == 0) {
-            $this->set_response(error_message_format(['room_hash' => $this->lang->line('exist_room')]), REST_Controller::HTTP_OK); return;
-        }
+        // if ($res = $this->db->affected_rows() == 0) {
+        //     $this->set_response(error_message_format(['room_hash' => $this->lang->line('exist_room')]), REST_Controller::HTTP_OK); return;
+        // }
 
         $data = array (
-            'room_id' => $room_id
+            // 'room_id' => $room_id
         );
 
         $this->set_response($data, REST_Controller::HTTP_OK); return;

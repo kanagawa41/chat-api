@@ -56,7 +56,7 @@ $route['translate_uri_dashes'] = FALSE;
 /* 管理ユーザが扱えるAPI */
 $route['admin/rooms']['post'] = 'admins_controller/create_room';
 $route['admin/rooms/(:any)']['get'] = 'admins_controller/select_room/$1';
-$route['admin/rooms/(:num)']['put'] = 'admins_controller/update_room/$1';
+$route['admin/rooms/(:any)']['put'] = 'admins_controller/update_room/$1';
 $route['admin/rooms/(:num)']['delete'] = 'admins_controller/delete_room/$1';
 $route['admin/rooms/(:any)/members/all']['get'] = 'admins_controller/select_users/$1';
 

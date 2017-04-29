@@ -12,4 +12,5 @@ final class MessageType extends Enum {
 	const DELTE_USER = '220'; //ユーザ削除
     const MAKE_MESSAGE = '300'; //メッセージ作成
 	const IMAGE_POST = '400'; //画像投稿
+	const NOTE_POST = '500'; //ノート投稿
 }

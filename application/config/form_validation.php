@@ -16,6 +16,20 @@ $config = array(
                         'rules' => 'required|max_length[200]'
                 ),
         )
+        ,'create_note' => array(
+                array(
+                        'field' => 'content',
+                        'label' => '内容',
+                        'rules' => 'required|max_length[200]'
+                ),
+        )
+        ,'update_note' => array(
+                array(
+                        'field' => 'content',
+                        'label' => '内容',
+                        'rules' => 'required|max_length[200]'
+                ),
+        )
         ,'create_user' => array(
                 array(
                         'field' => 'name',

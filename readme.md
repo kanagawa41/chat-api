@@ -129,6 +129,21 @@ CREATE TABLE read_messages (
 ```
 
 
+#### ノート
+```
+CREATE TABLE notes (
+    /** ノート情報 **/
+    note_id MEDIUMINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, /* ノートＩＤ */
+    room_id MEDIUMINT UNSIGNED NOT NULL, /* ルームＩＤ */
+    user_id INTEGER UNSIGNED NOT NULL, /* 作成ユーザＩＤ */
+    update_user_id INTEGER UNSIGNED, /* 更新ユーザＩＤ */
+    content VARCHAR(255) NOT NULL, /* 内容 */
+    del_flag TINYINT UNSIGNED NOT NULL DEFAULT 0, /* 削除フラグ　0…OFF, 1…ON */
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, /* 作成日 */
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP  /* 更新日 */
+) COLLATE=utf8_general_ci;
+```
+
 ## APIの種類
 
 ### 3. _GET_ __/rooms__

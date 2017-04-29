@@ -489,8 +489,8 @@ class Rooms_controller extends MY_Controller {
     }
 
     /**
-     * チャットに新しいイメージを追加。
-     * POST
+     * イメージを取得。
+     * GET
      */
     public function select_images_get($room_hash) {
         // ルームＩＤをデコードする
@@ -515,6 +515,132 @@ class Rooms_controller extends MY_Controller {
 
             $data[] = $temp_row;
         }
+
+        $this->set_response($data, REST_Controller::HTTP_OK); return;
+    }
+
+    /**
+     * チャットのノートを取得する。
+     * GET
+     */
+    public function select_notes_get($room_hash) {
+        // ルームＩＤをデコードする
+        $room_data = room_hash_decode($room_hash);
+        $room_id = $room_data['room_id'];
+        $user_id = $room_data['user_id'];
+
+        if(!$this->user->exist_user($room_id, $user_id)){
+            $this->set_response(error_message_format(['room_hash' => $this->lang->line('exist_user')]), REST_Controller::HTTP_OK); return;
+        }
+
+        $cols = $this->note->select_notes($room_id);
+
+        $data = array ();
+        foreach ($cols as $row) {
+            $temp_row = array ();
+            $temp_row['note_id'] = $row->note_id;
+            $temp_row['content'] = $row->content;
+            $temp_row['user_name'] = $row->name;
+            $temp_row['user_hash'] = $row->user_hash;
+            $temp_row['updated_at'] = $row->updated_at;
+
+            $data[] = $temp_row;
+        }
+
+        $this->set_response($data, REST_Controller::HTTP_OK); return;
+    }
+
+    /**
+     * チャットに新しいノートを追加する。
+     * GET
+     */
+    public function create_note_post($room_hash) {
+        if (!$this->form_validation->run('create_note')) {
+            $this->set_response(error_message_format($this->form_validation->error_array()), REST_Controller::HTTP_OK); return;
+        }
+
+        // ルームＩＤをデコードする
+        $room_data = room_hash_decode($room_hash);
+        $room_id = $room_data['room_id'];
+        $user_id = $room_data['user_id'];
+
+        if(!$this->user->exist_user($room_id, $user_id)){
+            $this->set_response(error_message_format(['room_hash' => $this->lang->line('exist_user')]), REST_Controller::HTTP_OK); return;
+        }
+
+        $note_id = $this->note->insert_note($room_id, $user_id, $this->post('content'));
+
+        $row = $this->note->select_note($note_id);
+
+        $data = array ();
+        $data['note_id'] = $row->note_id;
+        $data['content'] = $row->content;
+        $data['user_name'] = $row->name;
+        $data['user_hash'] = $row->user_hash;
+        $data['updated_at'] = $row->updated_at;
+
+        $this->set_response($data, REST_Controller::HTTP_OK); return;
+    }
+
+    /**
+     * チャットのノートを更新する。
+     * PUT
+     */
+    public function update_note_put($room_hash, $note_id) {
+        $this->form_validation->set_data($this->put());
+
+        $this->config->load("form_validation");
+        $this->form_validation->set_rules($this->config->item('update_note'));
+
+        // form_validationを呼ぶ方法だと、検証が正しく行われない。
+        if (!$this->form_validation->run()) {
+            $this->set_response(error_message_format($this->form_validation->error_array()), REST_Controller::HTTP_OK); return;
+        }
+
+        // ルームＩＤをデコードする
+        $room_data = room_hash_decode($room_hash);
+        $room_id = $room_data['room_id'];
+        $user_id = $room_data['user_id'];
+
+        if(!$this->user->exist_user($room_id, $user_id)){
+            $this->set_response(error_message_format(['room_hash' => $this->lang->line('exist_user')]), REST_Controller::HTTP_OK); return;
+        }
+
+        $this->note->update($note_id, [
+            'content'=>  $this->put('content'),
+            'update_user_id'   =>  $user_id,
+        ]);
+
+        $row = $this->note->select_note($note_id);
+
+        $data = array ();
+        $data['note_id'] = $row->note_id;
+        $data['content'] = $row->content;
+        $data['user_name'] = $row->name;
+        $data['user_hash'] = $row->user_hash;
+        $data['updated_at'] = $row->updated_at;
+
+        $this->set_response($data, REST_Controller::HTTP_OK); return;
+    }
+
+    /**
+     * チャットのノートを削除する。
+     * DELETE
+     */
+    public function delete_note_delete($room_hash, $note_id) {
+        // ルームＩＤをデコードする
+        $room_data = room_hash_decode($room_hash);
+        $room_id = $room_data['room_id'];
+        $user_id = $room_data['user_id'];
+
+        if(!$this->user->exist_user($room_id, $user_id)){
+            $this->set_response(error_message_format(['room_hash' => $this->lang->line('exist_user')]), REST_Controller::HTTP_OK); return;
+        }
+
+        $this->note->delete($note_id);
+
+        $data = array ();
+        $data['note_id'] = $note_id;
 
         $this->set_response($data, REST_Controller::HTTP_OK); return;
     }

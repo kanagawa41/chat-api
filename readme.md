@@ -91,7 +91,7 @@ CREATE TABLE stream_messages (
     message_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, /* メッセージＩＤ */
     room_id MEDIUMINT UNSIGNED, /* ルームＩＤ */
     user_id INTEGER UNSIGNED, /* ユーザＩＤ */
-    type SMALLINT UNSIGNED, /* メッセージの種類(100…ルーム作成、110…ルーム更新、120…ルーム削除、130…ルームリードオンリー、200…入室(ユーザ追加)、210…ユーザ情報更新、220…ユーザ削除、300…メッセージ送信、400…画像投稿) */
+    type SMALLINT UNSIGNED, /* メッセージの種類(100…ルーム作成、110…ルーム更新、120…ルーム削除、130…ルームリードオンリー、200…入室(ユーザ追加)、210…ユーザ情報更新、220…ユーザ削除、300…メッセージ送信、400…画像投稿、500…ノート投稿) */
     del_flag TINYINT UNSIGNED NOT NULL DEFAULT 0, /* 削除フラグ　0…OFF, 1…ON */
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP /* 作成日 */
 ) COLLATE=utf8_general_ci;
@@ -117,6 +117,7 @@ CREATE TABLE post_images (
 ) COLLATE=utf8_general_ci;
 ```
 
+
 #### 既読
 ```
 /** 既読情報 **/
@@ -141,6 +142,21 @@ CREATE TABLE notes (
     del_flag TINYINT UNSIGNED NOT NULL DEFAULT 0, /* 削除フラグ　0…OFF, 1…ON */
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, /* 作成日 */
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP  /* 更新日 */
+) COLLATE=utf8_general_ci;
+```
+
+
+#### フィードバック
+```
+/** フィードバック情報 **/
+CREATE TABLE feedbacks (
+    feed_back_id INTEGER UNSIGNED NOT NULL, /* フィードバックＩＤ */
+    user_id INTEGER UNSIGNED NOT NULL, /* ユーザＩＤ */
+    mail VARCHAR(255), /* E-mail */
+    genre TINYINT UNSIGNED NOT NULL DEFAULT 0, /* 1…違反報告, 2…改善報告, 99…その他 */
+    content VARCHAR(255) NOT NULL, /* 内容 */
+    debug VARCHAR(1000) NOT NULL, /* デバッグ内容 */
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP /* 作成日 */
 ) COLLATE=utf8_general_ci;
 ```
 
@@ -418,14 +434,12 @@ http://chat/rooms/FJOIngow2489u53345lFEklEC
 
 # WANT
 
-### メモ機能の実装。
-
-### ●デバイス（ブラウザ）を変えても、メッセージが取得できる仕組みを作成する。
-* 現在は取得したメッセージをローカルに保持しているため、デバイスを変更したらメッセージを引き継げない。
-
 ### ●部屋のロック（パスワード）機能を実装。
 
 ### ●ルームをリードオンリー（送信できない）モードをつける。
+
+### ●デバイス（ブラウザ）を変えても、メッセージが取得できる仕組みを作成する。
+* 現在は取得したメッセージをローカルに保持しているため、デバイスを変更したらメッセージを引き継げない。
 
 ### ●APIのリクエストの記載を「curl」主体から「ajax」風に書き直す
 
@@ -433,6 +447,7 @@ http://chat/rooms/FJOIngow2489u53345lFEklEC
 
 
 # DONE
+### メモ機能の実装。
 
 ### ●画像アップロード機能を実装[参考](http://ja.stackoverflow.com/questions/11378/%E3%82%AB%E3%83%A1%E3%83%A9%E3%81%A7%E6%92%AE%E5%BD%B1%E3%81%97%E3%81%9F%E7%94%BB%E5%83%8F%E3%82%92%E3%83%AA%E3%82%B5%E3%82%A4%E3%82%BA%E3%81%97%E3%81%A6%E3%82%A2%E3%83%83%E3%83%97%E3%83%AD%E3%83%BC%E3%83%89%E3%81%97%E3%81%9F%E3%81%84)
 * [FileAPI](http://cartman0.hatenablog.com/entry/2015/06/20/021402)

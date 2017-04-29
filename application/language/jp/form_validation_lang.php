@@ -33,5 +33,5 @@ $lang['exist_room'] = '指定のルームは存在しません。';
 $lang['is_admin'] = '管理人用のハッシュは使用できません。';
 $lang['wrong_hash'] = '正しくないハッシュです。';
 $lang['_validate_sex'] = '性別 欄は不正な項目が選択されています。';
-$lang['_validate_sex'] = '性別 欄は不正な項目が選択されています。';
+$lang['_validate_feedback_genre'] = 'ジャンル 欄は不正な項目が選択されています。';
 $lang['anonymous_user_not_say'] = '匿名ユーザはメッセージを送信できません。';

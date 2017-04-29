@@ -113,4 +113,21 @@ $config = array(
                         'rules' => 'max_length[50]'
                 ),
         )
+        ,'create_feedback' => array(
+                array(
+                        'field' => 'mail',
+                        'label' => 'メール',
+                        'rules' => 'required|valid_email|max_length[200]'
+                ),
+                array(
+                        'field' => 'genre',
+                        'label' => 'ジャンル',
+                        'rules' => 'required|numeric|callback__validate_feedback_genre'
+                ),
+                array(
+                        'field' => 'content',
+                        'label' => '報告内容',
+                        'rules' => 'required|max_length[1000]'
+                ),
+        )
 );

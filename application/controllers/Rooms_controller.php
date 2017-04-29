@@ -644,4 +644,46 @@ class Rooms_controller extends MY_Controller {
 
         $this->set_response($data, REST_Controller::HTTP_OK); return;
     }
+
+    /**
+     * フィードバックを作成する
+     * POST
+     */
+    public function create_feedback_post($room_hash) {
+        if (!$this->form_validation->run('create_feedback')) {
+            $this->set_response(error_message_format($this->form_validation->error_array()), REST_Controller::HTTP_OK); return;
+        }
+
+        // ルームＩＤをデコードする
+        $room_data = room_hash_decode($room_hash);
+        $room_id = $room_data['room_id'];
+        $user_id = $room_data['user_id'];
+
+        if(!$this->user->exist_user($room_id, $user_id)){
+            $this->set_response(error_message_format(['room_hash' => $this->lang->line('exist_user')]), REST_Controller::HTTP_OK); return;
+        }
+
+        $this->feedback->insert(array (
+            'user_id' => $user_id,
+            'mail' => $this->post('mail'),
+            'genre' => $this->post('genre'),
+            'content' => $this->post('content'),
+            'debug' => $this->post('debug'),
+        ));
+
+        $data = array ();
+
+        $this->set_response($data, REST_Controller::HTTP_OK); return;
+    }
+
+    /**
+     * 報告ジャンルのバリデーション
+     */
+    public function _validate_feedback_genre($value){
+        if($value === FeedbackGenre::OFFENCE || $value === FeedbackGenre::IMPROVE || $value === FeedbackGenre::OTHER){
+            return TRUE;
+        }
+        $this->form_validation->set_message('_validate_feedback_genre', $this->lang->line('_validate_feedback_genre'));
+        return FALSE;
+    }
 }

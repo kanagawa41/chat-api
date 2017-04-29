@@ -15,6 +15,6 @@ class MY_Controller extends REST_Controller {
         $this->lang->load('form_validation');
         $this->load->library(['form_validation', 'encrypt', 'classLoad']);
         $this->load->helper(['common', 'hash']);
-        $this->load->model(['user', 'stream_message', 'user_message', 'post_image', 'room', 'read_message', 'note']);
+        $this->load->model(['user', 'stream_message', 'user_message', 'post_image', 'room', 'read_message', 'note', 'feedback']);
 	}
 }

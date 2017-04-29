@@ -37,10 +37,14 @@ class Post_image extends MY_Model {
         return $this->db->select(
             '
             sm.message_id,
-            pi.path
+            u.name,
+            u.user_hash,
+            pi.path,
+            sm.created_at
             '
         )
         ->from('stream_messages as sm')
+        ->join('users as u', 'u.user_id = sm.user_id', 'inner')
         ->join('post_images as pi', 'pi.message_id = sm.message_id', 'left')
         ->where([
             'sm.room_id' => $room_id,

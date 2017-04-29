@@ -512,6 +512,9 @@ class Rooms_controller extends MY_Controller {
             $temp_row = array ();
             $temp_row['message_id'] = $row->message_id;
             $temp_row['content'] = $row->path;
+            $temp_row['user_name'] = $row->name;
+            $temp_row['user_hash'] = $row->user_hash;
+            $temp_row['created_at'] = $row->created_at;
 
             $data[] = $temp_row;
         }

@@ -45,7 +45,7 @@ class Post_image extends MY_Model {
         )
         ->from('stream_messages as sm')
         ->join('users as u', 'u.user_id = sm.user_id', 'inner')
-        ->join('post_images as pi', 'pi.message_id = sm.message_id', 'left')
+        ->join('post_images as pi', 'pi.message_id = sm.message_id', 'inner')
         ->where([
             'sm.room_id' => $room_id,
             'pi.message_id IS NOT NULL' => null,

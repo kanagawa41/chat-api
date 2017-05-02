@@ -21,6 +21,22 @@ class User extends MY_Model {
     }
 
     /**
+     * フィンガープリントを元にユーザを特定し、
+     * ユーザ情報を返却する
+     */
+    public function select_user_by_fingerprint($fingerprint) {
+        return $this->db->select('r.room_id, r.name as room_name, u.user_id, u.user_role, u.name as user_name, u.created_at')
+        ->from('rooms r')
+        ->join('users as u', 'u.room_id = r.room_id', 'inner')
+        ->where([
+            'r.room_id IS NOT NULL' => null,
+            'u.fingerprint' => $fingerprint
+        ])
+        ->order_by('u.created_at', 'desc')
+        ->limit(5)->get()->result();
+    }
+
+    /**
      * ユーザの存在チェックを厳密に行う。
      * trueの場合はユーザが存在する。でない場合はfalse。
      */

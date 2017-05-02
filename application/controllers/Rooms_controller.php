@@ -680,6 +680,37 @@ class Rooms_controller extends MY_Controller {
     }
 
     /**
+     * フィンガープリントを元にユーザの過去のルームを検索し返却する。
+     * GET
+     */
+    public function select_pastroom_get($fingerprint) {
+        // FIXME: フィンガープリント単品だと特定しやすいのでされにくい仕組みを作る
+        // ルームＩＤをデコードする
+        // $room_data = room_hash_decode($room_hash);
+        // $room_id = $room_data['room_id'];
+        // $user_id = $room_data['user_id'];
+
+        // if(!$this->user->exist_user($room_id, $user_id)){
+        //     $this->set_response(error_message_format(['room_hash' => $this->lang->line('exist_user')]), REST_Controller::HTTP_OK); return;
+        // }
+
+        $cols = $this->user->select_user_by_fingerprint($fingerprint);
+
+        $data = array ();
+        foreach ($cols as $row) {
+            $temp_row = array ();
+            $temp_row['room_hash'] = room_hash_encode($row->room_id, new UserRole($row->user_role), $row->user_id);
+            $temp_row['room_name'] = $row->room_name;
+            $temp_row['user_name'] = $row->user_name;
+            $temp_row['into_date'] = $row->created_at;
+
+            $data[] = $temp_row;
+        }
+
+        $this->set_response($data, REST_Controller::HTTP_OK); return;
+    }
+
+    /**
      * 報告ジャンルのバリデーション
      */
     public function _validate_feedback_genre($value){

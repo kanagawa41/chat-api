@@ -78,6 +78,7 @@ $route['rooms/(:any)/notes']['post'] = 'rooms_controller/create_note/$1';
 $route['rooms/(:any)/notes/(:num)']['put'] = 'rooms_controller/update_note/$1/$2';
 $route['rooms/(:any)/notes/(:num)']['delete'] = 'rooms_controller/delete_note/$1/$2';
 $route['rooms/(:any)/feedback']['post'] = 'rooms_controller/create_feedback/$1';
+$route['rooms/members/pastroom/(:num)']['get'] = 'rooms_controller/select_pastroom/$1';
 
 /* APIのコントローラーを直接たたかせないために宣言。スラッシュで区切るパターン分の宣言が必要。 */
 $route[':any'] = 'errors_controller/error_404';

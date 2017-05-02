@@ -45,7 +45,7 @@
 
 ### DB
 ```
-CREATE DATABASE `chat-api` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+CREATE DATABASE `chat-api` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
 ```
 
 #### ルーム
@@ -60,7 +60,7 @@ CREATE TABLE rooms (
     del_flag TINYINT UNSIGNED NOT NULL DEFAULT 0, /* 削除フラグ　0…OFF, 1…ON */
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, /* 作成日 */
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP  /* 更新日 */
-) COLLATE=utf8_general_ci;
+) COLLATE=utf8mb4_bin;
 ```
 
 
@@ -80,7 +80,7 @@ CREATE TABLE users (
     del_flag TINYINT UNSIGNED NOT NULL DEFAULT 0, /* 削除フラグ　0…OFF, 1…ON */
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, /* 作成日 */
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP  /* 更新日 */
-) COLLATE=utf8_general_ci;
+) COLLATE=utf8mb4_bin;
 ```
 
 
@@ -94,7 +94,7 @@ CREATE TABLE stream_messages (
     type SMALLINT UNSIGNED, /* メッセージの種類(100…ルーム作成、110…ルーム更新、120…ルーム削除、130…ルームリードオンリー、200…入室(ユーザ追加)、210…ユーザ情報更新、220…ユーザ削除、300…メッセージ送信、400…画像投稿、500…ノート投稿) */
     del_flag TINYINT UNSIGNED NOT NULL DEFAULT 0, /* 削除フラグ　0…OFF, 1…ON */
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP /* 作成日 */
-) COLLATE=utf8_general_ci;
+) COLLATE=utf8mb4_bin;
 ```
 
 #### ユーザメッセージ
@@ -104,7 +104,7 @@ CREATE TABLE user_messages (
     message_id INTEGER UNSIGNED NOT NULL PRIMARY KEY, /* メッセージＩＤ */
     user_id INTEGER UNSIGNED NOT NULL, /* ユーザＩＤ */
     body VARCHAR(255) NOT NULL /* メッセージ内容 */
-) COLLATE=utf8_general_ci;
+) COLLATE=utf8mb4_bin;
 ```
 
 #### 画像投稿メッセージ
@@ -114,7 +114,7 @@ CREATE TABLE post_images (
     message_id INTEGER UNSIGNED NOT NULL PRIMARY KEY, /* メッセージＩＤ */
     user_id INTEGER UNSIGNED NOT NULL, /* ユーザＩＤ */
     path VARCHAR(255) NOT NULL /* 画像パス */
-) COLLATE=utf8_general_ci;
+) COLLATE=utf8mb4_bin;
 ```
 
 
@@ -126,7 +126,7 @@ CREATE TABLE read_messages (
     user_id INTEGER UNSIGNED NOT NULL, /* ユーザＩＤ */
     room_id MEDIUMINT UNSIGNED, /* ルームＩＤ */
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP /* 作成日 */
-) COLLATE=utf8_general_ci;
+) COLLATE=utf8mb4_bin;
 ```
 
 
@@ -142,7 +142,7 @@ CREATE TABLE notes (
     del_flag TINYINT UNSIGNED NOT NULL DEFAULT 0, /* 削除フラグ　0…OFF, 1…ON */
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, /* 作成日 */
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP  /* 更新日 */
-) COLLATE=utf8_general_ci;
+) COLLATE=utf8mb4_bin;
 ```
 
 
@@ -157,7 +157,7 @@ CREATE TABLE feedbacks (
     content VARCHAR(255) NOT NULL, /* 内容 */
     debug VARCHAR(1000) NOT NULL, /* デバッグ内容 */
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP /* 作成日 */
-) COLLATE=utf8_general_ci;
+) COLLATE=utf8mb4_bin;
 ```
 
 ## APIの種類

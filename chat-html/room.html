@@ -1,0 +1,1542 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルーム</title>
+<link rel="stylesheet" type="text/css" href="assets/css/common/reset.css">
+<link rel="stylesheet" type="text/css" href="assets/css/common/setting.css">
+<link rel="stylesheet" type="text/css" href="assets/css/room/room.css">
+<link rel="stylesheet" type="text/css" href="assets/css/slicknav/slicknav.css">
+<link rel="stylesheet" type="text/css" href="assets/css/bootstrap-v3-3-7/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="assets/css/toastr/toastr.min.css"/>
+<!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script> -->
+<script type="text/javascript" src="assets/js/common/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="assets/js/common/config.js"></script>
+<script type="text/javascript" src="assets/js/common/my-common.js"></script>
+<script type="text/javascript" src="assets/js/store/store.min.js"></script>
+<script type="text/javascript" src="assets/js/common/message-history.js"></script>
+<script type="text/javascript" src="assets/js/slicknav/jquery.slicknav.min.js"></script>
+<script type="text/javascript" src="assets/js/bootstrap-v3-3-7/bootstrap.min.js"></script>
+<script type="text/javascript" src="assets/js/toastr/toastr.min.js"></script>
+<script type="text/javascript" src="assets/js/inview/jquery.inview.min.js"></script>
+<script type="text/javascript" src="assets/js/fingerprint/fingerprint.js"></script>
+<script type="text/javascript" src="assets/js/eventSource/eventsource.min.js"></script>
+<script type="text/javascript" src="assets/js/clipboard/clipboard.min.js"></script>
+<script type="text/javascript" src="assets/js/jquery-qrcode/jquery.qrcode.min.js"></script>
+
+<script type="text/javascript">
+    // デバッグモード
+    var DEBUG = true;
+    // トースター情報
+    var TOASTR = null;
+    // メッセージ最後の座標
+    var MESSAGE_Y_POSITION = null;
+    // メッセージの一番下を参照しているか？
+    var UNDER_FLAG = false;
+    // フィンガープリント
+    var fp = new Fingerprint();
+    // STOREキー
+    var RECENTLY_INTO_ROOM = "RECENTLY_INTO_ROOM";
+    const FINGERPRINT = fp.get();
+    // AJAXのリクエストパラメータのひな形
+    var getBasicRequest = function(){
+      return {
+          type: 'GET',
+          url: '',
+          crossDomain: true,
+          timeout: 10000,
+          cache: false,
+          data: {},
+          crossDomain: true,
+          headers: {
+            // headerはこの設定のみにしていないと、CORSの規約に反し通信が正しく行われないため。
+            'Content-Type' : 'application/x-www-form-urlencoded; charset=UTF-8'
+          },
+          beforeSend: function(jqXHR, settings) {
+            jqXHR.requestURL = settings.url;
+            // 指定のサーバーへ切り替える
+            settings.url = config.api_domain + '/' + settings.url;
+            return true;
+          }
+      };
+    }
+    // AJAXの接続失敗の処理
+    var AJAX_FAIL = function(XMLHttpRequest, textStatus, errorThrown ) {
+        TOASTR["error"]("接続が正しく行われませんでした。", "システムエラー");
+
+        var consoleMessages = [];
+        consoleMessages.push("URL : " + XMLHttpRequest.requestURL);
+        consoleMessages.push("XMLHttpRequest : " + XMLHttpRequest.responseText);
+        consoleMessages.push("textStatus : " + textStatus);
+        consoleMessages.push("errorThrown : " + errorThrown);
+
+        myConsole(consoleMessages, 'AJAX_ERROR');
+    };
+
+    $(document).ready(function(){
+        // 最初からレイヤーを出していても表示されない。
+        $("#overlay").fadeIn(100);
+
+        // トースター
+        toastr.options.timeOut = 3000;
+        toastr.options = {
+          "closeButton": true,
+          "debug": false,
+          "newestOnTop": true,
+          "progressBar": false,
+          "positionClass": "toast-top-full-width",
+          "preventDuplicates": false,
+          "showDuration": "300",
+          "hideDuration": "1000",
+          "timeOut": "5000",
+          "extendedTimeOut": "1000",
+          "showEasing": "swing",
+          "hideEasing": "linear",
+          "showMethod": "fadeIn",
+          "hideMethod": "fadeOut",
+          "tapToDismiss": false
+        }
+        TOASTR = toastr;
+
+        var params = myCommon.getParams();
+
+        var room_hash = params['room'];
+        if(room_hash){
+            existRoom(room_hash);
+        } else {
+            TOASTR["warning"]("ユーザハッシュ(room)が指定されていません。", "パラメータエラー"); return;
+        }
+    });
+    
+    /**
+     * エラーメッセージを表示する
+     */
+    function errorMessage(errors){
+        var messages = "";
+        jQuery.each(errors, function(key, val){
+            messages += val + '<br>';
+        });
+        TOASTR["warning"](messages, "エラー"); return;
+    }
+
+    /**
+     * ユーザ作成時
+     */
+    function createUser(){
+        validUserInfo();
+        intoRoom();
+    }
+
+    /**
+     * ユーザ情報の入力チェックを行う。
+     */
+    function validUserInfo(){
+        var userName = $('#name').val();
+        if(userName == ''){
+          TOASTR["warning"]("使用するユーザ名が入力されていません。", "入力エラー"); return;
+        } 
+
+        var sex = $('[class="sex"]:checked').map(function(){
+          return $(this).val()[0];
+        }).get();
+
+        if(sex == null){
+          TOASTR["warning"]("性別が選択されていません。", "入力エラー"); return;
+        }
+
+        $('#user_name').val(userName);
+        $('#user_sex').val(sex);
+        $('#user_icon').val($('#icon').val());
+    }
+
+    /**
+     * 部屋の存在チェック
+     */
+    function existRoom(room_hash) {
+      var ajaxRequest = getBasicRequest();
+      ajaxRequest['type'] = 'GET';
+      ajaxRequest['url'] = 'rooms/' + room_hash;
+      ajaxRequest['data'] = {};
+    
+      $.ajax(ajaxRequest
+      ).done(function(response, textStatus, jqXHR) {
+        if(response["errors"]){
+            $("#overlay").fadeOut();
+            myConsole(response["errors"], '部屋の存在エラー');
+            errorMessage(response["errors"]);
+            return;
+        }
+
+        myConsole('OK', '部屋の存在');
+
+        $('#room-name').val(response.name);
+        $('#description').val(response.description);
+        $('#room_hash').val(room_hash);
+        $('#room_key').val(response.key);
+        var roomUrl = config.self_domain + '/room.html';
+        $('#invite-modal #target-url').val(roomUrl + '?room=' + response.room_specificuser_hash);
+
+        // ユーザが指定されている場合は、ユーザ情報を取得する。
+        existUser(room_hash);
+      }).fail(AJAX_FAIL);
+    }
+    
+    /**
+     * ユーザの存在チェック
+     */
+    function existUser(room_hash) {
+      var ajaxRequest = getBasicRequest();
+      ajaxRequest['type'] = 'GET';
+      ajaxRequest['url'] = 'rooms/' + room_hash + '/members';
+      ajaxRequest['data'] = {};
+    
+      $.ajax(ajaxRequest
+      ).done(function(response, textStatus, jqXHR) {
+        if(response["errors"]){
+            showUserInputModal();
+            return;
+        }
+
+        myConsole('OK', 'ユーザの存在');
+
+        $('#user_name').val(response.name);
+        $('#user_sex').val(response.sex);
+        $('#user_icon').val(response.icon);
+        $('#user_role').val(response.role);
+        $('#user_hash').val(response.user_hash);
+
+        MessageHistory.setStoreKey(response.user_hash);
+
+        // スリックバー作動
+        $('#menu_navi').slicknav({
+            init: function(){
+              displayInit();
+            },
+        });
+
+        var messages = MessageHistory.getMessages();
+        jQuery.each(messages, function(key, val){
+            messageAppend(val, false);
+        });
+
+        messageScrollButtom();
+
+        fetchMessagesSse();
+
+        $("#overlay").fadeOut();
+      }).fail(AJAX_FAIL);
+    }
+
+    /**
+     * ユーザ情報を入力するモーダルを表示する。
+     */
+    function showUserInputModal(){
+        // iphoneでおかしくなる
+        // $("#name").keypress(function(e) {
+        //     if (e.which ? e.which : e.keyCode == 13) { // Enterを押下された場合
+        //         $('.sex').focus();
+        //     } 
+        // });
+        // ランダムに初期設定を変える
+        $('#icon option').eq(
+          Math.floor( Math.random() * $('#icon').children().length) + 1
+        ).prop('selected', true);
+
+        var inputModal = $('#navi-2-modal');
+        $(inputModal).find('.title-name').text('ユーザを作成');
+        $(inputModal).find('#execute').text('作成');
+        $(inputModal).find('#execute').off('click');
+        $(inputModal).find('#execute').on('click', function(){
+          createUser();
+        })
+
+        //ユーザ情報入力モーダルを表示
+        $(inputModal).modal('show');
+    }
+
+    /**
+     * 画面の初期化設定
+     */
+    function displayInit(){
+        $('.slicknav_btn').after('<div style="font-size: 0.9em; text-align: center; line-height: ' + parseInt($('.slicknav_menu').height()) + 'px;">' + myCommon.chop($('#room-name').val(), 8, '...') + '</div>');
+        $('.slicknav_icon').html('<span class="glyphicon glyphicon glyphicon-th" aria-hidden="true" style="color: #FFF;">');
+
+        $('body').height(screen.height);
+        var menuHeight = parseInt($('.slicknav_menu').outerHeight());
+        // スリックバーの詳細と被らないようにメッセージの表示位置を指定している。
+        $('#message_stream_top_margin').css('height', menuHeight);
+        // この設定だと何も値をいれていない場合に画面が潰れてしまう。
+        $('#message_stream').css('height', 
+          parseInt(screen.height) - (menuHeight + parseInt($('#message_input_area').height()))
+        );
+
+        // 匿名ユーザの場合は発言禁止
+        if($('#user_role').val() == 'anonymous'){
+            $('#message_body').prop('disabled', true);
+            $('#message_submit').prop('disabled', true);
+            $('#camera_btn').prop('disabled', true);
+        } else {
+            $('#message_body').prop('disabled', false);
+            $('#message_submit').prop('disabled', false);
+            $('#camera_btn').prop('disabled', false);
+        }
+
+        var messageBodyHeight = $('#message_body').height();
+        // 入力項目の隣のボタンの高さをそろえる
+        $('#message_submit').height(messageBodyHeight);
+        $('#camera_btn').height(messageBodyHeight);
+
+        //画面を一番下までスクロールする。
+        //アンドロイドのブラウザがＵＲＬ分の縦幅を途中でなくため誤作動が起きる。
+        setTimeout(function() {
+            window.scroll(0,$(document).height());
+        },0);
+
+        $('#message_stream_under').on('inview', function(event, isInView, visiblePartX, visiblePartY) {
+            if (isInView) { //要素が見えたときに実行する処理
+                UNDER_FLAG = true;
+            } else { //要素が見えなくなったときに実行する処理
+                UNDER_FLAG = false;
+            }
+        });
+        
+        var mousedownHappened = false;
+        $('#message_submit').mousedown(function() {
+            mousedownHappened = true;
+        });
+
+        // スマートフォンでは入力中の文字が見えなくなることがあるため入力欄の高さを調節している。
+        var largeHeight = $('#message_stream_top_margin').height() + messageBodyHeight;
+        $('#message_body').focusin(function(event) {
+          $('#message_stream_top_margin').hide();
+          $('#message_body').height(largeHeight);
+          $('#message_submit').height(largeHeight);
+          $('#camera_btn').height(largeHeight);
+
+          mousedownHappened = false;
+        }).focusout(function(event) {
+          $('#message_stream_top_margin').show();
+          $('#message_body').height(messageBodyHeight);
+          $('#message_submit').height(messageBodyHeight);
+          $('#camera_btn').height(messageBodyHeight);
+
+          // 下記のようなイベントの取得の仕方はIphoneでは無効となるため現在のmousedownによるスイッチ方式を採用している。
+          // if(event.relatedTarget != null && event.relatedTarget.id == 'message_submit'){
+          //   $('#message_submit').click();
+          //   return;
+          // }
+          if(mousedownHappened) {
+            $('#message_submit').click();
+            return;
+          }
+        });
+
+        /**
+         * inputにファイルが選択された時にアップロードする。
+         * アップロードをクリックした時に動作させるためにはchangeをclickにする。
+         */
+        $('#picture-upload').on('change', function(){
+          var file = $('#picture-upload').prop('files')[0];
+          var acceptFileTypes = /^image\/(gif|jpe?g)$/i; //content type
+          if(file['type'] && !acceptFileTypes.test(file['type'])) {
+              TOASTR["warning"]('サポートしていない拡張子です。', "パラメーターエラー"); return;
+          }
+          if(file['size'] && file['size'] > 5000000) {
+              TOASTR["warning"]('ファイルのサイズが大きすぎます。', "パラメーターエラー"); return;
+          }
+
+          uploadImage(file);
+        });
+
+
+        /**
+         * inputにファイルが選択された時にアップロードする。
+         * アップロードをクリックした時に動作させるためにはchangeをclickにする。
+         */
+        $('#image-upload').on('change', function(){
+          var file = $('#image-upload').prop('files')[0];
+          var acceptFileTypes = /^image\/(gif|jpe?g)$/i; //content type
+          if(file['type'] && !acceptFileTypes.test(file['type'])) {
+              TOASTR["warning"]('サポートしていない拡張子です。', "パラメーターエラー"); return;
+          }
+          if(file['size'] && file['size'] > 5000000) {
+              TOASTR["warning"]('ファイルのサイズが大きすぎます。', "パラメーターエラー"); return;
+          }
+
+          uploadImage(file);
+        });
+
+        myConsole('OK', '画面初期化');
+    }
+
+    /**
+     * 画像をアップロードする。
+     */
+    function uploadImage(file){
+
+      // createObjectURLを使用してURLを取得しているのは、IOSでは「FileReader」が正しく起動しないためである。
+      // ================================
+      // var reader = new FileReader();
+      // reader.onload = function (e) {
+      //  処理
+      // }
+      // reader.readAsDataURL(file);
+      // ================================
+      myCommon.resizeImage(window.URL.createObjectURL(file), function (dataURL){
+          myConsole('OK', '画像リサイズ');
+
+          var fd = new FormData();
+            if ($('#picture-upload').val() !== '') {
+              fd.append('upfile', myCommon.dataURItoBlob(dataURL), myCommon.fileNameOnly(file['name']) + '.jpg');
+            } else if ($('#image-upload').val() !== '') {
+              fd.append('upfile', myCommon.dataURItoBlob(dataURL), myCommon.fileNameOnly(file['name']) + '.jpg');
+            }
+            fd.append('room_hash', $('#room_hash').val());
+            fd.append('url', config.api_domain);
+
+            $('#picture-upload').val('');
+            $('#image-upload').val('');
+
+            var postData = {
+              type : "POST",
+              dataType : "json",
+              data : fd,
+              processData : false,
+              contentType : false
+            };
+            $.ajax(
+              "./file_upload.php", postData
+            ).done(function(response, textStatus, jqXHR){
+                if(response["errors"]){
+                    myConsole(response["errors"], '画像の送信エラー');
+                    errorMessage(response["errors"]);
+                    return;
+                }
+
+                myConsole('OK', '画像ファイル保存');
+
+                sendImage(response.path);
+            }).fail(AJAX_FAIL);
+          });
+    }
+
+    /**
+     * イメージ情報を送信する。
+     */
+    function sendImage(path){
+      var ajaxRequest = getBasicRequest();
+      ajaxRequest['type'] = 'POST';
+      ajaxRequest['url'] = 'rooms/' + $('#room_hash').val() + '/images';
+      ajaxRequest['data'] = {
+            path : path
+      };
+
+      $.ajax(ajaxRequest
+      ).done(function(response, textStatus, jqXHR) {
+        if(response["errors"]){
+            myConsole(response["errors"], '画像メッセージ送信エラー');
+            errorMessage(response["errors"]);
+            return;
+        }
+
+        myConsole('OK', '画像メッセージ送信');
+
+        messageAppend(response, true);
+        messageScrollButtom();
+      }).fail(AJAX_FAIL);
+    }
+
+    /**
+     * ルームに入室する
+     */
+    function intoRoom(){
+      var ajaxRequest = getBasicRequest();
+      ajaxRequest['type'] = 'POST';
+      ajaxRequest['url'] = 'rooms/' + $('#room_hash').val() + '/members';
+      ajaxRequest['data'] = {
+            name : $('#user_name').val(),
+            sex : $('#user_sex').val(),
+            icon : $('#user_icon').val(),
+            fingerprint : FINGERPRINT
+      };
+
+      $.ajax(ajaxRequest
+      ).done(function(response, textStatus, jqXHR) {
+        if(response["errors"]){
+            myConsole(response["errors"], '入室エラー');
+            errorMessage(response["errors"]);
+            return;
+        }
+
+        window.location.href = window.location.href.split('?')[0] + "?room=" + response.room_hash;
+
+      }).fail(AJAX_FAIL);
+    }
+
+    /**
+     * メッセージを取得する
+     */
+    function fetchMessagesSse(){
+      var es = new EventSource('chat-sse.php?room_hash=' + $('#room_hash').val());
+
+      var consoleMessages = [];
+
+      consoleMessages.push('EventSource: ' + (es));
+      consoleMessages.push('SSE.addEventListener: ' + (es.addEventListener));
+      consoleMessages.push('SSE.onopen: ' + (es.onopen));
+      consoleMessages.push('SSE.onclose: ' + (es.onclose));
+      consoleMessages.push('SSE.onerror: ' + (es.onerror));
+      myConsole(consoleMessages, 'EventSource');
+
+      // メッセージを取得
+      es.addEventListener('messages', function (event) {
+          var messageValue = [];
+          // myConsole(JSON.stringify(event));
+
+          // {"isTrusted":true}のような値が返却される場合がある
+          if(!event.data){
+              myConsole('空のメッセージを受信', 'SSE-メッセージ受信');
+              return;
+          }
+
+          JSON.parse(event.data).forEach(function(value) {
+              myConsole(value.body, 'SSE-メッセージ受信');
+
+              // メッセージの表示位置が最後と離れている場合
+              if($('#message_stream div:last-child').offset().top != MESSAGE_Y_POSITION){
+                  var message = '';
+                  if(value.type == 200 && value.user.who == 'other'){ // 他人が入室
+                      message = value.user.name + ' さんが入室しました。'
+                  } else if(value.type == 100){ // ルーム作成
+                      return;
+                  } else if(value.type == 400){ // 画像投稿
+                      message = value.user.name + ' さんが画像を投稿しました。';
+                  } else if(value.type == 500){ // 画像投稿
+                      message = value.user.name + ' さんがノートを投稿しました。';
+                  } else if(value.type == 300){ // メッセージ
+                      message = value.body;
+                  } else {
+                      myConsole(JSON.stringify(value), 'SSE-不正なメッセージ受信');
+                      return;
+                  }
+
+                  TOASTR["info"]('<a href="javascript:void(0);" class="clear" onclick="messageScrollButtom();">' + message + '</a>', '新着メッセージ');
+              } else {
+                   messageScrollButtom();
+              }
+
+              messageAppend(value, true);
+          });
+      });
+
+      // バリデーションエラー
+      es.addEventListener('errors', function (event) {
+          myConsole(JSON.stringify(event.data), 'SSE-バリデーションエラー');
+          errorMessage(event.data);
+
+          es.close();
+      });
+
+      // タイムアウトした
+      es.addEventListener('timeout', function (event) {
+          myConsole(event.data, 'SSE-タイムアウト');
+      });
+
+      es.onopen = function() {
+          myConsole('OPEN', 'SSE-接続');
+      };
+
+      es.onclose = function(code, reason) {
+          var consoleMessages = [];
+          consoleMessages.push(code);
+          consoleMessages.push(reason);
+          myConsole(consoleMessages, 'SSE-接続エラー');
+
+          TOASTR["error"]("接続が切断されました。", "システムエラー");
+      }
+
+      // ＰＨＰ側のタイムアウトで発生することもある。
+      es.onerror = function(e) {
+          if (e.readyState === EventSource.CONNECTING) { // === 0 
+            myConsole('再接続中', 'SSE-エラー');
+          } else if (e.readyState === EventSource.OPEN) { // === 1
+            myConsole('接続中', 'SSE-エラー');
+          } else if (e.readyState === EventSource.CLOSED) { // === 2
+            myConsole('終了', 'SSE-エラー');
+          } else {
+            myConsole(JSON.stringify(e), 'SSE-エラー');
+          }
+      };
+    }
+ 
+    /**
+     * メッセージを送信する
+     */
+    function sendMessage(){
+      var message_body = $('#message_body').val();
+      if(!message_body) { return; }
+      $('#message_body').val('');
+
+      var ajaxRequest = getBasicRequest();
+      ajaxRequest['type'] = 'POST';
+      ajaxRequest['url'] = 'rooms/' + $('#room_hash').val() + '/messages';
+      ajaxRequest['data'] = {
+            body : message_body
+      };
+
+      $.ajax(ajaxRequest
+      ).done(function(response, textStatus, jqXHR) {
+        if(response["errors"]){
+            myConsole(response["errors"], 'ユーザメッセージ送信エラー');
+            errorMessage(response["errors"]);
+            return;
+        }
+
+        myConsole('OK', 'ユーザメッセージ送信');
+
+        messageAppend(response, true);
+        messageScrollButtom();
+      }).fail(AJAX_FAIL);
+    }
+
+    /**
+     * メッセージを取得する
+     */
+    function getMessage(message_id){
+      var ajaxRequest = getBasicRequest();
+      ajaxRequest['type'] = 'GET';
+      ajaxRequest['url'] = 'rooms/' + $('#room_hash').val() + '/messages/' + message_id;
+      ajaxRequest['data'] = {};
+
+      $.ajax(ajaxRequest
+      ).done(function(response, textStatus, jqXHR) {
+        if(response["errors"]){
+            myConsole(response["errors"], '個別メッセージ受信エラー');
+            errorMessage(response["errors"]);
+            return;
+        }
+
+        myConsole('OK', '個別メッセージ受信');
+
+        messageAppend(response, true);
+        messageScrollButtom();
+      }).fail(AJAX_FAIL);
+    }
+
+    /**
+     *　メッセージ構成を作成し返却する。
+     */
+    function createMessage(value){
+        //デバッグ用
+        // myConsole(JSON.stringify(value));
+
+        if(!value){ return null; }
+
+        var message_id = value.message_id;
+        var body = myCommon.toDisplayMessage(value.body); // 改行コード置換
+        var user_name = value.user.name;
+        var sexClass = null;
+        if(value.user.sex == 1){
+            sexClass = "sex_man";
+        } else if(value.user.sex == 2) {
+            sexClass = "sex_woman";
+        } else {
+            sexClass = "sex_none";
+        }
+        var who = value.user.who;
+        var icon = value.user.icon;
+        var hash = value.user.hash;
+        var type = value.type;
+        var sendTime = myCommon.parseTwitterDate(myCommon.parseSaftyDate(value.send_time));
+        var sendDate = myCommon.formatDate(myCommon.parseSaftyDate(value.send_time));
+
+        var result = null;
+
+        if(type == 200 && who == 'other'){ // 他人が入室
+            result = '<div class="information_box">'
+                   + ' <div class="information_message">'
+                   + user_name + ' さんが入室しました。'
+                   + ' </div>'
+                   + ' <input type="hidden" class="message_id" value="' + message_id + '">'
+                   + ' <input type="hidden" class="send_date" value="' + sendDate + '">'
+                   + '</div>';
+
+        } else if(type == 100){ // ルーム作成
+            //bodyに部屋名が入力されているが、部屋名を表示すると途中で部屋名を変更したときの齟齬の調整が面倒なので表示しない。
+            result = '<div class="information_box">'
+                   + ' <div class="information_message">'
+                   + '～　ルームが作成されました　～'
+                   + ' </div>'
+                   + ' <input type="hidden" class="message_id" value="' + message_id + '">'
+                   + ' <input type="hidden" class="send_date" value="' + sendDate + '">'
+                   + '</div>';
+
+        } else if(type == 400){ // 画像投稿
+            // FIXME 画像の領域が表示されてから画像を表示するようにする。
+
+            var imagePath = body;
+            if(who == 'self'){
+                result = '<div class="question_box">'
+                       + ' <div class="answer_image ' + sexClass + '">'
+                       + '  <img src="assets/image/' + icon + '" alt="' + user_name + '"/>'
+                       + '  <div class="send_time">' + sendTime + '</div>'
+                       + ' </div>'
+                       + ' <p class="answer_name">' + user_name + '　' + hash + '</p>'
+                       + ' <div class="image_box answer_post_image">'
+                       + ' 　<img src="' + myCommon.addSuffixOfFileName(body, '_thumbnail') + '" alt="" class="img-rounded img-responsive post_image_size" onclick="imageDialogShow(\'' + body + '\');">'
+                       + '　</div>'
+                       + '　</div>'
+                       + ' <input type="hidden" class="message_id" value="' + message_id + '">'
+                       + ' <input type="hidden" class="send_date" value="' + sendDate + '">'
+                       + '</div>';
+            } else if(who == 'other') {
+                result = '<div class="question_box">'
+                       + ' <div class="question_image ' + sexClass + '">'
+                       + '  <img src="assets/image/' + icon + '" alt="' + user_name + '"/>'
+                       + '  <div class="send_time">' + sendTime + '</div>'
+                       + ' </div>'
+                       + ' <p class="question_name">' + user_name + '　' + hash + '</p>'
+                       + ' <div class="image_box question_post_image">'
+                       + ' 　<img src="' + myCommon.addSuffixOfFileName(body, '_thumbnail') + '" alt="" class="img-rounded img-responsive post_image_size" onclick="imageDialogShow(\'' + body + '\');">'
+                       + '　</div>'
+                       + ' <input type="hidden" class="message_id" value="' + message_id + '">'
+                       + ' <input type="hidden" class="send_date" value="' + sendDate + '">'
+                       + '</div>';
+            }
+
+        } else if(type == 500){ // ノート投稿
+            result = '<div class="information_box">'
+                   + ' <div class="information_message">'
+                   + user_name + ' さんがノートを投稿しました。'
+                   + ' </div>'
+                   + ' <input type="hidden" class="message_id" value="' + message_id + '">'
+                   + ' <input type="hidden" class="send_date" value="' + sendDate + '">'
+                   + '</div>';
+
+        } else if(type == 300){ // メッセージ
+            if(who == 'self'){
+                result = '<div class="question_box">'
+                       + ' <div class="answer_image ' + sexClass + '">'
+                       + '  <img src="assets/image/' + icon + '" alt="' + user_name + '"/>'
+                       + '  <div class="send_time">' + sendTime + '</div>'
+                       + ' </div>'
+                       + ' <p class="answer_name">' + user_name + '　' + hash + '</p>'
+                       + ' <div class="arrow_answer">' + body + '</div>'
+                       + ' <input type="hidden" class="message_id" value="' + message_id + '">'
+                       + ' <input type="hidden" class="send_date" value="' + sendDate + '">'
+                       + '</div>';
+            } else if(who == 'other') {
+                result = '<div class="question_box">'
+                       + ' <div class="question_image ' + sexClass + '">'
+                       + '  <img src="assets/image/' + icon + '" alt="' + user_name + '"/>'
+                       + '  <div class="send_time">' + sendTime + '</div>'
+                       + ' </div>'
+                       + ' <p class="question_name">' + user_name + '　' + hash + '</p>'
+                       + ' <div class="arrow_question">' + body + '</div>'
+                       + ' <input type="hidden" class="message_id" value="' + message_id + '">'
+                       + ' <input type="hidden" class="send_date" value="' + sendDate + '">'
+                       + '</div>';
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * メッセージ追加処理
+     * 第二の引数でローカルストレージに登録する場合はtrue、しない場合はfalseを設定する。
+     */
+    function messageAppend(rawMessage, historyRegistFlag){
+        if(historyRegistFlag){
+            MessageHistory.append(rawMessage);
+        }
+
+        var message = createMessage(rawMessage)
+        if(message == null){ return; }
+
+        $('#message_stream_under').before(message);
+
+        // 一番下の場合は自動的に下にスクロールする。
+        if(UNDER_FLAG){
+            // beforeにより、絶対にスクロールしてしまう。
+            messageScrollButtom();
+        }
+    }
+
+    /**
+     * 拡大画像表示ポップアップ
+     */
+    function imageDialogShow(path){
+        $('#image-modal img').attr('src', path);
+        $('#image-modal').modal('show');
+    }
+
+    /**
+     * 日付メッセージの表示共通処理
+     */
+    function createDateMessage(id, dateValue){
+        return '<div class="information_box" id="' + id + '">' + dateValue + '<input type="hidden" class="send_date" value="' + id + '">' + '</div>';
+    }
+    
+    /**
+     * メッセージ欄を一番下までスクロールする
+     */
+    function messageScrollButtom(){
+        // 一番下までスクロールする
+        $('#message_stream').animate({scrollTop: $('#message_stream')[0].scrollHeight}, 'fast');
+    }
+
+    /**
+     * ユーザ更新前処理
+     */
+    function updateUserInfo(){
+        $('#menu_navi').slicknav('toggle');
+
+        var inputModal = $('#navi-2-modal');
+        $(inputModal).find('.title-name').text('ユーザの詳細');
+        $(inputModal).find('#execute').text('更新');
+        $(inputModal).find('#name').val($('#user_name').val());
+        $(inputModal).find('input[name=sex]').val([$('#user_sex').val()]);
+        $(inputModal).find('#icon').val($('#user_icon').val());
+        $(inputModal).find('#execute').off('click');
+        $(inputModal).find('#execute').on('click', function(){
+          updateUser();
+        })
+
+        $(inputModal).modal('show');
+    }
+
+    /**
+     * ユーザを更新する
+     */
+    function updateUser(){
+        validUserInfo();
+
+        var ajaxRequest = getBasicRequest();
+        // PUT と設定したいがChromeが「Content-Type」を上書きするのでPOST
+        ajaxRequest['type'] = 'PUT';
+        ajaxRequest['url'] = 'rooms/' + $('#room_hash').val() + '/members';
+        ajaxRequest['data'] = {
+            method : 'PUT',
+            name : $('#user_name').val(),
+            sex : $('#user_sex').val(),
+            icon : $('#user_icon').val(),
+        };
+
+        $.ajax(ajaxRequest
+        ).done(function(response, textStatus, jqXHR) {
+            if(response["errors"]){
+                myConsole(response["errors"], 'ユーザ情報更新エラー');
+                errorMessage(response["errors"]);
+                return;
+            }
+
+            myConsole('OK', 'ユーザ情報更新');
+
+            $('#navi-2-modal').modal('hide');
+            TOASTR["info"]('ユーザ情報を更新しました。', 'ユーザ情報');
+        }).fail(AJAX_FAIL);
+    }
+
+    /**
+     * ユーザ一覧を表示する
+     */
+    function userList(){
+      $('#menu_navi').slicknav('toggle');
+
+      var ajaxRequest = getBasicRequest();
+      ajaxRequest['type'] = 'GET';
+      ajaxRequest['url'] = 'rooms/' + $('#room_hash').val() + '/members/all';
+
+      $.ajax(ajaxRequest
+      ).done(function(response, textStatus, jqXHR) {
+          if(response["errors"]){
+              myConsole(response["errors"], 'ユーザ一覧表示エラー');
+              errorMessage(response["errors"]);
+              return;
+          }
+
+          myConsole('OK', 'ユーザ一覧表示');
+
+          $('#users-infos li').remove();
+          jQuery.each(response, function(key, value) {
+              var roleColor = '';
+              if(value.role == 'admin'){
+                  roleColor = 'admin-label';
+              }else if(value.role == 'specific-user'){
+                  roleColor = 'popular-label';
+              }else if(value.role == 'anonymous'){
+                  roleColor = 'audience-label';
+              }
+
+              $('#users-infos').append(
+                  '<li class="user-info list-group-item">' 
+                + '<div class="usre-name label label-success ' + roleColor + '">' + value.name + '</div>'
+                + '&nbsp;&nbsp;'
+                + '<div class="usre-hash label label-success">' + value.user_hash + '</div>' + '</li>'
+              );
+          });
+
+          $('#room-info').css('display', 'block');
+
+          $("#navi-3-modal").modal('show');
+      }).fail(AJAX_FAIL);
+    }
+
+    /**
+     * 画像一覧を表示する。
+     */
+    function selectAlbam(){
+      $('#menu_navi').slicknav('toggle');
+
+      var ajaxRequest = getBasicRequest();
+      ajaxRequest['type'] = 'GET';
+      ajaxRequest['url'] = 'rooms/' + $('#room_hash').val() + '/images';
+
+      $.ajax(ajaxRequest
+      ).done(function(response, textStatus, jqXHR) {
+          if(response["errors"]){
+              myConsole(response["errors"], '画像一覧表示エラー');
+              errorMessage(response["errors"]);
+              return;
+          }
+
+          myConsole('OK', '画像一覧表示');
+
+          $("#image-list li").remove();
+          var content = $("#image-list");
+          jQuery.each(response, function(key, value) {
+              $(content).append(
+                  '<li class="image_content list-group-item center-block">'
+                + '<div class="label label-success">' + value.user_name + '</div>　<div class="label label-success">' + value.user_hash + '</div>'
+                + '<br>'
+                + '投稿日:' + myCommon.formatDate(myCommon.parseSaftyDate(value.created_at)) + ' ' + myCommon.formatTime(myCommon.parseSaftyDate(value.created_at)) + '</div>'
+                + ' <img src="' + myCommon.addSuffixOfFileName(value.content, '_thumbnail') + '">'
+                + ' <input type="hidden" class="message_id" value="' + value.message_id + '">'
+                + '</li>'
+              );
+
+          });
+
+          $("#navi-4-modal").modal('show');
+      }).fail(AJAX_FAIL);
+    }
+
+    /**
+     * ルーム情報モーダルを表示する
+     */
+    function roomInfoModalShow(){
+      $('#menu_navi').slicknav('toggle');
+
+      var modal = $('#navi-1-modal');
+
+      // 管理者以外は触らせない。
+      if($('#user_role').val() != 'admin'){
+        $(modal).find('#room-name').prop('disabled', true);
+        $(modal).find('#description').prop('disabled', true);
+        $(modal).find('#execute').prop('disabled', true);
+      }
+
+      $(modal).find('#execute').off('click');
+      $(modal).find('#execute').on('click', function(){
+        var ajaxRequest = getBasicRequest();
+        ajaxRequest['type'] = 'PUT';
+        ajaxRequest['url'] = 'admin/rooms/' + $('#room_hash').val();
+        ajaxRequest['data'] = {
+          name: $('#room-name').val(),
+          description: $('#description').val(),
+        };
+      
+        $.ajax(ajaxRequest
+        ).done(function(response, textStatus, jqXHR) {
+          if(response["errors"]){
+              errorMessage(response["errors"]);
+              return;
+          }
+
+          myConsole('OK', '部屋の情報更新');
+
+          $(modal).modal('hide');
+          TOASTR["info"]('ユーザ情報を更新しました。', 'ユーザ情報');
+        }).fail(AJAX_FAIL);
+
+      })
+
+      $('#navi-1-modal').modal('show');
+    }
+
+    /**
+     * 招待モーダルを表示する
+     */
+    function inviteModalShow(){
+      $('#menu_navi').slicknav('toggle');
+
+      var clipboard = new Clipboard('#clipboard-btn');
+      clipboard.on('success', function(e) {
+          TOASTR["info"]('URLをコピーしました。', 'コピー');
+      });
+      clipboard.on('error', function(e) {
+          TOASTR["info"]('URLのコピーに失敗しました。', 'コピー');
+      });
+
+      emergeQrcode($('#invite-modal #target-url').val());
+      $('#invite-modal').modal('show');
+    }
+
+    /**
+     * 報告モーダルを表示する
+     */
+    function feedbackModalShow(){
+      $('#menu_navi').slicknav('toggle');
+
+      var modal = $('#feedback-modal')
+      $(modal).find('#execute').off('click');
+      $(modal).find('#execute').on('click', function(){
+        var ajaxRequest = getBasicRequest();
+        ajaxRequest['type'] = 'POST';
+        ajaxRequest['url'] = 'rooms/' + $('#room_hash').val() + '/feedback';
+        ajaxRequest['data'] = {
+          mail: $(modal).find('#mail').val(),
+          genre: $(modal).find('#genre').val(),
+          content: $(modal).find('#content').val(),
+          description: $(modal).find('#description').val(),
+          debug: $("#navi-99-modal .modal-body").html(),
+        };
+      
+        $.ajax(ajaxRequest
+        ).done(function(response, textStatus, jqXHR) {
+          if(response["errors"]){
+              errorMessage(response["errors"]);
+              return;
+          }
+
+          myConsole('OK', 'フィードバック報告完了');
+
+          $(modal).modal('hide');
+          TOASTR["info"]('ご協力有難うございました。', '報告完了');
+        }).fail(AJAX_FAIL);
+
+      })
+
+      $('#feedback-modal').modal('show');
+    }
+
+    /**
+     * QRコードを表示する。
+     */
+    function emergeQrcode(targetUrl){
+      $('#qrcode_canvas').empty();
+      $('#qrcode_canvas').qrcode({width: 200, height: 200, text: targetUrl, render: 'canvas'});
+      // 画像に変換している。
+      $("#qrcode_img").attr("src", $("#qrcode_canvas canvas")[0].toDataURL("image/png"));
+      $("#qrcode_canvas canvas").hide();
+    }
+
+    /**
+     * ノートモーダルを表示する。
+     */
+    function noteModalShow(){
+      $('#menu_navi').slicknav('toggle');
+
+      var modal = $('#note-modal');
+
+      $(modal).find('#new-note').html('');
+      $(modal).find('#note-list').html('');
+      $(modal).find('#create').off('click');
+      $(modal).find('#create').on('click', function(){
+        var noteNode = '';
+        noteNode += '<textarea  class="form-control" name="new-note" rows="4"></textarea>';
+        noteNode += '<button type="button" id="note-create" class="btn btn-primary pull-right" onclick="noteAddPost();">投稿</button>';
+
+        $(modal).find('#new-note').append(noteNode);
+      });
+
+      notesGet();
+    }
+
+    /**
+     * ノートを取得する
+     */
+    function notesGet(){
+      var ajaxRequest = getBasicRequest();
+      ajaxRequest['type'] = 'GET';
+      ajaxRequest['url'] = 'rooms/' + $('#room_hash').val() + '/notes';
+      ajaxRequest['data'] = {
+      };
+    
+      $.ajax(ajaxRequest
+      ).done(function(response, textStatus, jqXHR) {
+        if(response["errors"]){
+            errorMessage(response["errors"]);
+            return;
+        }
+
+        myConsole('OK', 'ノート取得');
+
+        var modal = $('#note-modal');
+        var contentList = $(modal).find("#note-list");
+        jQuery.each(response, function(key, value) {
+            $(contentList).prepend(
+                '<li style="clear: both;">'
+              + createNoteNode(value)
+              + '</li>'
+            );
+        });
+
+        $(modal).modal('show');
+      }).fail(AJAX_FAIL);
+    }
+
+    /**
+     * ノートを追加する
+     */
+    function noteAddPost(){
+        var content = $('#note-modal').find('[name="new-note"]').val();
+        var ajaxRequest = getBasicRequest();
+        ajaxRequest['type'] = 'POST';
+        ajaxRequest['url'] = 'rooms/' + $('#room_hash').val() + '/notes';
+        ajaxRequest['data'] = {
+          content: content,
+        };
+      
+        $.ajax(ajaxRequest
+        ).done(function(response, textStatus, jqXHR) {
+          if(response["errors"]){
+              errorMessage(response["errors"]);
+              return;
+          }
+
+          myConsole('OK', 'ノート追加');
+
+          var modal = $('#note-modal');
+          $(modal).find("#note-list").prepend(
+              '<li style="clear: both;">'
+            + createNoteNode(response)
+            + '</li>'
+          );
+          $(modal).find('#new-note').html('');
+
+          TOASTR["info"]('ノートを追加しました。', 'ノートの追加');
+        }).fail(AJAX_FAIL);
+    }
+
+    /**
+     * ノートを編集する
+     */
+    function noteEdit(thisObj, noteId){
+      var targetGroup = $(thisObj).parent().parent();
+      var textarea = $(targetGroup).find('[name="note-content"]');
+      textarea.prop('readonly', false);
+      $(targetGroup).find('#note-edit').css('display', 'none');
+      $(targetGroup).find('#note-update').css('display', '');
+    }
+
+    /**
+     * ノートを更新する
+     */
+    function noteUpdate(thisObj, noteId){
+      var targetGroup = $(thisObj).parent().parent();
+      var content = $(targetGroup).find('[name="note-content"]').val();
+      var ajaxRequest = getBasicRequest();
+      ajaxRequest['type'] = 'PUT';
+      ajaxRequest['url'] = 'rooms/' + $('#room_hash').val() + '/notes/' + noteId;
+      ajaxRequest['data'] = {
+        content: content,
+      };
+    
+      $.ajax(ajaxRequest
+      ).done(function(response, textStatus, jqXHR) {
+        if(response["errors"]){
+            errorMessage(response["errors"]);
+            return;
+        }
+
+        myConsole('OK', 'ノート更新');
+
+        $(targetGroup).html(
+          createNoteNode(response)
+        );
+
+        TOASTR["info"]('ノートを更新しました。', 'ノートの更新');
+      }).fail(AJAX_FAIL);
+    }
+
+    /**
+     * ノート要素を生成する。
+     */
+    function createNoteNode(value){
+      return '<div class="label label-success">' + value.user_name + '</div>　<div class="label label-success">' + value.user_hash + '</div>'
+        + '<br>'
+        + '更新日:' + myCommon.formatDate(myCommon.parseSaftyDate(value.updated_at)) + ' ' + myCommon.formatTime(myCommon.parseSaftyDate(value.updated_at)) + '</div>'
+        + '<textarea  class="form-control" name="note-content" rows="4" readonly>' + value.content + '</textarea>'
+        + '<div class="form-group pull-right">'
+        + '<button type="button" id="note-edit" class="btn btn-primary" onclick="noteEdit(this, ' + value.note_id + ');">編集</button>'
+        + '<button type="button" id="note-update" class="btn btn-primary" style="display: none;" onclick="noteUpdate(this, ' + value.note_id + ');">更新</button>'
+        + '　<button type="button" id="note-delete" class="btn btn-primary" onclick="noteDelete(this, ' + value.note_id + ');">削除</button>'
+        + '</div>';
+    }
+
+    /**
+     * ノートを削除する
+     */
+    function noteDelete(thisObj, noteId){
+      var targetGroup = $(thisObj).parent().parent();
+      var ajaxRequest = getBasicRequest();
+      ajaxRequest['type'] = 'DELETE';
+      ajaxRequest['url'] = 'rooms/' + $('#room_hash').val() + '/notes/' + noteId;
+      ajaxRequest['data'] = {
+      };
+    
+      $.ajax(ajaxRequest
+      ).done(function(response, textStatus, jqXHR) {
+        if(response["errors"]){
+            errorMessage(response["errors"]);
+            return;
+        }
+
+        myConsole('OK', 'ノート削除');
+
+        $(targetGroup).remove();
+
+        TOASTR["info"]('ノートを削除しました。', 'ノートの削除');
+      }).fail(AJAX_FAIL);
+    }
+
+    /**
+     * 画像を選択するイベント処理。
+     */
+    function imageSelect(){
+      $('#menu_navi').slicknav('toggle');
+      
+      $('#image-upload').click();
+    }
+
+    /**
+     * コンソールモーダルを表示する。
+     */
+    function debugModalShow(){
+      $('#menu_navi').slicknav('toggle');
+
+      $('#navi-99-modal').modal('show');
+    }
+
+    /**
+     * コンソール出力をスタックする
+     */
+    function myConsole(value, type){
+        if(DEBUG){
+            if(value instanceof Array){
+                $("#navi-99-modal .modal-body").append('<div>==start ' + type + '</div>');
+                jQuery.each(value, function(key, val) {
+                    $("#navi-99-modal .modal-body").append('<div>' + val.toString() + '</div>');
+                });
+                $("#navi-99-modal .modal-body").append('<div>==end ' + type + '</div>');
+            }else{
+                $("#navi-99-modal .modal-body").append('<div>' + type + ': ' + value.toString() + '</div>');
+            }
+        }
+    }
+</script>
+</head>
+<body>
+<!-- 本体 -->
+  <!-- ナビメニュー -->
+  <ul id="menu_navi" class="clearfix">
+    <li>
+      <table class="table table-bordered table-inverse">
+        <tbody>
+          <tr>
+            <td style="text-align: center; width: 33%;" onclick="roomInfoModalShow();">
+              <div class="glyphicon glyphicon-list-alt" aria-hidden="true"></div>
+              <div class="navi-menu-name">ルーム</div>
+            </td>
+            <td style="text-align: center; width: 33%;" onclick="updateUserInfo();">
+              <div class="glyphicon glyphicon-user" aria-hidden="true"></div>
+              <div class="navi-menu-name">ユーザ</div>
+            </td>
+            <td style="text-align: center; width: 33%;" onclick="noteModalShow();">
+              <div class="glyphicon glyphicon-book" aria-hidden="true"></div>
+              <div class="navi-menu-name">ノート</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="text-align: center; width: 33%;" onclick="userList();">
+              <div class="glyphicon glyphicon-stats" aria-hidden="true"></div>
+              <div class="navi-menu-name">メンバー</div>
+            </td>
+            <td style="text-align: center;" onclick="selectAlbam();">
+              <div class="glyphicon glyphicon-picture" aria-hidden="true"></div>
+              <div class="navi-menu-name">アルバム</div>
+            </td>
+            <td style="text-align: center;" onclick="imageSelect();">
+              <div class="glyphicon glyphicon-cloud-upload" aria-hidden="true"></div>
+              <div class="navi-menu-name">写真選択</div>
+            </td>
+          </tr>
+          <tr>
+<!-- 
+            <td style="text-align: center;" onclick="debugModalShow();">
+              <div class="glyphicon glyphicon-info-sign" aria-hidden="true"></div>
+              <div class="navi-menu-name">デバッグ</div>
+            </td>
+ -->
+            <td style="text-align: center;">
+              <div class="glyphicon glyphicon-envelope" aria-hidden="true" style="color: #fff"></div>
+            </td>
+            <td style="text-align: center;" onclick="inviteModalShow();">
+              <div class="glyphicon glyphicon-envelope" aria-hidden="true"></div>
+              <div class="navi-menu-name">招待</div>
+            </td>
+            <td style="text-align: center;" onclick="feedbackModalShow();">
+              <div class="glyphicon glyphicon-bullhorn" aria-hidden="true"></div>
+              <div class="navi-menu-name">報告</div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </li>
+  </ul>
+  <div id="message_stream_top_margin"></div>
+  <div id="message_stream">
+    <div id="message_stream_under"></div>
+  </div>
+  <div id="message_input_area" class="input-group">
+    <span class="input-group-btn">
+      <!-- アイコンの大きさはボタンの文字サイズに依存している -->
+      <button type="button" class="btn btn-primary" id="camera_btn" onclick="$('#picture-upload').click();" style="font-size: 30px;"><span class="glyphicon glyphicon-camera" aria-hidden="true"></span></button>
+      <!-- カメラ起動用 -->
+      <input type="file" id="picture-upload" name="capture" accept="image/*" capture="camera" style="display: none;" />
+      <!-- 画像選択用 -->
+      <input type="file" id="image-upload" name="select-image" accept="image/*" style="display: none;" />
+
+    </span>
+    <!-- font-size:16pxはiphoneの入力時の拡大を避けるため -->
+    <textarea id="message_body" class="form-control input-xs" style="font-size:16px;"></textarea>
+    <span class="input-group-btn">
+      <!-- アイコンの大きさはボタンの文字サイズに依存している -->
+      <button type="button" class="btn btn-primary" id="message_submit" onclick="sendMessage();" style="font-size: 30px;"><span class="glyphicon glyphicon-send" aria-hidden="true"></span></button>
+    </span>
+  </div>
+<!-- 本体 -->
+
+  <!-- データ保持 -->
+  <input type="hidden" id="room_hash">
+  <input type="hidden" id="room_key">
+  <input type="hidden" id="user_name">
+  <input type="hidden" id="user_sex">
+  <input type="hidden" id="user_icon">
+  <input type="hidden" id="user_role">
+  <input type="hidden" id="user_hash">
+
+  <img src="" id="hidden_img" style="display: none;">
+
+  <!-- ナビ-詳細 -->
+  <div class="modal fade" id="navi-1-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+          <h4 class="modal-title"><span class="glyphicon glyphicon glyphicon-list-alt" aria-hidden="true"></span>ルーム詳細</h4>
+        </div>
+        <div class="modal-body">
+          <!-- font-size:16pxはiphoneの入力時の拡大を避けるため -->
+          <div class="label label-success">ルーム名</div>
+          <input type="text" id="room-name" placeholder="名前" class="form-control" style="font-size:16px;">
+          <br />
+          <div class="label label-success">説明</div>
+          <input type="text" id="description" placeholder="名前" class="form-control" style="font-size:16px;">
+        </div>
+        <div class="modal-footer">
+          <!-- <button type="button" class="btn btn-default" data-dismiss="modal">閉じる</button> -->
+          <button type="button" id="execute" class="btn btn-primary">更新</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ナビ-ユーザ情報入力 -->
+  <div class="modal fade" id="navi-2-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+          <h4 class="modal-title"><span class="glyphicon glyphicon glyphicon-user" aria-hidden="true"></span><span class="title-name">ユーザを作成</span></h4>
+        </div>
+        <div class="modal-body">
+          <div class="label label-success">ユーザ名</div>
+          <!-- font-size:16pxはiphoneの入力時の拡大を避けるため -->
+          <input type="text" id="name" placeholder="名前" class="form-control" style="font-size:16px;">
+          <br>
+          <div class="label label-success">性別</div>
+          <br>
+          <label class="radio-inline"><input type="radio" name="sex" class="sex" value="1" checked="checked">男</label>
+          <label class="radio-inline"><input type="radio" name="sex" class="sex" value="2">女</label>
+          <label class="radio-inline"><input type="radio" name="sex" class="sex" value="0">選択しない</label>
+          <br>
+          <br>
+          <div class="label label-success">アイコン</div>
+          <select class="form-control" id="icon" name="icon" style="font-size:16px;">
+            <option value="user_icon/1.png">ネコ</option>
+            <option value="user_icon/2.png">イルカ</option>
+            <option value="user_icon/3.png">イヌ</option>
+            <option value="user_icon/4.png">シカ</option>
+            <option value="user_icon/5.png">ペンギン</option>
+            <option value="user_icon/6.png">カメレオン</option>
+            <option value="user_icon/7.png">リス</option>
+            <option value="user_icon/8.png">キリン</option>
+            <option value="user_icon/9.png">ハリネズミ</option>
+            <option value="user_icon/10.png">ゾウ</option>
+            <option value="user_icon/11.png">ヒツジ</option>
+            <option value="user_icon/12.png">トナカイ</option>
+            <option value="user_icon/13.png">タカ</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <!-- <button type="button" class="btn btn-default" data-dismiss="modal">閉じる</button> -->
+          <button type="button" id="execute" class="btn btn-primary">作成</button>
+          <div class="modal-body">
+            <a href="past-room.html" style="color: red;">ルームのアドレスを忘れた</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ナビ-ユーザ一覧 -->
+  <div class="modal fade" id="navi-3-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+          <h4 class="modal-title"><span class="glyphicon glyphicon glyphicon-stats" aria-hidden="true"></span>メンバーの一覧</h4>
+        </div>
+        <div class="modal-body on-scroll">
+          <ul id="users-infos" class="list-group"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!--　アルバムポップアップ　-->
+  <div class="modal fade" id="navi-4-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+          <h4 class="modal-title"><span class="glyphicon glyphicon glyphicon-picture" aria-hidden="true"></span>アルバム</h4>
+        </div>
+        <div class="modal-body on-scroll">
+          <ul id="image-list" class="list-group"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!--　ノートポップアップ　-->
+  <div class="modal fade" id="note-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+          <h4 class="modal-title"><span class="glyphicon glyphicon glyphicon-book" aria-hidden="true"></span>ノート</h4>
+        </div>
+        <div class="modal-body on-scroll">
+          <button type="button" id="create" class="btn btn-primary pull-right">作成</button>
+          <br>
+          <br>
+          <ul id="new-note"></ul>
+          <ul id="note-list" class="note-group"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!--　招待ポップアップ　-->
+  <div class="modal fade" id="invite-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+          <h4 class="modal-title"><span class="glyphicon glyphicon glyphicon-envelope" aria-hidden="true"></span>知り合いを招待</h4>
+        </div>
+        <div class="modal-body on-scroll">
+          <div class="label label-success">URLで招待する</div>
+          <textarea id="target-url" class="form-control input-xs" style="font-size:16px;" readonly></textarea>
+          <button id="clipboard-btn" type="button" class="btn btn-primary" data-clipboard-target="#target-url"><span class="glyphicon glyphicon-paperclip" aria-hidden="true"></span></button>
+          <br />
+          <br />
+          <div class="label label-success">QRで招待する</div>
+          <br />
+          <br />
+          <div id="qrcode_canvas"></div>
+          <div class="center-block">
+            <img id="qrcode_img" alt="" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!--　デバッグポップアップ　-->
+  <div class="modal fade" id="navi-99-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+          <h4 class="modal-title"><span class="glyphicon glyphicon glyphicon-info-sign" aria-hidden="true"></span>デバッグ</h4>
+        </div>
+        <div class="modal-body on-scroll">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!--　画像ポップアップ　-->
+  <div class="modal fade bs-example-modal-sm" id="image-modal" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content text-center">
+        <img src="" width="100%" data-dismiss="modal">
+      </div>
+    </div>
+  </div>
+
+  <!-- フィードバック入力 -->
+  <div class="modal fade" id="feedback-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+          <h4 class="modal-title"><span class="glyphicon glyphicon glyphicon-bullhorn" aria-hidden="true"></span><span class="title-name">報告する</span></h4>
+        </div>
+        <div class="modal-body">
+          <div class="label label-success">メール</div>
+          <!-- font-size:16pxはiphoneの入力時の拡大を避けるため -->
+          <input type="text" id="mail" placeholder="メール" class="form-control" style="font-size:16px;">
+          <br>
+          <div class="label label-success">ジャンル</div>
+          <select class="form-control" id="genre" name="genre" style="font-size:16px;">
+            <option value="0" selected>選択して下さい</option>
+            <option value="1">違反報告</option>
+            <option value="2">改善報告</option>
+            <option value="99">その他</option>
+          </select>
+          <br>
+          <div class="label label-success">詳細</div>
+          <textarea id="content" class="form-control input-xs" style="font-size:16px;"></textarea>
+        </div>
+        <div class="modal-footer">
+          <!-- <button type="button" class="btn btn-default" data-dismiss="modal">閉じる</button> -->
+          <button type="button" id="execute" class="btn btn-primary">報告</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- オーバーレイ -->
+  <div id="overlay" style="display: none;">
+      <div class="content">LLチャット</p>
+  </div>
+</body>
+</html>

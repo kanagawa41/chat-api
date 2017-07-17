@@ -1,0 +1,86 @@
+html body {
+    font-size: 16px;
+}
+
+hr {display: none;}
+
+.bs-mapper h2{
+    font-size: 1.7em;
+    font-weight: bold;
+}
+
+.center-block{
+    width: 100%;
+    text-align: center; 
+} .center-block .entry{
+    background: #5ae628;
+    color: #fff;
+    font-size: 1.7em;
+    font-weight: bold;
+}
+
+.base-color {
+    color: #5ae628;
+}
+
+/* header */
+.header{
+    background: #313c52;
+    box-shadow: 1px 0px 6px 0px;
+    border: 1px solid #000;
+}
+.menubar{
+    color: #fff;
+    width: 100%;
+    height: 55px;
+    font-size: 1.7em;
+    font-weight: bold;
+    text-align: center; 
+    line-height: 55px;
+    vertical-align: middle;
+}
+
+.main-img{
+    height: 100%;
+}
+
+/* panel */
+.separator {
+    border-top: 1px solid #dfdfdf;
+}
+
+.portion-emphasis {
+    color: #5ae628;
+    font-weight: bold;
+    padding: 0 3px;
+}
+
+.content{
+    padding-top: 1em;
+    padding-bottom: 1em;
+}
+
+.list-content li{
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+}
+.annotation{
+    font-size: 0.8em;
+}
+
+/* fotter */
+.footer-content{
+    background: #313c52;
+    color: #5a5b5f;
+    text-align: center; 
+}
+
+.copymark{
+    font-size: 0.5em;
+    padding: 0.5em;
+}
+
+.modal-body{
+    max-height: calc(80vh);
+    overflow-y: auto;
+}

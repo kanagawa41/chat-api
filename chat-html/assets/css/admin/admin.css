@@ -1,0 +1,35 @@
+#room-info{
+  display:none;
+}
+
+#user_inputs .label-success{
+  color: #fff;
+  background-color: #313c52;
+}
+
+span.admin{
+  color: #fff;
+  background-color: #ff7f50;
+}
+
+span.popular{
+  color: #fff;
+  background-color: #5ae628;
+}
+
+span.audience{
+  color: #fff;
+  background-color: #a9a9a9;
+}
+
+div.admin-label{
+  background-color: #ff7f50;
+}
+
+div.popular-label{
+  background-color: #5ae628;
+}
+
+div.audience-label{
+  background-color: #a9a9a9;
+}

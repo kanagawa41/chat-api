@@ -1,0 +1,194 @@
+#menu_navi {
+    display: none;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+.slicknav_menu {
+    position: fixed;
+    width: 100%;
+    top: 0;
+} .slicknav_menu li{
+	padding-top: 1px;
+}
+
+.slicknav_nav .row {
+    height: 100px; /* 段数によって変える */
+    margin-right: 0px;
+    margin-left: 0px;
+} 
+.slicknav_nav .col-block {
+    height: 50px;
+} .center-block{
+    width: 100%;
+    text-align: center; 
+} .slicknav_nav .table {
+    margin-bottom: 0px;
+    background: #FFF;
+} .slicknav_nav .table-bordered>tbody>tr>td {
+    border-style: none;
+    color: #313c52;
+} 
+/*.slicknav_nav .table-bordered>tbody>tr>td{
+    border: 3px double #ccc;
+}*/
+
+.navi-menu-name {
+    font-size: 0.4em;
+}
+
+/* メッセージ表示範囲  */
+#message_stream{
+     background: #6f92c0; /* 入力欄の背景色と同一にする必要がある */
+     margin: 0 auto;
+     width: 100%;
+     overflow: scroll;   /* スクロール表示 */ 
+}
+
+.arrow_answer,
+.arrow_question {
+    /* position: relative;  これを設定したらdescriptionの上にメッセージが表示されてしまう*/
+    word-wrap: break-word;
+    background: #fff;
+    border: 1px solid #c8c8c8;
+    border-radius: 10px;
+    width:83%;
+    padding:3%;
+} .arrow_question {
+    float: right;
+    margin-right: 1%;
+} .arrow_answer {
+    background: #85e249;
+    margin-left: 1%;
+}
+
+.answer_image img,
+.question_image img{
+     border-radius: 50px;
+     border-width: 1.5px;
+     border-style: solid;
+     width: 100%;
+} .question_image{
+     float: left;
+     width:15%;
+} .answer_image{
+     float: right;
+     width:15%;
+}
+
+.sex_man img{
+    border-color: #225fe7;
+} .sex_woman img{
+    border-color: #f19ec2;
+} .sex_none img{
+    border-color: #fff;
+}
+
+
+.question_box{
+     width: 100%;
+     overflow: hidden;
+     margin-bottom: 8%;
+}
+p.question_name,
+p.answer_name{
+     font-size: 11px;
+     color: #fff;
+     margin:0;
+}
+p.answer_name{text-align: right;}
+
+.send_time{
+    text-align: center;
+    font-size: 11px;
+    color: #fff;
+}
+
+.information_box{
+     text-align: center;
+     color: #fff;
+     height: 50px;
+     width: 100%;
+     overflow: hidden;
+     margin-bottom: 8%;
+}
+.information_message{
+     text-align: center;
+     color: #fff;
+     background-color:rgba(119,136,153,0.5);
+     line-height: 50px;
+}
+
+/* FIXME otherの画像が左に寄りすぎている */
+/* ユーザ投稿画像 */
+.image_box{
+    width:83%;
+    padding:0 3% 3% 3%;
+} .answer_post_image{
+    margin-left: auto;
+    padding-left: 8%;
+} .question_post_image{
+    float: right;
+} .image_box img.post_image_size{
+    object-fit: cover;
+    width: 200px;
+    height: 200px;
+}
+
+/* モーダルを画面いっぱいにスクロール有で表示する */
+.on-scroll{
+    height: 80vh;
+    width: 100%;
+    overflow: scroll;
+}
+
+.modal-title .glyphicon{
+    padding-right: 1em;
+}
+
+/* アルバム */
+.image_content img{
+    object-fit: cover;
+    width: 200px;
+    height: 200px;
+    margin: 0 auto;
+}
+
+#message_input_area{
+     background: #6f92c0;　　/* メッセージ欄の背景色と同一にする必要がある */
+     position: relative;
+     bottom: auto;
+}
+
+/* ユーザ一覧系 */
+#users-info{
+    height: 200px;
+    overflow: scroll;
+}
+span.admin{
+  color: #fff;
+  background-color: #ff7f50;
+} span.popular{
+  color: #fff;
+  background-color: #5ae628;
+} span.audience{
+  color: #fff;
+  background-color: #a9a9a9;
+} div.admin-label{
+  background-color: #ff7f50;
+} div.popular-label{
+  background-color: #5ae628;
+} div.audience-label{
+  background-color: #a9a9a9;
+}
+
+/* モーダルの共通点 */
+.modal .modal-header {
+    color: #fff;
+    background: #313c52;
+}
+
+.modal .label-success {
+    background-color: #313c52;
+}

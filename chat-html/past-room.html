@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>過去のルーム</title>
+<link rel="stylesheet" type="text/css" href="assets/css/past-room/past-room.css">
+<link rel="stylesheet" type="text/css" href="assets/css/slicknav/slicknav.css">
+<link rel="stylesheet" type="text/css" href="assets/css/common/reset.css">
+<link rel="stylesheet" type="text/css" href="assets/css/common/setting.css">
+<link rel="stylesheet" type="text/css" href="assets/css/bootstrap-v3-3-7/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="assets/css/toastr/toastr.min.css"/>
+<script type="text/javascript" src="assets/js/common/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="assets/js/common/config.js"></script>
+<script type="text/javascript" src="assets/js/common/my-common.js"></script>
+<script type="text/javascript" src="assets/js/jquery-qrcode/jquery.qrcode.min.js"></script>
+<script type="text/javascript" src="assets/js/slicknav/jquery.slicknav.min.js"></script>
+<script type="text/javascript" src="assets/js/bootstrap-v3-3-7/bootstrap.min.js"></script>
+<script type="text/javascript" src="assets/js/fingerprint/fingerprint.js"></script>
+<script type="text/javascript" src="assets/js/toastr/toastr.min.js"></script>
+
+<script type="text/javascript">
+    // トースター情報
+    var TOASTR = null;
+    // STOREキー
+    var RECENTLY_INTO_ROOM = "RECENTLY_INTO_ROOM";
+    // フィンガープリント
+    var fp = new Fingerprint();
+    const FINGERPRINT = fp.get();
+
+    // AJAXのリクエストパラメータのひな形
+    var getBasicRequest = function(){
+      return {
+          type: 'GET',
+          url: '',
+          crossDomain: true,
+          timeout: 10000,
+          cache: false,
+          data: {},
+          crossDomain: true,
+          headers: {
+            // headerはこの設定のみにしていないと、CORSの規約に反し通信が正しく行われないため。
+            'Content-Type' : 'application/x-www-form-urlencoded; charset=UTF-8'
+          },
+          beforeSend: function(jqXHR, settings) {
+            jqXHR.requestURL = settings.url;
+            // 指定のサーバーへ切り替える
+            settings.url = config.api_domain + '/' + settings.url;
+            return true;
+          }
+      };
+    }
+    // AJAXの接続失敗の処理
+    var AJAX_FAIL = function(XMLHttpRequest, textStatus, errorThrown ) {
+        TOASTR["error"]("接続が正しく行われませんでした。", "システムエラー");
+
+        console.log("URL : " + XMLHttpRequest.requestURL);
+        console.log("XMLHttpRequest : " + XMLHttpRequest.responseText);
+        console.log("textStatus : " + textStatus);
+        console.log("errorThrown : " + errorThrown);
+    };
+
+    /**
+     * エラーメッセージを表示する
+     */
+    function errorMessage(errors){
+        var messages = "";
+        jQuery.each(errors, function(key, val){
+            messages += val + '<br>';
+        });
+        TOASTR["warning"](messages, "入力エラー"); return;
+    }
+
+    $(document).ready(function(){
+        // 最初からレイヤーを出していても表示されない。
+        $("#overlay").fadeIn(50);
+
+        // トースター
+        toastr.options.timeOut = 3000;
+        toastr.options = {
+          "closeButton": true,
+          "debug": false,
+          "newestOnTop": true,
+          "progressBar": false,
+          "positionClass": "toast-top-full-width",
+          "preventDuplicates": false,
+          "showDuration": "300",
+          "hideDuration": "1000",
+          "timeOut": "5000",
+          "extendedTimeOut": "1000",
+          "showEasing": "swing",
+          "hideEasing": "linear",
+          "showMethod": "fadeIn",
+          "hideMethod": "fadeOut",
+          "tapToDismiss": false
+        }
+        TOASTR = toastr;
+
+        // スリックバー作動
+        $('#menu_navi').slicknav();
+        var menuHeight = parseInt($('.slicknav_menu').outerHeight());
+
+        $('.slicknav_btn').after('<div style="font-size: 0.9em; text-align: center; line-height: ' + parseInt($('.slicknav_menu').height()) + 'px;">' + '過去のルーム' + '</div>');
+        // 機能によりスタイルが上書きされるのでプログラムで設定している。
+        $('.slicknav_btn').css('display', 'none');
+        $('body').css('background-color', '#dedee7');
+
+        // 最近入ったルームの情報を取得
+        var ajaxRequest = getBasicRequest();
+        ajaxRequest['type'] = 'GET';
+        ajaxRequest['url'] = 'rooms/members/pastroom/' + FINGERPRINT;
+        ajaxRequest['data'] = {
+        };
+      
+        $.ajax(ajaxRequest
+        ).done(function(response, textStatus, jqXHR) {
+          if(response["errors"]){
+              errorMessage(response["errors"]);
+              return;
+          }
+
+          var html = '';
+          for(var roomInfo in response){
+            var userName = response[roomInfo]['user_name'];
+            var roomName = response[roomInfo]['room_name'];
+            var roomHash = response[roomInfo]['room_hash'];
+            var intoDate = response[roomInfo]['into_date'];
+            html += '<li class="user-info list-group-item" onclick="moveRoom(\'' + roomHash + '\');">';
+            html += ' <div class="label label-default">' + roomName + '</div>&nbsp;&nbsp;<div class="label label-default">' + userName + '</div>&nbsp;&nbsp;<div class="label label-default">' + intoDate + '</div><input type="hidden" name="room_hash" value="' + roomHash + '"><span class="glyphicon glyphicon-chevron-right pull-right" aria-hidden="true"></span>';
+            html += '</li>';
+          }
+
+          $('#recently-into-room').html(html);
+          $("#overlay").fadeOut();
+        }).fail(AJAX_FAIL);
+    });
+
+    function moveRoom(roomHash){
+      console.log('a');
+      window.location.href = "room.html?room=" + roomHash;
+    }
+</script>
+</head>
+<body>
+  <div>
+    <ul id="menu_navi" class="clearfix">
+    </ul>
+    <div>過去に入室したルームの履歴を表示します。</div>
+    <br />
+    <div id="user_inputs">
+      <ul id="recently-into-room" class="list-group"></ul>
+    </div>
+    <div style="color: red;">※入室した時と端末(スマートフォン)や、ブラウザが変わっている場合は履歴が正しく表示されない場合がございます。</div>
+  </div>
+  <!-- オーバーレイ -->
+  <div id="overlay" style="display: none;">
+      <div class="content">LLチャット</p>
+  </div>
+</body>
+</html>

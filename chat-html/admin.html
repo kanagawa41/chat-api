@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルーム作成</title>
+<link rel="stylesheet" type="text/css" href="assets/css/admin/admin.css">
+<link rel="stylesheet" type="text/css" href="assets/css/slicknav/slicknav.css">
+<link rel="stylesheet" type="text/css" href="assets/css/common/reset.css">
+<link rel="stylesheet" type="text/css" href="assets/css/common/setting.css">
+<link rel="stylesheet" type="text/css" href="assets/css/bootstrap-v3-3-7/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="assets/css/toastr/toastr.min.css"/>
+<!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script> -->
+<script type="text/javascript" src="assets/js/common/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="assets/js/common/config.js"></script>
+<script type="text/javascript" src="assets/js/store/store.min.js"></script>
+<script type="text/javascript" src="assets/js/common/my-common.js"></script>
+<script type="text/javascript" src="assets/js/jquery-qrcode/jquery.qrcode.min.js"></script>
+<script type="text/javascript" src="assets/js/slicknav/jquery.slicknav.min.js"></script>
+<script type="text/javascript" src="assets/js/bootstrap-v3-3-7/bootstrap.min.js"></script>
+<script type="text/javascript" src="assets/js/toastr/toastr.min.js"></script>
+<script type="text/javascript" src="assets/js/fingerprint/fingerprint.js"></script>
+<script type="text/javascript" src="assets/js/clipboard/clipboard.min.js"></script>
+
+<script type="text/javascript">
+    // トースター情報
+    var TOASTR = null;
+    // STOREキー
+    var RECENTLY_INTO_ROOM = "RECENTLY_INTO_ROOM";
+    // フィンガープリント
+    var fp = new Fingerprint();
+    const FINGERPRINT = fp.get();
+
+    // AJAXのリクエストパラメータのひな形
+    var AJAX_REQUEST_MODEL = {
+        type: 'GET',
+        url: '',
+        crossDomain: true,
+        timeout: 10000,
+        cache: false,
+        data: {},
+        crossDomain: true,
+        headers: {
+          'Content-Type' : 'application/x-www-form-urlencoded; charset=UTF-8'
+        },
+        beforeSend: function(jqXHR, settings) {
+          jqXHR.requestURL = settings.url;
+          // 指定のサーバーへ切り替える
+          settings.url = config.api_domain + '/' + settings.url;
+          return true;
+        }
+    };
+    // AJAXの接続失敗の処理
+    var AJAX_FAIL = function(XMLHttpRequest, textStatus, errorThrown ) {
+        TOASTR["error"]("接続が正しく行われませんでした。", "システムエラー");
+
+        console.log("URL : " + XMLHttpRequest.requestURL);
+        console.log("XMLHttpRequest : " + XMLHttpRequest.responseText);
+        console.log("textStatus : " + textStatus);
+        console.log("errorThrown : " + errorThrown);
+    };
+
+    /**
+     * エラーメッセージを表示する
+     */
+    function errorMessage(errors){
+        var messages = "";
+        jQuery.each(errors, function(key, val){
+            messages += val + '<br>';
+        });
+        TOASTR["warning"](messages, "入力エラー"); return;
+    }
+
+    $(document).ready(function(){
+        // 最初からレイヤーを出していても表示されない。
+        $("#overlay").fadeIn(50);
+
+        // トースター
+        toastr.options.timeOut = 3000;
+        toastr.options = {
+          "closeButton": true,
+          "debug": false,
+          "newestOnTop": true,
+          "progressBar": false,
+          "positionClass": "toast-top-full-width",
+          "preventDuplicates": false,
+          "showDuration": "300",
+          "hideDuration": "1000",
+          "timeOut": "5000",
+          "extendedTimeOut": "1000",
+          "showEasing": "swing",
+          "hideEasing": "linear",
+          "showMethod": "fadeIn",
+          "hideMethod": "fadeOut",
+          "tapToDismiss": false
+        }
+        TOASTR = toastr;
+
+        // スリックバー作動
+        $('#menu_navi').slicknav();
+        var menuHeight = parseInt($('.slicknav_menu').outerHeight());
+
+        $('.slicknav_btn').after('<div style="font-size: 0.9em; text-align: center; line-height: ' + parseInt($('.slicknav_menu').height()) + 'px;">' + 'グループ作成' + '</div>');
+        // 機能によりスタイルが上書きされるのでプログラムで設定している。
+        $('.slicknav_btn').css('display', 'none');
+        $('body').css('background-color', '#dedee7');
+        
+        var clipboard = new Clipboard('.clipboard-btn');
+    		clipboard.on('success', function(e) {
+          TOASTR["info"]("URLをコピーしました。", "システム通知");
+    		});
+
+        // ランダムに初期設定を変える
+        $('#icon option').eq(
+          Math.floor( Math.random() * $('#icon').children().length) + 1
+        ).prop('selected', true);
+
+        $("#overlay").fadeOut();
+    });
+
+    /**
+     * 部屋を作成する
+     */
+    function createRoom(){
+      var roomName = $('#room-name').val();
+      if(!roomName) { 
+            TOASTR["warning"]('部屋名を入力して下さい。', "入力エラー"); return;
+      }
+
+      $('#room-name').prop("disabled", true);
+      $('#room-description').prop("disabled", true);
+      $('#room-create-btn').prop("disabled", true);
+
+      var roomDescriptoin = $('#room-description').val();
+
+      var ajaxRequest = AJAX_REQUEST_MODEL;
+      ajaxRequest['type'] = 'POST';
+      ajaxRequest['url'] = 'admin/rooms/';
+      ajaxRequest['data'] = {
+            name : roomName,
+            description : roomDescriptoin,
+            user_name : $('#user_inputs #user_name').val(),
+            sex : $('#user_inputs [name="sex"]:checked').val(),
+            icon : $('#user_inputs #icon').val(),
+            fingerprint: FINGERPRINT
+      };
+
+      $.ajax(ajaxRequest
+      ).done(function(response, textStatus, jqXHR) {
+        if(response["errors"]){
+            console.log(response["errors"]);
+            errorMessage(response["errors"]);
+
+            $('#room-name').prop("disabled", false);
+            $('#room-description').prop("disabled", false);
+            $('#room-create-btn').prop("disabled", false);
+
+            return;
+        }
+
+        window.location.href = 'room.html' + "?room=" + response.room_admin_hash;
+      }).fail(AJAX_FAIL);
+    }
+</script>
+</head>
+<body>
+  <div>
+    <ul id="menu_navi" class="clearfix">
+    </ul>
+    <div id="user_inputs">
+    	<div class="label label-success">グループ名</div>
+      <!-- font-size:16pxはiphoneの入力時の拡大を避けるため -->
+    	<input type="text" id="room-name" placeholder="グループ名" class="form-control" style="font-size:16px;">
+      <br>
+      <div class="label label-success">グループ説明</div>
+    	<input type="text" id="room-description" placeholder="説明" class="form-control" style="font-size:16px;">
+      <br>
+      <div class="label label-success">ユーザ名</div>
+      <input type="text" id="user_name" placeholder="名前" class="form-control" style="font-size:16px;">
+      <br>
+      <div class="label label-success">性別</div>
+      <br>
+      <label class="radio-inline"><input type="radio" name="sex" class="sex" value="1" checked="checked">男</label>
+      <label class="radio-inline"><input type="radio" name="sex" class="sex" value="2">女</label>
+      <label class="radio-inline"><input type="radio" name="sex" class="sex" value="0">選択しない</label>
+      <br>
+      <br>
+      <div class="label label-success">アイコン</div>
+      <select class="form-control" id="icon" name="icon" style="font-size:16px;">
+        <option value="user_icon/1.png">ネコ</option>
+        <option value="user_icon/2.png">イルカ</option>
+        <option value="user_icon/3.png">イヌ</option>
+        <option value="user_icon/4.png">シカ</option>
+        <option value="user_icon/5.png">ペンギン</option>
+        <option value="user_icon/6.png">カメレオン</option>
+        <option value="user_icon/7.png">リス</option>
+        <option value="user_icon/8.png">キリン</option>
+        <option value="user_icon/9.png">ハリネズミ</option>
+        <option value="user_icon/10.png">ゾウ</option>
+        <option value="user_icon/11.png">ヒツジ</option>
+        <option value="user_icon/12.png">トナカイ</option>
+        <option value="user_icon/13.png">タカ</option>
+      </select>
+      <br>
+      <div id="user_form">
+        <!-- FIXME: 右寄せにする方法を変える -->
+        <div class="modal-footer">
+          <button type="button" id="room-create-btn" class="btn btn-primary" onclick="createRoom();">作成</button>
+          <div class="modal-body">
+            <a href="past-room.html" style="color: red;">ルームのアドレスを忘れた</a>
+          </div>
+        </div>
+      	<input type="hidden" id="room-id">
+        <br>
+        <br>
+      </div>
+    </div>
+  </div>
+  <!-- オーバーレイ -->
+  <div id="overlay" style="display: none;">
+      <div class="content">LLチャット</p>
+  </div>
+</body>
+</html>
